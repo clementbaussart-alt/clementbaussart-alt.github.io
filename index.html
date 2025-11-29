@@ -318,6 +318,19 @@
         @media (max-width: 1000px) { .comparator-main { grid-template-columns: 1fr; } #backToSelected { right: 12px; bottom: 12px; } }
         .btn-filter-del { background: #2a2f39; color: #e8ecf3; border: 0; border-radius: 8px; padding: 8px 10px; font-weight: 700; cursor: pointer; }
         .btn-filter-del.active { background: #ff6b6b; color: #fff; }
+        /* GIF de félicitations en fin de session */
+.result-gif {
+	display: none;
+	margin-top: 20px;
+	text-align: center;
+}
+.result-gif img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 12px;
+	box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+.result-gif.show { display: block; }
     </style>
 </head>
 <body>
@@ -458,6 +471,7 @@
                         <button class="btn-review" id="btnReviewWrong" onclick="reviewWrongCards()">🔄 Réviser à revoir</button>
                         <button class="btn-next-list" id="btnNextList" onclick="goToNextList()">Liste suivante →</button>
                     </div>
+                    <div id="resultGif" class="result-gif"><img id="resultGifImg" src="" alt="Bravo !"></div>
                 </div>
             </div>
         </div>
@@ -609,6 +623,10 @@
 <script>
     // VARIABLES GLOBALES FLASHCARDS
     let categories = {}, results = {}, currentCategory = null, currentFolder = null, currentList = null, currentPage = 'home', currentIndex = 0, isFlipped = false, isReviewMode = false, reviewIndices = [], stats = {known: 0, partial: 0, unknown: 0}, currentEditingSide = null, renameTarget = null, openCategories = {};
+    
+    // ——— GIF “majorité connu” ———
+// Remplace par l’URL de TON gif (https://…/ton.gif)
+const GIF_KNOWN_URL = 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif';
     
     // ====== THEME ======
     const THEME_KEY = 'flashcards_theme_v1';
@@ -1230,6 +1248,17 @@
             btnNext.disabled = true; 
             btnNext.textContent = 'Dernière liste ✓'; 
         } 
+        // Afficher le GIF si majorité de "Connu"
+const majorityKnown = (stats.known > stats.partial + stats.unknown);
+const gifWrap = document.getElementById('resultGif');
+const gifImg  = document.getElementById('resultGifImg');
+if (majorityKnown && GIF_KNOWN_URL) {
+	gifImg.src = GIF_KNOWN_URL;
+	gifWrap.classList.add('show');
+} else {
+	gifWrap.classList.remove('show');
+	gifImg.src = '';
+}
     }
     function drawPieChart() { 
         const total = stats.known + stats.partial + stats.unknown; 
