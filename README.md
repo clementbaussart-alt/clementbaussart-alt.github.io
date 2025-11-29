@@ -1,4 +1,3 @@
-# clementbaussart-alt.github.io[V9.html](https://github.com/user-attachments/files/23834972/V9.html)
 <!DOCTYPE html>
 <html lang="fr">
 <head>
