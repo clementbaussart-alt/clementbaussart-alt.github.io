@@ -287,7 +287,18 @@
         .comp-change .token.del { box-shadow: inset 0 -0.35em rgba(255,92,92,0.35); border-color: rgba(255,92,92,0.7); text-decoration: none; }
         .comp-change .ctx { color: #8b93a6; display: block; margin-top: 6px; font-size: 12px; }           /* Bouton retour à la sélection */    #backToSelected { position: fixed; right: 390px; bottom: 20px; z-index: 2001; background: #ffd166; color: #111; border: 0; border-radius: 999px; padding: 10px 14px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.35); display: none; }    #backToSelected.visible { display: inline-flex; }    #backToSelected:hover { filter: brightness(0.95); }        /* Fantôme suppression avec parenthèses rouges */    .del-ghost { display: inline-block; margin: 0 2px; color: #fff; }
         .del-ghost mark.del { text-decoration: none; box-shadow: inset 0 -0.45em rgba(255,92,92,0.35); border-color: rgba(255,92,92,0.7); }
-        .focus-ghost { display: inline-block; width: 10px; height: 1.2em; vertical-align: baseline; box-shadow: inset 0 -0.48em rgba(255,209,102,0.9), 0 0 0 2px rgba(255,209,102,0.25); border: 1px dashed rgba(255,209,102,0.85); border-radius: 4px; }        /* Plus de contraste vert dans barre latérale */.comp-change .token { box-shadow: inset 0 -0.35em rgba(34,197,94,0.7); border-color: rgba(34,197,94,1); background: rgba(34,197,94,0.15); }mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(34,197,94,0.9); }        @media (max-width: 1000px) { .comparator-main { grid-template-columns: 1fr; } #backToSelected { right: 12px; bottom: 12px; } }	/* Bouton Editer compact (barre d'étude) */.btn-edit-current {  background: #667eea;  color: #fff;  border: none;  border-radius: 6px;  padding: 6px 10px;  font-size: 12px;  font-weight: 700;  cursor: pointer;  line-height: 1;}.btn-edit-current:hover { background:#5568d3; box-shadow:0 3px 10px rgba(102,126,234,0.35); transform: translateY(-1px); }/* Fond blanc propre pour carte et résultats */.card-face { background:#fff !important; box-shadow:0 4px 15px rgba(0,0,0,0.08); border:1px solid #eee; }.end-message { background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.08); }.stat-bar-track { background:#f3f4f6; border:1px solid #eee; }/* Bouton filtre "Suppressions uniquement" */.btn-filter-del {	background: #2a2f39;	color: #e8ecf3;	border: 0;	border-radius: 8px;	padding: 8px 10px;	font-weight: 700;	cursor: pointer;}.btn-filter-del.active {	background: #ff6b6b;	color: #fff;}/* Bouton Exporter tout (accueil) */.btn-export-all {	background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);	color: #111;	border: none;	border-radius: 10px;	padding: 15px 30px;	font-size: 16px;	font-weight: 700;	cursor: pointer;	transition: all 0.3s;}.btn-export-all:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(250,112,154,0.35); }/* Boutons d’intégration compacts (réutilise le style des petits boutons) */.btn-embed {	background: rgba(255,255,255,0.9);	border: none;	color: #667eea;	cursor: pointer;	font-size: 11px;	padding: 4px 7px;	border-radius: 3px;	line-height: 1;	transition: all 0.3s;}.btn-embed:hover { background: #667eea; color: #fff; }  
+        .focus-ghost { display: inline-block; width: 10px; height: 1.2em; vertical-align: baseline; box-shadow: inset 0 -0.48em rgba(255,209,102,0.9), 0 0 0 2px rgba(255,209,102,0.25); border: 1px dashed rgba(255,209,102,0.85); border-radius: 4px; }        /* Plus de contraste vert dans barre latérale */.comp-change .token { box-shadow: inset 0 -0.35em rgba(34,197,94,0.7); border-color: rgba(34,197,94,1); background: rgba(34,197,94,0.15); }mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(34,197,94,0.9); }        @media (max-width: 1000px) { .comparator-main { grid-template-columns: 1fr; } #backToSelected { right: 12px; bottom: 12px; } }	/* Bouton Editer compact (barre d'étude) */.btn-edit-current {  background: #667eea;  color: #fff;  border: none;  border-radius: 6px;  padding: 6px 10px;  font-size: 12px;  font-weight: 700;  cursor: pointer;  line-height: 1;}.btn-edit-current:hover { background:#5568d3; box-shadow:0 3px 10px rgba(102,126,234,0.35); transform: translateY(-1px); }/* Fond blanc propre pour carte et résultats */.card-face { background:#fff !important; box-shadow:0 4px 15px rgba(0,0,0,0.08); border:1px solid #eee; }.end-message { background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.08); }.stat-bar-track { background:#f3f4f6; border:1px solid #eee; }/* Bouton filtre "Suppressions uniquement" */.btn-filter-del {	background: #2a2f39;	color: #e8ecf3;	border: 0;	border-radius: 8px;	padding: 8px 10px;	font-weight: 700;	cursor: pointer;}.btn-filter-del.active {	background: #ff6b6b;	color: #fff;}/* Bouton Exporter tout (accueil) */.btn-export-all {	background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);	color: #111;	border: none;	border-radius: 10px;	padding: 15px 30px;	font-size: 16px;	font-weight: 700;	cursor: pointer;	transition: all 0.3s;}.btn-export-all:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(250,112,154,0.35); }/* Boutons d’intégration compacts (réutilise le style des petits boutons) */.btn-embed {	background: rgba(255,255,255,0.9);	border: none;	color: #667eea;	cursor: pointer;	font-size: 11px;	padding: 4px 7px;	border-radius: 3px;	line-height: 1;	transition: all 0.3s;}.btn-embed:hover { background: #667eea; color: #fff; }
+		#themeModal { z-index: 3000; }
+#themeModal .modal-content { max-height: 80vh; overflow: auto; }
+		#themeModal .input-group input[type="color"] {
+	background: #fff;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	width: 48px; height: 36px;
+	padding: 0;
+}
+#themeModal .modal-content { background: var(--panel); color: var(--text); }
+#themeModal label { color: var(--text); }
     </style>
 </head>
 <body>
@@ -522,6 +533,10 @@
 				<input type="file" id="themeImportInput" accept="application/json" style="display:none">
 			</label>
 		</div>
+		<div class="input-group" style="display:flex; gap:8px; flex-wrap:wrap">
+	<button class="btn-action btn-action-secondary" type="button" onclick="applyPreset('Clair')">Clair</button>
+	<button class="btn-action btn-action-secondary" type="button" onclick="applyPreset('Sombre')">Sombre</button>
+</div>
 	</div>
 </div>
 <div id="comparatorModal">
@@ -591,6 +606,39 @@ const themeVars = [
 	['--partial','th_partial'],
 	['--unknown','th_unknown'],
 ];
+	const THEME_PRESETS = {
+	Clair: {
+		'--bg-gradient-from':'#667eea','--bg-gradient-to':'#764ba2',
+		'--primary':'#667eea','--primary-2':'#764ba2',
+		'--accent':'#11998e','--accent-2':'#38ef7d',
+		'--text':'#333333','--text-soft':'#666666',
+		'--panel':'#ffffff','--panel-muted':'#f5f7fa',
+		'--border':'#e0e0e0','--card-bg':'#ffffff',
+		'--known':'#38ef7d','--partial':'#f5a623','--unknown':'#ff6b6b'
+	},
+	Sombre: {
+		'--bg-gradient-from':'#0f172a','--bg-gradient-to':'#1f2937',
+		'--primary':'#4f46e5','--primary-2':'#7c3aed',
+		'--accent':'#10b981','--accent-2':'#34d399',
+		'--text':'#e5e7eb','--text-soft':'#9ca3af',
+		'--panel':'#111827','--panel-muted':'#0b1220',
+		'--border':'#374151','--card-bg':'#0b1220',
+		'--known':'#22c55e','--partial':'#f59e0b','--unknown':'#ef4444'
+	}
+};
+
+function applyPreset(name){
+	const preset = THEME_PRESETS[name];
+	if (!preset) return;
+	Object.entries(preset).forEach(([cssVar,val]) => setVar(cssVar,val));
+	// Répercute dans les inputs si le modal est ouvert
+	for (const [cssVar, inputId] of themeVars) {
+		const el = document.getElementById(inputId);
+		if (el && preset[cssVar]) el.value = toColor(preset[cssVar]) || el.value;
+	}
+	// Sauvegarde
+	localStorage.setItem(THEME_KEY, JSON.stringify(preset));
+}
 
 function getComputedVar(name){
 	return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -600,12 +648,24 @@ function setVar(name, value){
 }
 
 function openThemeModal(){
-	// Pré-remplir avec les valeurs actuelles
-	for(const [cssVar, inputId] of themeVars){
-		const v = getComputedVar(cssVar) || '';
+	// 1) Pré-remplir + live preview
+	for (const [cssVar, inputId] of themeVars) {
 		const input = document.getElementById(inputId);
-		if(input) input.value = toColor(v) || '#000000';
+		if (!input) continue;
+		const cur = getComputedVar(cssVar) || '';
+		input.value = toColor(cur) || input.value || '#000000';
+		input.oninput = (e) => {
+			const val = e.target.value;
+			if (val && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(val)) {
+				setVar(cssVar, val); // aperçu en direct
+			}
+		};
 	}
+
+	// 2) ICI, juste avant l'ouverture → branche l'auto‑save
+	bindThemeAutoSave();
+
+	// 3) Ouvre le modal
 	document.getElementById('themeModal').classList.add('show');
 }
 function closeThemeModal(){
@@ -629,12 +689,15 @@ function toColor(v){
 
 function saveTheme(){
 	const theme = {};
-	for(const [cssVar, inputId] of themeVars){
+	for (const [cssVar, inputId] of themeVars) {
 		const input = document.getElementById(inputId);
-		if(input && input.value){
+		if (input && input.value && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(input.value)) {
 			theme[cssVar] = input.value;
-			setVar(cssVar, input.value);
 		}
+	}
+	localStorage.setItem(THEME_KEY, JSON.stringify(theme));
+	alert('Thème enregistré ✓');
+}
 	}
 	localStorage.setItem(THEME_KEY, JSON.stringify(theme));
 	alert('Thème enregistré ✓');
@@ -656,6 +719,26 @@ function resetTheme(){
 		document.documentElement.style.removeProperty(cssVar);
 	}
 	alert('Thème réinitialisé');
+}
+	let themeAutoSaveTimer = null;
+function autoSaveThemeSoon(){
+	clearTimeout(themeAutoSaveTimer);
+	themeAutoSaveTimer = setTimeout(() => {
+		const theme = {};
+		for (const [cssVar, inputId] of themeVars) {
+			const el = document.getElementById(inputId);
+			if (el && el.value) theme[cssVar] = el.value;
+		}
+		localStorage.setItem(THEME_KEY, JSON.stringify(theme));
+	}, 400);
+}
+
+function bindThemeAutoSave(){
+	for (const [, inputId] of themeVars) {
+		const el = document.getElementById(inputId);
+		if (!el) continue;
+		el.addEventListener('input', autoSaveThemeSoon);
+	}
 }
 
 function exportTheme(){
