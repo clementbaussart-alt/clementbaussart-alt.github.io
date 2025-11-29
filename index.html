@@ -4,493 +4,1568 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flashcards + Comparateur</title>
-    <script src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js"></script>
     <style>
-        /* --- 1. VARIABLES DE COULEURS (Modifiables) --- */
-        :root {
-            /* Couleurs principales (Dégradé violet par défaut) */
-            --primary-color-start: #667eea;
-            --primary-color-end: #764ba2;
-            
-            /* Couleurs secondaires (Vert/Turquoise par défaut) */
-            --secondary-color-start: #11998e;
-            --secondary-color-end: #38ef7d;
-
-            /* Autres */
-            --sidebar-bg: #ffffff;
-            --text-main: #333333;
-            --bg-body: #f0f2f5; 
-        }
-
-        /* --- 2. CSS INITIAL (Adapté avec variables) --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: var(--bg-body); /* Changé pour une couleur unie ou dégradé global */
-            min-height: 100vh; 
-            display: flex; 
-        }
-        
-        /* MENU FIXE (Modifié pour rester fixe) */
-        .sidebar { 
-            width: 280px; 
-            background: var(--sidebar-bg); 
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); 
-            display: flex; 
-            flex-direction: column; 
-            position: fixed; 
-            height: 100vh; 
-            left: 0; 
-            top: 0; 
-            z-index: 100; 
-            /* Pas de transition de masquage */
-        }
-
-        .sidebar-header { 
-            padding: 30px 20px; 
-            background: linear-gradient(135deg, var(--primary-color-start) 0%, var(--primary-color-end) 100%); 
-            color: white; 
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; }
+        .sidebar { width: 280px; background: white; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100; transition: transform 0.3s ease; }
+        .sidebar.hidden { transform: translateX(-280px); }
+        .sidebar-header { padding: 30px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .sidebar-header h1 { font-size: 22px; margin-bottom: 5px; }
         .sidebar-header p { font-size: 13px; opacity: 0.9; }
-        
         .sidebar-nav { padding: 20px; border-bottom: 2px solid #e0e0e0; }
-        .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 10px; font-weight: 500; color: var(--text-main); }
+        .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 10px; font-weight: 500; }
         .nav-item:hover { background: #f5f7fa; }
-        .nav-item.active { 
-            background: linear-gradient(135deg, var(--primary-color-start) 0%, var(--primary-color-end) 100%); 
-            color: white; 
-        }
-
+        .nav-item.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .folder-section { flex: 1; overflow-y: auto; padding: 20px; }
         .folder-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .folder-section-header h3 { font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
         .folder-section-buttons { display: flex; gap: 5px; }
-        
-        .btn-new-folder, .btn-new-category { 
-            background: var(--primary-color-start); 
-            color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s; 
-        }
-        .btn-new-category { background: var(--secondary-color-start); }
-        
-        /* Contenu Principal décalé pour le menu fixe */
-        .main-content { 
-            margin-left: 280px; 
-            flex: 1; 
-            padding: 40px; 
-            overflow-y: auto; 
-            height: 100vh; 
-        }
-
-        /* --- Styles Généraux des pages --- */
-        .page { display: none; }
-        .page.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-        .container { background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1); padding: 40px; max-width: 800px; margin: 0 auto; }
-        
-        /* Boutons avec variables */
-        .btn-action { background: linear-gradient(135deg, var(--primary-color-start) 0%, var(--primary-color-end) 100%); color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
-        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        
-        .btn-action-secondary { background: linear-gradient(135deg, var(--secondary-color-start) 0%, var(--secondary-color-end) 100%); }
-        
-        /* Onglet Paramètres (Nouveau style) */
-        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
-        .setting-card { background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #e0e0e0; }
-        .setting-card label { display: block; margin-bottom: 10px; font-weight: 600; color: #555; }
-        .setting-card input[type="color"] { width: 100%; height: 50px; border: none; cursor: pointer; border-radius: 8px; }
-        .btn-reset { margin-top: 20px; background: #ff6b6b; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-
-        /* ... (Reste des styles essentiels conservés mais utilisant les variables où nécessaire) ... */
-        .category-header.active { background: linear-gradient(135deg, var(--secondary-color-start) 0%, var(--secondary-color-end) 100%); color: white; }
-        .toggle-sidebar-btn { display: none; } /* Caché car menu fixe */
-        
-        /* Comparateur styles */
-        .btn-comparator { background: linear-gradient(135deg, var(--secondary-color-start) 0%, var(--secondary-color-end) 100%); color: white; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        
-        /* Modal & autres */
+        .btn-new-folder, .btn-new-category { background: #667eea; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s; }
+        .btn-new-folder:hover, .btn-new-category:hover { background: #5568d3; }
+        .btn-new-category { background: #11998e; }
+        .btn-new-category:hover { background: #0f8778; }
+        .category-item { margin-bottom: 10px; }
+        .category-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #f5f7fa; border-radius: 6px; cursor: pointer; transition: all 0.3s; }
+        .category-header:hover { background: #e8ebff; }
+        .category-header.active { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; }
+        .category-left { display: flex; align-items: center; gap: 8px; flex: 1; }
+        .category-toggle { font-size: 12px; transition: transform 0.3s; }
+        .category-toggle.open { transform: rotate(90deg); }
+        .category-name { font-weight: 600; font-size: 14px; }
+        .category-count { background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; color: #667eea; margin-left: 5px; }
+        .category-header.active .category-count { background: rgba(255, 255, 255, 0.3); color: white; }
+        .category-actions { display: flex; gap: 5px; opacity: 0; transition: all 0.3s; }
+        .category-header:hover .category-actions { opacity: 1; }
+        .btn-edit-category, .btn-delete-category { background: none; border: none; color: #999; cursor: pointer; font-size: 14px; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .category-header.active .btn-edit-category, .category-header.active .btn-delete-category { color: rgba(255, 255, 255, 0.8); }
+        .btn-edit-category:hover { color: #667eea; }
+        .category-header.active .btn-edit-category:hover { color: white; }
+        .btn-delete-category:hover { color: #ff6b6b; }
+        .category-header.active .btn-delete-category:hover { color: #ffcccc; }
+        .category-folders { padding-left: 15px; margin-top: 5px; display: none; }
+        .category-folders.open { display: block; }
+        .folder-item { padding: 10px 15px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: space-between; }
+        .folder-item:hover { background: #f5f7fa; }
+        .folder-item.active { background: #e8ebff; color: #667eea; font-weight: 600; }
+        .folder-info { display: flex; align-items: center; gap: 8px; flex: 1; }
+        .folder-badge { background: rgba(102, 126, 234, 0.2); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; color: #667eea; }
+        .folder-item.active .folder-badge { background: rgba(102, 126, 234, 0.3); }
+        .folder-actions { display: flex; gap: 5px; opacity: 0; transition: all 0.3s; }
+        .folder-item:hover .folder-actions { opacity: 1; }
+        .btn-edit-folder, .btn-delete-folder { background: none; border: none; color: #999; cursor: pointer; font-size: 14px; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .btn-edit-folder:hover { color: #667eea; }
+        .btn-delete-folder:hover { color: #ff6b6b; }
+        .toggle-sidebar-btn { position: fixed; left: 290px; top: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; width: 48px; height: 48px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 101; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
+        .toggle-sidebar-btn:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5); }
+        .toggle-sidebar-btn.sidebar-hidden { left: 10px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4); }
+        .toggle-sidebar-btn.sidebar-hidden:hover { box-shadow: 0 6px 20px rgba(17, 153, 142, 0.5); }
+        .toggle-icon { transition: transform 0.3s ease; display: inline-block; }
+        .toggle-sidebar-btn.sidebar-hidden .toggle-icon { transform: rotate(180deg); }
+        .main-content { margin-left: 280px; flex: 1; padding: 40px; overflow-y: auto; height: 100vh; transition: margin-left 0.3s ease; }
+        .main-content.sidebar-hidden { margin-left: 0; }
+        .container { background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); padding: 40px; max-width: 800px; margin: 0 auto; }
+        .app-header { background: white; border-radius: 20px 20px 0 0; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); padding: 20px 40px; max-width: 800px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; }
+        .app-header h1 { margin: 0; font-size: 22px; color: #333; }
+        .app-header p { margin: 0; font-size: 13px; color: #666; }
+        .btn-comparator { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s; }
+        .btn-comparator:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4); }
+        .home-page { text-align: center; }
+        .home-hero { padding: 60px 40px; }
+        .home-hero h1 { font-size: 48px; color: #333; margin-bottom: 20px; }
+        .home-hero p { font-size: 18px; color: #666; line-height: 1.6; margin-bottom: 10px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 40px; }
+        .stat-card { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+        .stat-card-value { font-size: 36px; font-weight: 700; color: #667eea; margin-bottom: 10px; }
+        .stat-card-label { font-size: 14px; color: #666; font-weight: 500; }
+        .quick-actions { margin-top: 40px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .btn-action { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .btn-action-secondary { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .btn-action-secondary:hover { box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4); }
+        .recent-courses { margin-top: 50px; text-align: left; }
+        .recent-courses h2 { font-size: 24px; color: #333; margin-bottom: 20px; }
+        .course-list { display: flex; flex-direction: column; gap: 15px; }
+        .course-card { background: #f5f7fa; padding: 20px; border-radius: 12px; cursor: pointer; transition: all 0.3s; display: flex; justify-content: space-between; align-items: center; }
+        .course-card:hover { background: #e8ebff; transform: translateX(5px); }
+        .course-card-left { flex: 1; }
+        .course-card-title { font-size: 18px; font-weight: 600; color: #333; margin-bottom: 5px; }
+        .course-card-info { font-size: 14px; color: #666; }
+        .course-card-arrow { font-size: 24px; color: #667eea; }
+        .lists-page h2 { color: #333; margin-bottom: 10px; font-size: 28px; display: inline-block; }
+        .lists-page-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .btn-edit-page-title { background: none; border: none; color: #667eea; cursor: pointer; font-size: 20px; padding: 5px; transition: all 0.3s; }
+        .btn-edit-page-title:hover { color: #5568d3; transform: scale(1.1); }
+        .lists-page-subtitle { color: #666; font-size: 14px; margin-bottom: 30px; }
+        .lists-grid { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+        .list-card { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 25px 30px; border-radius: 15px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); position: relative; display: flex; justify-content: space-between; align-items: center; }
+        .list-card:hover { transform: translateX(5px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); }
+        .list-card-left { flex: 1; }
+        .list-card-title { font-size: 22px; font-weight: 600; color: #333; margin-bottom: 8px; }
+        .list-card-count { font-size: 14px; color: #666; margin-bottom: 5px; }
+        .list-card-progress { font-size: 13px; color: #667eea; font-weight: 600; }
+        .list-card-actions { display: flex; gap: 12px; }
+        .btn-list-action { padding: 15px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; color: white; min-width: 140px; }
+        .btn-study { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .btn-study:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .btn-manage { background: linear-gradient(135deg, #f5a623 0%, #f7b733 100%); }
+        .btn-manage:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(245, 166, 35, 0.4); }
+        .list-card-buttons { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; opacity: 0; transition: all 0.3s; }
+        .list-card:hover .list-card-buttons { opacity: 1; }
+        .btn-edit-list, .btn-delete-list { background: rgba(255, 255, 255, 0.9); border: none; color: #667eea; cursor: pointer; font-size: 11px; padding: 4px 7px; border-radius: 3px; transition: all 0.3s; line-height: 1; }
+        .btn-edit-list:hover { background: #667eea; color: white; }
+        .btn-delete-list { color: #ff6b6b; }
+        .btn-delete-list:hover { background: #ff6b6b; color: white; }
+        .btn-new-list { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; width: 100%; }
+        .btn-new-list:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .manage-cards-page h2 { color: #333; margin-bottom: 10px; font-size: 28px; }
+        .breadcrumb { color: #666; font-size: 14px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        .breadcrumb a { color: #667eea; text-decoration: none; cursor: pointer; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .manage-section { margin-bottom: 40px; }
+        .manage-section h3 { font-size: 20px; color: #333; margin-bottom: 15px; }
+        .cards-list { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        .card-edit-item { background: #f5f7fa; padding: 20px; border-radius: 12px; border: 2px solid transparent; transition: all 0.3s; }
+        .card-edit-item:hover { border-color: #667eea; }
+        .card-edit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .card-edit-number { font-size: 14px; font-weight: 600; color: #667eea; }
+        .card-edit-actions { display: flex; gap: 8px; }
+        .btn-delete-card { background: #ff6b6b; color: white; padding: 5px 12px; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-delete-card:hover { background: #ee5a6f; }		/* bouton éditer une carte */.btn-edit-card {	background: #667eea;	color: white;	padding: 5px 12px;	border: none;	border-radius: 5px;	font-size: 12px;	font-weight: 600;	cursor: pointer;	transition: all 0.3s;}.btn-edit-card:hover { background: #5568d3; }/* conteneur édition inline d'une carte */.card-inline-editor {	margin-top: 12px;	padding: 14px;	border: 2px dashed #d0d0d0;	border-radius: 10px;	background: #fff;}.card-inline-editor .editor-toolbar { margin-bottom: 8px; }.card-inline-editor .editor-row { margin-bottom: 12px; }.card-inline-editor .actions { display: flex; gap: 8px; }.btn-save-card {	background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);	color: #fff;	border: none;	border-radius: 6px;	padding: 8px 14px;	font-weight: 700;	cursor: pointer;}.btn-save-card:hover { filter: brightness(0.95); }.btn-cancel-card {	background: #e0e0e0;	color: #333;	border: none;	border-radius: 6px;	padding: 8px 14px;	font-weight: 700;	cursor: pointer;}.btn-cancel-card:hover { background:#d0d0d0; }/* bouton éditer dans la page de révision */.btn-edit-current {	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);	color: #fff;	border: none;	border-radius: 8px;	padding: 10px 16px;	font-weight: 700;	cursor: pointer;}.btn-edit-current:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }        .card-edit-content { display: flex; flex-direction: column; gap: 10px; }
+        .card-edit-text { font-size: 14px; color: #333; }
+        .card-edit-label { font-weight: 600; color: #666; margin-right: 5px; }
+        .editor-toolbar { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; padding: 10px; background: #f9f9f9; border-radius: 8px; border: 2px solid #d0d0d0; align-items: center; }
+        .editor-btn { background: white; border: 2px solid #667eea; color: #667eea; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 700; transition: all 0.2s; }
+        .editor-btn:hover { background: #667eea; color: white; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); }
+        .color-picker { width: 32px; height: 32px; border: 2px solid #667eea; border-radius: 6px; cursor: pointer; padding: 2px; }
+        .editor-content { width: 100%; padding: 12px; border: 2px solid #d0d0d0; border-radius: 8px; font-size: 14px; font-family: inherit; min-height: 120px; resize: vertical; overflow-y: auto; background: white; }
+        .editor-content:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .editor-content img { max-width: 100%; height: auto; display: inline-block; margin: 5px; border-radius: 8px; vertical-align: middle; }
+        .empty-cards-message { text-align: center; padding: 40px; color: #999; font-size: 16px; }
+        .study-page h2 { color: #333; margin-bottom: 20px; font-size: 28px; }
+        .study-mode-indicator { display: inline-block; background: #f5a623; color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-left: 10px; }
+        .study-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .progress-bar { background: #e0e0e0; height: 8px; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; transition: width 0.3s ease; }
+        .card-container { perspective: 1000px; margin-bottom: 30px; }
+        .card { background: transparent; border-radius: 15px; min-height: 300px; max-height: 500px; cursor: pointer; transition: transform 0.6s; transform-style: preserve-3d; position: relative; }
+        .card.flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 40px; overflow-y: auto; overflow-x: hidden; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+        .card-face::-webkit-scrollbar { width: 8px; }
+        .card-face::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.3); border-radius: 10px; }
+        .card-face::-webkit-scrollbar-thumb { background: rgba(102, 126, 234, 0.5); border-radius: 10px; }
+        .card-face::-webkit-scrollbar-thumb:hover { background: rgba(102, 126, 234, 0.7); }
+        .card-front { z-index: 2; }
+        .card-back { transform: rotateY(180deg); }
+        .card-text { font-size: 24px; color: #333; font-weight: 500; line-height: 1.5; width: 100%; text-align: center; }
+        .card-text img { max-width: 100%; height: auto; display: inline-block; margin: 5px; border-radius: 8px; vertical-align: middle; }
+        .buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        button { padding: 15px 30px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; color: white; flex: 1; min-width: 150px; }
+        .btn-known { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .btn-known:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4); }
+        .btn-partial { background: linear-gradient(135deg, #f5a623 0%, #f7b733 100%); }
+        .btn-partial:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(245, 166, 35, 0.4); }
+        .btn-unknown { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); }
+        .btn-unknown:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4); }
+        .stats { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
+        .flip-hint { text-align: center; color: #999; font-size: 14px; margin-bottom: 20px; font-style: italic; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; color: #333; font-weight: 600; }
+        .input-group input[type="text"] { width: 100%; padding: 12px 15px; border: 2px solid #d0d0d0; border-radius: 8px; font-size: 16px; font-family: inherit; background: white; color: #333; box-sizing: border-box; }
+        .input-group input[type="text"]:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .input-group input[type="text"]::placeholder { color: #999; }
+        .input-group select { width: 100%; padding: 12px 15px; border: 2px solid #d0d0d0; border-radius: 8px; font-size: 16px; font-family: inherit; background: white; color: #333; box-sizing: border-box; cursor: pointer; }
+        .input-group select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .btn-add { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 100%; margin-top: 10px; }
+        .btn-add:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .end-message { text-align: center; padding: 40px; }
+        .end-message h2 { color: #333; margin-bottom: 30px; }
+        .chart-container { display: flex; flex-direction: column; gap: 20px; margin: 30px 0; }
+        .stat-bar-container { display: flex; flex-direction: column; gap: 15px; }
+        .stat-bar-item { display: flex; flex-direction: column; gap: 8px; }
+        .stat-bar-label { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; }
+        .stat-bar-label-left { display: flex; align-items: center; gap: 8px; }
+        .stat-bar-icon { width: 16px; height: 16px; border-radius: 3px; }
+        .stat-bar-track { width: 100%; height: 30px; background: #f0f0f0; border-radius: 8px; overflow: hidden; }
+        .stat-bar-fill { height: 100%; transition: width 0.5s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 13px; }
+        .stat-bar-fill-known { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .stat-bar-fill-partial { background: linear-gradient(135deg, #f5a623 0%, #f7b733 100%); }
+        .stat-bar-fill-unknown { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); }
+        .legend-known { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .legend-partial { background: linear-gradient(135deg, #f5a623 0%, #f7b733 100%); }
+        .legend-unknown { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); }
+        .end-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
+        .btn-restart { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); flex: 1; min-width: 180px; }
+        .btn-restart:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .btn-review { background: linear-gradient(135deg, #f5a623 0%, #f7b733 100%); flex: 1; min-width: 180px; }
+        .btn-review:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(245, 166, 35, 0.4); }
+        .btn-review:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-review:disabled:hover { transform: none; box-shadow: none; }
+        .btn-next-list { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); flex: 1; min-width: 180px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-next-list:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4); }
+        .btn-next-list:disabled { opacity: 0.5; cursor: not-allowed; background: #ccc; }
+        .btn-next-list:disabled:hover { transform: none; box-shadow: none; }
+        .save-section { margin-top: 30px; padding-top: 30px; border-top: 2px solid #e0e0e0; text-align: center; }
+        .save-buttons { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        .btn-export { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); flex: 1; min-width: 130px; }
+        .btn-export:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(250, 112, 154, 0.4); }
+        .btn-clear { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); flex: 1; min-width: 130px; }
+        .btn-clear:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4); }
+        .empty-state { text-align: center; padding: 40px; color: #999; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center; }
         .modal.show { display: flex; }
-        .modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 90%; }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar { width: 70px; }
-            .sidebar-header h1, .sidebar-header p, .category-name, .folder-info span:nth-child(2) { display: none; }
-            .main-content { margin-left: 70px; padding: 20px; }
-        }
-        
-        /* Reste des styles spécifiques (Card, List, etc.) du code initial */
-        .list-card { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 25px 30px; border-radius: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .list-card-title { font-size: 22px; font-weight: 600; color: #333; }
-        .btn-study { background: linear-gradient(135deg, var(--primary-color-start) 0%, var(--primary-color-end) 100%); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; }
-        
-        /* Comparateur specifique */
-        #comparatorModal { z-index: 2000; background: rgba(0,0,0,0.8); }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 90%; position: relative; z-index: 1001; }
+        .modal-header { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #333; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-cancel { background: #e0e0e0; color: #333; }
+        .btn-cancel:hover { background: #d0d0d0; }
+        .page { display: none; }
+        .page.active { display: block; }
+        #fileInput, #imageInput { display: none; }
+        /* STYLES COMPARATEUR */
+        #comparatorModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow: auto; }
+        #comparatorModal.show { display: block; }
         .comparator-container { background: #0b0c0f; color: #e8ecf3; min-height: 100vh; padding: 20px; }
+        .comparator-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #23262d; background: #14161a; margin-bottom: 20px; border-radius: 10px; }
+        .comparator-header h1 { margin: 0; font-size: 20px; }
+        .btn-close-comparator { background: #ff6b6b; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-close-comparator:hover { background: #ee5a6f; }
         .comparator-main { display: grid; grid-template-columns: 1fr 360px; gap: 20px; }
-        .comp-panel { background: #14161a; border: 1px solid #23262d; border-radius: 12px; padding: 15px; }
-        .comp-controls textarea { width: 100%; background: #0e1014; color: white; border: 1px solid #333; padding: 10px; }
-        mark.ins { background: #1f6b36; color: white; text-decoration: none; }
-        mark.del { background: #6b1f1f; text-decoration: line-through; color: white; }
+        .comparator-section { }
+        .comparator-aside { background: #14161a; border-radius: 12px; padding: 16px; }
+        .comp-panel { background: #14161a; border: 1px solid #23262d; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+        .comp-panel h2 { margin: 0; padding: 12px 14px; border-bottom: 1px solid #23262d; font-size: 16px; }
+        #diffOutput { padding: 14px; white-space: pre-wrap; word-break: break-word; }
+        .comp-controls { display: grid; gap: 12px; padding: 12px; border: 1px solid #23262d; background: #14161a; border-radius: 12px; }
+        .comp-controls textarea { width: 100%; min-height: 120px; resize: vertical; background: #0e1014; border: 1px solid #2a2f39; border-radius: 8px; color: #e8ecf3; padding: 10px; font-family: inherit; }
+        .comp-controls label { font-weight: 600; margin-bottom: 6px; display: block; color: #e8ecf3; }
+        .comp-controls button { background: #5b8cff; color: white; border: 0; border-radius: 8px; padding: 10px 12px; font-weight: 600; cursor: pointer; }
+        .comp-controls button.secondary { background: #2a2f39; }
+        .comp-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        mark.ins, mark.del { background: transparent; border-radius: 4px; color: #fff; padding: 0 2px; border: 1px solid; }
+        mark.ins { box-shadow: inset 0 -0.45em rgba(31,191,71,0.4); border-color: rgba(31,191,71,0.7); }
+        mark.del { box-shadow: inset 0 -0.45em rgba(255,92,92,0.35); border-color: rgba(255,92,92,0.7); text-decoration: line-through; }
+        mark.focused { box-shadow: inset 0 -0.48em rgba(255,209,102,0.9), 0 0 0 2px rgba(255,209,102,0.25) !important; border-color: rgba(255,209,102,0.85) !important; background: rgba(255,209,102,0.2) !important; }
+        .comp-change.selected { border-color: #ffd166 !important; box-shadow: 0 0 0 2px rgba(255,209,102,0.25) !important; background: rgba(255,209,102,0.1); }
+        .comp-summary { padding: 12px; border-bottom: 1px solid #23262d; }
+        .comp-summary small { color: #8b93a6; }
+        code.badge { background: #222630; border: 1px solid #2a2f39; padding: 2px 6px; border-radius: 6px; font-size: 12px; }
+        .comp-toolbar { display: flex; gap: 8px; align-items: center; padding: 8px; border-bottom: 1px solid #23262d; }
+        .comp-changes { padding: 8px; max-height: 500px; overflow: auto; }
+        .comp-change { display: block; text-align: left; width: 100%; background: transparent; border: 1px solid #2a2f39; border-radius: 10px; color: #e8ecf3; padding: 10px; margin: 8px 0; cursor: pointer; }
+        .comp-change:hover { border-color: #ffd166; }
+        .comp-change.selected { border-color: #ffd166; box-shadow: 0 0 0 2px rgba(255,209,102,0.25); }
+        .comp-change .type { font-weight: 700; margin-bottom: 6px; display: block; }
+        .comp-change .token { display: inline; color: #fff; padding: 0 1px; border-radius: 4px; border: 1px solid; }
+        .comp-change .token { box-shadow: inset 0 -0.35em rgba(31,191,71,0.4); border-color: rgba(31,191,71,0.7); }
+        .comp-change .token.del { box-shadow: inset 0 -0.35em rgba(255,92,92,0.35); border-color: rgba(255,92,92,0.7); text-decoration: none; }
+        .comp-change .ctx { color: #8b93a6; display: block; margin-top: 6px; font-size: 12px; }           /* Bouton retour à la sélection */    #backToSelected { position: fixed; right: 390px; bottom: 20px; z-index: 2001; background: #ffd166; color: #111; border: 0; border-radius: 999px; padding: 10px 14px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.35); display: none; }    #backToSelected.visible { display: inline-flex; }    #backToSelected:hover { filter: brightness(0.95); }        /* Fantôme suppression avec parenthèses rouges */    .del-ghost { display: inline-block; margin: 0 2px; color: #fff; }
+        .del-ghost mark.del { text-decoration: none; box-shadow: inset 0 -0.45em rgba(255,92,92,0.35); border-color: rgba(255,92,92,0.7); }
+        .focus-ghost { display: inline-block; width: 10px; height: 1.2em; vertical-align: baseline; box-shadow: inset 0 -0.48em rgba(255,209,102,0.9), 0 0 0 2px rgba(255,209,102,0.25); border: 1px dashed rgba(255,209,102,0.85); border-radius: 4px; }        /* Plus de contraste vert dans barre latérale */.comp-change .token { box-shadow: inset 0 -0.35em rgba(34,197,94,0.7); border-color: rgba(34,197,94,1); background: rgba(34,197,94,0.15); }mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(34,197,94,0.9); }        @media (max-width: 1000px) { .comparator-main { grid-template-columns: 1fr; } #backToSelected { right: 12px; bottom: 12px; } }	/* Bouton Editer compact (barre d'étude) */.btn-edit-current {  background: #667eea;  color: #fff;  border: none;  border-radius: 6px;  padding: 6px 10px;  font-size: 12px;  font-weight: 700;  cursor: pointer;  line-height: 1;}.btn-edit-current:hover { background:#5568d3; box-shadow:0 3px 10px rgba(102,126,234,0.35); transform: translateY(-1px); }/* Fond blanc propre pour carte et résultats */.card-face { background:#fff !important; box-shadow:0 4px 15px rgba(0,0,0,0.08); border:1px solid #eee; }.end-message { background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.08); }.stat-bar-track { background:#f3f4f6; border:1px solid #eee; }/* Bouton filtre "Suppressions uniquement" */.btn-filter-del {	background: #2a2f39;	color: #e8ecf3;	border: 0;	border-radius: 8px;	padding: 8px 10px;	font-weight: 700;	cursor: pointer;}.btn-filter-del.active {	background: #ff6b6b;	color: #fff;}/* Bouton Exporter tout (accueil) */.btn-export-all {	background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);	color: #111;	border: none;	border-radius: 10px;	padding: 15px 30px;	font-size: 16px;	font-weight: 700;	cursor: pointer;	transition: all 0.3s;}.btn-export-all:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(250,112,154,0.35); }/* Boutons d’intégration compacts (réutilise le style des petits boutons) */.btn-embed {	background: rgba(255,255,255,0.9);	border: none;	color: #667eea;	cursor: pointer;	font-size: 11px;	padding: 4px 7px;	border-radius: 3px;	line-height: 1;	transition: all 0.3s;}.btn-embed:hover { background: #667eea; color: #fff; }  
     </style>
 </head>
 <body>
-
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h1>📚 Flashcards</h1>
-            <p>Apprentissage</p>
-        </div>
-        <div class="sidebar-nav">
-            <div class="nav-item active" onclick="showPage('home')"><span>🏠</span><span>Accueil</span></div>
-            <div class="nav-item" onclick="showPage('settings')"><span>⚙️</span><span>Paramètres</span></div>
-        </div>
-        <div class="folder-section">
-            <div class="folder-section-header">
-                <h3>Mes Cours</h3>
-                <div class="folder-section-buttons">
-                    <button class="btn-new-category" onclick="showNewCategoryModal()">📁</button>
-                    <button class="btn-new-folder" onclick="showNewFolderModal()">+</button>
-                </div>
+	<button class="toggle-sidebar-btn" id="toggleSidebarBtn" onclick="toggleSidebar()"><span class="toggle-icon">◀</span></button>
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header"><h1>📚 Flashcards</h1><p>Système d'apprentissage</p></div>
+    <div class="sidebar-nav"><div class="nav-item active" onclick="showPage('home')"><span>🏠</span><span>Accueil</span></div></div>
+    <div class="folder-section">
+        <div class="folder-section-header">
+            <h3>Organisation</h3>
+            <div class="folder-section-buttons">
+                <button class="btn-new-category" onclick="showNewCategoryModal()" title="Nouvelle catégorie">📁</button>
+                <button class="btn-new-folder" onclick="showNewFolderModal()" title="Nouveau cours">+</button>
             </div>
-            <div id="categoryList"></div>
+        </div>
+        <div id="categoryList"></div>
+    </div>
+</div>
+<div class="main-content" id="mainContent">
+    <div class="app-header" style="padding:10px 40px;">
+        <button class="btn-comparator" onclick="openComparator()">
+            🔍 Comparateur de texte
+        </button>
+    </div>
+    <div id="homePage" class="page active">
+        <div class="container home-page">
+            <div class="home-hero"><h1>Bienvenue ! 👋</h1><p>Apprends efficacement avec ton système de flashcards.</p></div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-card-value" id="totalCourses">0</div><div class="stat-card-label">Cours créés</div></div>
+                <div class="stat-card"><div class="stat-card-value" id="totalCards">0</div><div class="stat-card-label">Cartes totales</div></div>
+            </div>
+            <div class="quick-actions">
+                <button class="btn-action" onclick="showNewFolderModal()">➕ Créer un cours</button>
+                <button class="btn-action btn-action-secondary" onclick="importCards()">📥 Importer</button>
+				<button class="btn-export-all" onclick="exportAll()">📦 Exporter tout</button>
+            </div>
+            <div class="recent-courses"><h2>Mes cours</h2><div class="course-list" id="courseList"></div></div>
         </div>
     </div>
-
-    <div class="main-content" id="mainContent">
-        <div class="app-header" style="padding:10px 40px; display:flex; justify-content:flex-end;">
-            <button class="btn-comparator" onclick="openComparator()">🔍 Comparateur</button>
+    <div id="listsPage" class="page">
+        <div class="container lists-page">
+            <div class="lists-page-header"><h2 id="listsTitle">Cours</h2><button class="btn-edit-page-title" onclick="showRenameFolderModal()">✏️</button><button class="btn-edit-page-title" title="Intégrer ce cours" onclick="copyFolderEmbed()">🔗</button></div>
+            <p class="lists-page-subtitle">Sélectionne une liste à réviser</p>
+            <div class="lists-grid" id="listsGrid"></div>
+            <button class="btn-new-list" onclick="showNewListModal()">➕ Créer une nouvelle liste</button>
         </div>
-
-        <div id="homePage" class="page active">
-            <div class="container home-page">
-                <div class="home-hero">
-                    <h1>Bienvenue ! 👋</h1>
-                    <p>Apprends efficacement avec ton système de flashcards.</p>
+    </div>
+    <div id="manageCardsPage" class="page">
+        <div class="container manage-cards-page">
+            <div class="breadcrumb"><a id="backToLists">← Retour aux listes</a></div>
+            <h2 id="manageTitle">Gérer les cartes</h2>
+            <div class="manage-section">
+                <h3>➕ Ajouter une nouvelle carte</h3>
+                <div class="input-group">
+                    <label>Question / Recto :</label>
+                    <div class="editor-toolbar">
+                        <button class="editor-btn" onclick="formatText('bold', 'Q')"><b>G</b></button>
+                        <button class="editor-btn" onclick="formatText('italic', 'Q')"><i>I</i></button>
+                        <button class="editor-btn" onclick="formatText('underline', 'Q')"><u>S</u></button>
+                        <input type="color" class="color-picker" id="textColorQ" value="#000000" title="Couleur">
+                        <input type="color" class="color-picker" id="bgColorQ" value="#ffff00" title="Surlignage">
+                        <button class="editor-btn" onclick="insertImage('Q')">🖼️</button>
+                        <button class="editor-btn" onclick="clearFormat('Q')">✖</button>
+                    </div>
+                    <div class="editor-content" id="newQuestion" contenteditable="true"></div>
                 </div>
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-card-value" id="totalCourses">0</div><div class="stat-card-label">Cours</div></div>
-                    <div class="stat-card"><div class="stat-card-value" id="totalCards">0</div><div class="stat-card-label">Cartes</div></div>
+                <div class="input-group">
+                    <label>Réponse / Verso :</label>
+                    <div class="editor-toolbar">
+                        <button class="editor-btn" onclick="formatText('bold', 'A')"><b>G</b></button>
+                        <button class="editor-btn" onclick="formatText('italic', 'A')"><i>I</i></button>
+                        <button class="editor-btn" onclick="formatText('underline', 'A')"><u>S</u></button>
+                        <input type="color" class="color-picker" id="textColorA" value="#000000" title="Couleur">
+                        <input type="color" class="color-picker" id="bgColorA" value="#ffff00" title="Surlignage">
+                        <button class="editor-btn" onclick="insertImage('A')">🖼️</button>
+                        <button class="editor-btn" onclick="clearFormat('A')">✖</button>
+                    </div>
+                    <div class="editor-content" id="newAnswer" contenteditable="true"></div>
                 </div>
-                <div class="quick-actions" style="margin-top:40px; display:flex; gap:10px; justify-content:center;">
-                    <button class="btn-action" onclick="showNewFolderModal()">➕ Créer un cours</button>
-                    <button class="btn-action btn-action-secondary" onclick="exportCards()">📦 Exporter</button>
-                    <input type="file" id="fileInput" style="display:none" accept=".json">
-                    <button class="btn-action" style="background:#555;" onclick="document.getElementById('fileInput').click()">📥 Importer</button>
-                </div>
-                <div id="courseList" class="course-list" style="margin-top:40px;"></div>
+                <button class="btn-add" onclick="addCard()">Ajouter la carte</button>
             </div>
-        </div>
-
-        <div id="settingsPage" class="page">
-            <div class="container">
-                <h2 style="margin-bottom:20px;">🎨 Personnalisation</h2>
-                <p>Modifie les couleurs de l'application.</p>
-                
-                <div class="settings-grid">
-                    <div class="setting-card">
-                        <label>Couleur Principale (Début Dégradé)</label>
-                        <input type="color" id="colorP1" value="#667eea" oninput="updateColors()">
-                    </div>
-                    <div class="setting-card">
-                        <label>Couleur Principale (Fin Dégradé)</label>
-                        <input type="color" id="colorP2" value="#764ba2" oninput="updateColors()">
-                    </div>
-                    <div class="setting-card">
-                        <label>Couleur Secondaire (Début)</label>
-                        <input type="color" id="colorS1" value="#11998e" oninput="updateColors()">
-                    </div>
-                    <div class="setting-card">
-                        <label>Couleur Secondaire (Fin)</label>
-                        <input type="color" id="colorS2" value="#38ef7d" oninput="updateColors()">
-                    </div>
-                    <div class="setting-card">
-                        <label>Fond Général</label>
-                        <input type="color" id="colorBg" value="#f0f2f5" oninput="updateColors()">
-                    </div>
-                </div>
-                <button class="btn-reset" onclick="resetColors()">Rétablir les couleurs par défaut</button>
+            <div class="manage-section">
+                <h3>📝 Cartes existantes (<span id="cardCount">0</span>)</h3>
+                <div class="cards-list" id="cardsList"></div>
             </div>
-        </div>
-
-        <div id="listsPage" class="page">
-            <div class="container">
-                <h2 id="listsTitle" style="margin-bottom:20px;">Cours</h2>
-                <div id="listsGrid" class="lists-grid"></div>
-                <button class="btn-new-list" style="margin-top:20px; width:100%; padding:15px; background:var(--bg-body); border:1px solid #ddd; cursor:pointer;" onclick="showNewListModal()">➕ Nouvelle liste</button>
-            </div>
-        </div>
-
-        <div id="studyPage" class="page">
-            <div class="container" style="text-align:center;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                    <button onclick="showListsPage(currentCategory, currentFolder)" style="border:none; background:none; cursor:pointer; font-size:20px;">←</button>
-                    <h2 id="studyTitle">Titre</h2>
-                    <button onclick="editCurrentCard()" style="border:none; background:none; cursor:pointer;">✏️</button>
-                </div>
-                
-                <div class="card-container" style="perspective:1000px; height:300px; margin-bottom:20px;">
-                    <div id="flashcard" class="card" onclick="this.classList.toggle('flipped')" style="width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform 0.6s; cursor:pointer;">
-                        <div class="card-face card-front" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:white; display:flex; align-items:center; justify-content:center; font-size:24px; border:1px solid #eee; border-radius:15px; padding:20px;">
-                            <div id="question">Question</div>
-                        </div>
-                        <div class="card-face card-back" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:#f9f9f9; transform:rotateY(180deg); display:flex; align-items:center; justify-content:center; font-size:24px; border:1px solid #eee; border-radius:15px; padding:20px;">
-                            <div id="answer">Réponse</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-study" style="flex:1;" onclick="nextCard()">Carte Suivante</button>
-                </div>
-                
-                <div style="margin-top:30px; border-top:1px solid #eee; padding-top:20px;">
-                    <h3>Ajouter une carte rapide</h3>
-                    <input id="newQ" placeholder="Question" style="width:100%; padding:10px; margin-bottom:10px;">
-                    <input id="newA" placeholder="Réponse" style="width:100%; padding:10px; margin-bottom:10px;">
-                    <button class="btn-action" onclick="addCard()">Ajouter</button>
+            <div class="save-section">
+                <h2 style="margin-bottom:20px;color:#333">💾 Gestion des cartes</h2>
+                <div class="save-buttons">
+                    <button class="btn-export" onclick="exportCards()">📥 Exporter</button>
+                    <button class="btn-clear" onclick="clearCurrentList()">🗑️ Vider</button>
                 </div>
             </div>
         </div>
     </div>
-
-    <div id="newCategoryModal" class="modal"><div class="modal-content"><h3>Nouvelle Catégorie</h3><input id="catName" placeholder="Nom" style="width:100%; padding:10px; margin:10px 0;"><button class="btn-action" onclick="createCategory()">Créer</button><button onclick="closeModals()" style="margin-left:10px;">Annuler</button></div></div>
-    <div id="newFolderModal" class="modal"><div class="modal-content"><h3>Nouveau Cours</h3><select id="catSelect" style="width:100%; margin:10px 0; padding:10px;"></select><input id="folderName" placeholder="Nom" style="width:100%; padding:10px; margin:10px 0;"><button class="btn-action" onclick="createFolder()">Créer</button><button onclick="closeModals()" style="margin-left:10px;">Annuler</button></div></div>
-    <div id="newListModal" class="modal"><div class="modal-content"><h3>Nouvelle Liste</h3><input id="listName" placeholder="Nom" style="width:100%; padding:10px; margin:10px 0;"><button class="btn-action" onclick="createList()">Créer</button><button onclick="closeModals()" style="margin-left:10px;">Annuler</button></div></div>
-
-    <div id="comparatorModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; overflow:auto;">
-        <div class="comparator-container">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <h2>Comparateur</h2>
-                <button class="btn-close-comparator" onclick="closeComparator()">Fermer</button>
-            </div>
-            <div class="comparator-main">
-                <div class="comp-controls">
-                    <textarea id="oldText" rows="10" placeholder="Ancien texte..."></textarea>
-                    <textarea id="newText" rows="10" placeholder="Nouveau texte..." style="margin-top:10px;"></textarea>
-                    <button class="btn-action" style="margin-top:10px;" onclick="computeComp()">Comparer</button>
+    <div id="studyPage" class="page">
+        <div class="container study-page">
+            <div class="breadcrumb"><a id="backToListsStudy">← Retour aux listes</a></div>
+            <div class="study-controls">	<div>		<h2 id="studyTitle" style="display:inline">Liste</h2>		<span id="studyModeIndicator" class="study-mode-indicator" style="display:none">🔄 Mode révision</span>	</div>	<button class="btn-edit-current" id="btnEditCurrent" onclick="editCurrentCard()">✏️ Éditer cette carte</button></div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+            <div id="cardSection">
+                <div class="flip-hint">👆 Clique pour retourner (molette pour scroller)</div>
+                <div class="card-container">
+                    <div class="card" id="flashcard" onclick="flipCard()">
+                        <div class="card-face card-front"><div class="card-text" id="question"></div></div>
+                        <div class="card-face card-back"><div class="card-text" id="answer"></div></div>
+                    </div>
                 </div>
+                <div class="buttons">
+                    <button class="btn-known" onclick="answer('known')">✓ Connu</button>
+                    <button class="btn-partial" onclick="answer('partial')">~ Partiellement</button>
+                    <button class="btn-unknown" onclick="answer('unknown')">✗ Pas connu</button>
+                </div>
+                <div class="stats" id="stats"></div>
+            </div>
+            <div id="emptyState" class="empty-state" style="display:none"><div class="empty-state-icon">📝</div><h3>Aucune carte</h3></div>
+            <div id="endSection" style="display:none">
+                <div class="end-message">
+                    <h2>🎉 Session terminée !</h2>
+                    <div class="chart-container">
+                        <div class="stat-bar-container">
+                            <div class="stat-bar-item">
+                                <div class="stat-bar-label"><div class="stat-bar-label-left"><div class="stat-bar-icon legend-known"></div><span id="legendKnown">Connu: 0 (0%)</span></div></div>
+                                <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill-known" id="barKnown" style="width:0%">0</div></div>
+                            </div>
+                            <div class="stat-bar-item">
+                                <div class="stat-bar-label"><div class="stat-bar-label-left"><div class="stat-bar-icon legend-partial"></div><span id="legendPartial">Partiel: 0 (0%)</span></div></div>
+                                <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill-partial" id="barPartial" style="width:0%">0</div></div>
+                            </div>
+                            <div class="stat-bar-item">
+                                <div class="stat-bar-label"><div class="stat-bar-label-left"><div class="stat-bar-icon legend-unknown"></div><span id="legendUnknown">Pas connu: 0 (0%)</span></div></div>
+                                <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill-unknown" id="barUnknown" style="width:0%">0</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="end-actions">
+                        <button class="btn-restart" onclick="restartSession()">Recommencer</button>
+                        <button class="btn-review" id="btnReviewWrong" onclick="reviewWrongCards()">🔄 Réviser à revoir</button>
+                        <button class="btn-next-list" id="btnNextList" onclick="goToNextList()">Liste suivante →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<input type="file" id="fileInput" accept=".json">
+<input type="file" id="imageInput" accept="image/*">
+<div class="modal" id="newCategoryModal"><div class="modal-content"><div class="modal-header">Nouvelle catégorie</div><div class="input-group"><label for="categoryNameInput">Nom de la catégorie :</label><input type="text" id="categoryNameInput" placeholder="Ex: Droit S3"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeNewCategoryModal()">Annuler</button><button class="btn-add" onclick="createCategory()">Créer</button></div></div></div>
+<div class="modal" id="newFolderModal"><div class="modal-content"><div class="modal-header">Nouveau cours</div><div class="input-group"><label for="folderCategorySelect">Catégorie :</label><select id="folderCategorySelect"></select></div><div class="input-group"><label for="folderNameInput">Nom du cours :</label><input type="text" id="folderNameInput" placeholder="Ex: Droit Administratif"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeNewFolderModal()">Annuler</button><button class="btn-add" onclick="createFolder()">Créer</button></div></div></div>
+<div class="modal" id="newListModal"><div class="modal-content"><div class="modal-header">Nouvelle liste</div><div class="input-group"><label for="listNameInput">Nom de la liste :</label><input type="text" id="listNameInput" placeholder="Ex: Chapitre 1"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeNewListModal()">Annuler</button><button class="btn-add" onclick="createList()">Créer</button></div></div></div>
+<div class="modal" id="renameCategoryModal"><div class="modal-content"><div class="modal-header">Renommer la catégorie</div><div class="input-group"><label for="renameCategoryInput">Nouveau nom :</label><input type="text" id="renameCategoryInput" placeholder="Nouveau nom"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeRenameCategoryModal()">Annuler</button><button class="btn-add" onclick="renameCategory()">Renommer</button></div></div></div>
+<div class="modal" id="renameFolderModal"><div class="modal-content"><div class="modal-header">Renommer le cours</div><div class="input-group"><label for="renameFolderInput">Nouveau nom :</label><input type="text" id="renameFolderInput" placeholder="Nouveau nom du cours"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeRenameFolderModal()">Annuler</button><button class="btn-add" onclick="renameFolder()">Renommer</button></div></div></div>
+<div class="modal" id="renameListModal"><div class="modal-content"><div class="modal-header">Renommer la liste</div><div class="input-group"><label for="renameListInput">Nouveau nom :</label><input type="text" id="renameListInput" placeholder="Nouveau nom de la liste"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeRenameListModal()">Annuler</button><button class="btn-add" onclick="renameList()">Renommer</button></div></div></div>
+<div id="comparatorModal">
+    <div class="comparator-container">
+        <div class="comparator-header" style="padding:10px 20px;">
+            <button class="btn-close-comparator" onclick="closeComparator()">✕ Fermer</button>
+        </div>
+        <div class="comparator-main">
+            <div class="comparator-section">
                 <div class="comp-panel">
-                    <div id="diffOutput" style="white-space:pre-wrap;">Résultat...</div>
+                    <h2>Texte récent annoté</h2>
+                    <div id="diffOutput"></div>
                 </div>
+                    </div>
+    <button id="backToSelected" title="Aller à la carte sélectionnée">⬅ Aller à la sélection</button>
+</div>
+                <div class="comp-controls">
+                    <div>
+                        <label for="oldText">Texte ancien</label>
+                        <textarea id="oldText" placeholder="Colle ici l'ancienne version…"></textarea>
+                    </div>
+                    <div>
+                        <label for="newText">Texte récent</label>
+                        <textarea id="newText" placeholder="Colle ici la nouvelle version…"></textarea>
+                    </div>
+                    <div class="comp-split">
+                        <button id="compareBtn">Comparer</button>
+                        <button id="copyBtn" class="secondary">Copier le résultat</button>
+                    </div>
+                </div>
+            </div>
+            <div class="comparator-aside">
+                <div class="comp-summary">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                        <code class="badge">Insertions: <span id="insCount">0</span></code>
+                        <code class="badge">Suppressions: <span id="delCount">0</span></code>
+                        <code class="badge">Remplacements: <span id="repCount">0</span></code>
+                    </div>
+                    <small id="hint">Colle tes textes puis clique sur « Comparer ».</small>
+                </div>
+                <div class="comp-toolbar">	<strong>Changements</strong>	<span style="flex:1"></span>	<button id="toggleOnlyDeletions" class="btn-filter-del">➖ Suppressions uniquement</button>	<button id="toggleContext" class="secondary">± Contexte</button></div>
+                <div id="changesList" class="comp-changes"></div>
             </div>
         </div>
     </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js"></script>
+<script>
+	// VARIABLES GLOBALES FLASHCARDS
+let categories = {}, results = {}, currentCategory = null, currentFolder = null, currentList = null, currentPage = 'home', currentIndex = 0, isFlipped = false, isReviewMode = false, reviewIndices = [], stats = {known: 0, partial: 0, unknown: 0}, currentEditingSide = null, renameTarget = null, openCategories = {};
 
-    <script>
-        // --- LOGIQUE JAVASCRIPT ---
+// --- MODE INTÉGRÉ (iframe) ---
+function getQueryParams() {
+	const p = new URLSearchParams(window.location.search);
+	return {
+		embed: p.get('embed') === '1',
+		cat: p.get('cat') || null,
+		folder: p.get('folder') || null,
+		list: p.get('list') || null,
+		view: p.get('view') || null // "manage" | "study" | "lists" (optionnel)
+	};
+}
+
+function bootstrapEmbedIfAny() {
+	try {
+		const qp = getQueryParams();
+		if (!qp.embed) return;
+		// Allège l’UI intégrée
+		document.getElementById('toggleSidebarBtn')?.classList.add('sidebar-hidden');
+		document.getElementById('sidebar')?.classList.add('hidden');
+		document.getElementById('mainContent')?.classList.add('sidebar-hidden');
+		// Si cat/folder/list sont fournis, on navigue directement
+		if (qp.cat && qp.folder && qp.list) {
+			// Par défaut: vue "study" (révision), sinon gérer "manage" ou "lists"
+			if (qp.view === 'manage') {
+				showManageCardsPage(qp.cat, qp.folder, qp.list);
+			} else if (qp.view === 'lists') {
+				showListsPage(qp.cat, qp.folder);
+			} else {
+				showStudyPage(qp.cat, qp.folder, qp.list, false);
+			}
+		} else if (qp.cat && qp.folder) {
+			showListsPage(qp.cat, qp.folder);
+		} else {
+			// Pas assez d’infos → accueil minimal
+			showPage('home');
+		}
+	} catch(e) {
+		console.error('Erreur embed:', e);
+	}
+}
+// Appeler après loadData()
+
+
+// FONCTIONS FLASHCARDS
+function toggleSidebar() { const sidebar = document.getElementById('sidebar'); const mainContent = document.getElementById('mainContent'); const toggleBtn = document.getElementById('toggleSidebarBtn'); sidebar.classList.toggle('hidden'); mainContent.classList.toggle('sidebar-hidden'); toggleBtn.classList.toggle('sidebar-hidden'); }
+function formatText(command, side) { document.execCommand(command, false, null); document.getElementById('new' + (side === 'Q' ? 'Question' : 'Answer')).focus(); }
+function clearFormat(side) { const editor = document.getElementById('new' + (side === 'Q' ? 'Question' : 'Answer')); editor.innerHTML = editor.innerText; }
+function insertImage(side) { currentEditingSide = side; document.getElementById('imageInput').click(); }
+
+document.getElementById('imageInput').addEventListener('change', function(e) { 
+	const file = e.target.files && e.target.files[0];
+	if (!file) return;
+
+	const reader = new FileReader();
+	reader.onload = function(event) { 
+		const img = document.createElement('img');
+		img.src = event.target.result;
+		img.style.maxWidth = '100%';
+		img.style.height = 'auto';
+		img.style.display = 'inline-block';
+		img.style.margin = '5px';
+		img.style.borderRadius = '8px';
+		
+		let editor, targetId;
+		if (currentEditingExisting.idx !== null) {
+			// Cas de l'édition d'une carte existante (PATCH: Ajout du branchement)
+			targetId = (currentEditingExisting.side === 'Q' ? 'editQ-' : 'editA-') + currentEditingExisting.idx;
+			editor = document.getElementById(targetId);
+		} else {
+			// Cas de la création d'une nouvelle carte (original)
+			editor = document.getElementById('new' + (currentEditingSide === 'Q' ? 'Question' : 'Answer'));
+		}
+
+		if (!editor) {
+			console.error("Éditeur introuvable.");
+			return;
+		}
+
+		const selection = window.getSelection();
+		if (selection.rangeCount > 0 && editor.contains(selection.anchorNode)) {
+			const range = selection.getRangeAt(0);
+			range.deleteContents();
+			range.insertNode(img);
+			const space = document.createTextNode('\u00A0');
+			range.setStartAfter(img);
+			range.insertNode(space);
+			range.setStartAfter(space);
+			range.collapse(true);
+			selection.removeAllRanges();
+			selection.addRange(range);
+		} else { 
+			editor.appendChild(img);
+		}
+		
+		editor.focus(); 
+		
+		// Nettoyer après utilisation
+		currentEditingExisting = { idx: null, side: null }; 
+	}; 
+	reader.readAsDataURL(file); 
+	e.target.value = ''; 
+});
+
+document.getElementById('textColorQ').addEventListener('change', function(e) { document.execCommand('foreColor', false, e.target.value); document.getElementById('newQuestion').focus(); });
+document.getElementById('bgColorQ').addEventListener('change', function(e) { document.execCommand('backColor', false, e.target.value); document.getElementById('newQuestion').focus(); });
+document.getElementById('textColorA').addEventListener('change', function(e) { document.execCommand('foreColor', false, e.target.value); document.getElementById('newAnswer').focus(); });
+document.getElementById('bgColorA').addEventListener('change', function(e) { document.execCommand('backColor', false, e.target.value); document.getElementById('newAnswer').focus(); });
+
+function showPage(e) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); if (e === 'home') { document.getElementById('homePage').classList.add('active'); document.querySelector('.nav-item').classList.add('active'); currentPage = 'home'; currentCategory = null; currentFolder = null; currentList = null; updateHomeStats(); } }
+function showListsPage(category, folder) { currentCategory = category; currentFolder = folder; currentList = null; currentPage = 'lists'; document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); document.getElementById('listsPage').classList.add('active'); document.getElementById('listsTitle').textContent = folder; updateCategoryList(); loadListsPage(); }
+function showManageCardsPage(category, folderName, listName) { currentCategory = category; currentFolder = folderName; currentList = listName; currentPage = 'manage'; document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); document.getElementById('manageCardsPage').classList.add('active'); document.getElementById('manageTitle').textContent = 'Gérer : ' + listName; document.getElementById('backToLists').onclick = function() { showListsPage(currentCategory, currentFolder); }; updateCategoryList(); loadManageCardsPage(); }
+function showStudyPage(category, folderName, listName, reviewMode) { 
+	if (reviewMode === undefined) reviewMode = false; 
+	currentCategory = category; 
+	currentFolder = folderName; 
+	currentList = listName; 
+	currentIndex = 0; 
+	stats = {known: 0, partial: 0, unknown: 0}; 
+	isReviewMode = reviewMode; 
+	
+	if (isReviewMode) { 
+		reviewIndices = getCardsToReview(); 
+		if (reviewIndices.length === 0) { 
+			alert('Aucune carte à revoir !'); 
+			return; 
+		} 
+	} else { 
+		reviewIndices = []; 
+	} 
+	
+	document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); 
+	document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); 
+	document.getElementById('studyPage').classList.add('active'); 
+	document.getElementById('studyTitle').textContent = listName; 
+	document.getElementById('studyModeIndicator').style.display = isReviewMode ? 'inline-block' : 'none'; 
+	document.getElementById('backToListsStudy').onclick = function() { showListsPage(currentCategory, currentFolder); }; 
+	currentPage = 'study'; 
+	updateCategoryList(); 
+	loadCurrentList(); 
+}
+function getCardsToReview() { if (!currentCategory || !currentFolder || !currentList || !results[currentCategory] || !results[currentCategory][currentFolder] || !results[currentCategory][currentFolder][currentList]) return []; const e = results[currentCategory][currentFolder][currentList], t = []; Object.keys(e).forEach(r => { const o = e[r]; if (o === 'partial' || o === 'unknown') t.push(parseInt(r)); }); return t; }
+function getNextList() { if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) return null; const lists = Object.keys(categories[currentCategory][currentFolder]); const currentIndex = lists.indexOf(currentList); if (currentIndex === -1 || currentIndex === lists.length - 1) return null; return lists[currentIndex + 1]; }
+function goToNextList() { const nextList = getNextList(); if (nextList) { showStudyPage(currentCategory, currentFolder, nextList, false); } }
+function loadData() { 
+	const catData = localStorage.getItem('flashcards_categories_v3'); 
+	if (catData) { 
+		try { 
+			categories = JSON.parse(catData); 
+		} catch (e) { 
+			console.error('Erreur:', e); categories = {}; 
+		} 
+	} else { 
+		categories = {}; 
+	} 
+	
+	const openData = localStorage.getItem('flashcards_open_categories'); 
+	if (openData) { 
+		try { 
+			openCategories = JSON.parse(openData); 
+		} catch (e) { 
+			openCategories = {}; 
+		} 
+	} 
+	
+	const resData = localStorage.getItem('flashcards_results_v3'); 
+	if (resData) { 
+		try { 
+			results = JSON.parse(resData); 
+		} catch (e) { 
+			results = {}; 
+		} 
+	} 
+	
+	if (Object.keys(categories).length === 0) { 
+		categories = {'📚 Mes cours': {'Droit Administratif': {'Chapitre 1': [{question: "Qu'est-ce que le principe de légalité ?", answer: "Le principe selon lequel l'administration doit agir conformément aux règles de droit."}]}}}; 
+		openCategories['📚 Mes cours'] = true; 
+	} 
+	updateCategoryList(); 
+	updateHomeStats(); 
+}
+function saveData() { localStorage.setItem('flashcards_categories_v3', JSON.stringify(categories)); localStorage.setItem('flashcards_open_categories', JSON.stringify(openCategories)); updateHomeStats(); }
+function saveResults() { localStorage.setItem('flashcards_results_v3', JSON.stringify(results)); }
+function toggleCategory(catName) { openCategories[catName] = !openCategories[catName]; localStorage.setItem('flashcards_open_categories', JSON.stringify(openCategories)); updateCategoryList(); }
+function updateCategoryList() { 
+	const container = document.getElementById('categoryList'); 
+	container.innerHTML = ''; 
+	Object.keys(categories).forEach(catName => { 
+		const catDiv = document.createElement('div'); 
+		catDiv.className = 'category-item'; 
+		const catHeader = document.createElement('div'); 
+		catHeader.className = 'category-header'; 
+		if (catName === currentCategory && (currentPage === 'lists' || currentPage === 'study' || currentPage === 'manage')) { 
+			catHeader.classList.add('active'); 
+		} 
+		
+		let totalCards = 0; 
+		Object.values(categories[catName]).forEach(folder => { 
+			Object.values(folder).forEach(lists => { 
+				totalCards += lists.length; 
+			}); 
+		}); 
+		
+		const leftDiv = document.createElement('div'); 
+		leftDiv.className = 'category-left'; 
+		const isOpen = openCategories[catName]; 
+		const toggleSpan = document.createElement('span'); 
+		toggleSpan.className = 'category-toggle' + (isOpen ? ' open' : ''); 
+		toggleSpan.innerHTML = '▶'; 
+		toggleSpan.onclick = function(e) { e.stopPropagation(); toggleCategory(catName); }; 
+		const nameSpan = document.createElement('span'); 
+		nameSpan.className = 'category-name'; 
+		nameSpan.textContent = catName; 
+		const countSpan = document.createElement('span'); 
+		countSpan.className = 'category-count'; 
+		countSpan.textContent = totalCards; 
+		leftDiv.appendChild(toggleSpan); 
+		leftDiv.appendChild(nameSpan); 
+		leftDiv.appendChild(countSpan); 
+		
+		const actionsDiv = document.createElement('div'); 
+		actionsDiv.className = 'category-actions'; 
+		const editBtn = document.createElement('button'); 
+		editBtn.className = 'btn-edit-category'; 
+		editBtn.innerHTML = '✏️'; 
+		editBtn.onclick = function(e) { e.stopPropagation(); showEditCategoryModal(catName); }; 
+		const deleteBtn = document.createElement('button'); 
+		deleteBtn.className = 'btn-delete-category'; 
+		deleteBtn.innerHTML = '✕'; 
+		deleteBtn.onclick = function(e) { e.stopPropagation(); deleteCategory(catName); }; 
+		actionsDiv.appendChild(editBtn); 
+		actionsDiv.appendChild(deleteBtn); 
+		
+		catHeader.appendChild(leftDiv); 
+		catHeader.appendChild(actionsDiv); 
+		catDiv.appendChild(catHeader); 
+		
+		const foldersDiv = document.createElement('div'); 
+		foldersDiv.className = 'category-folders' + (isOpen ? ' open' : ''); 
+		
+		Object.keys(categories[catName]).forEach(folderName => { 
+			let cardCount = 0; 
+			Object.values(categories[catName][folderName]).forEach(lists => { 
+				cardCount += lists.length; 
+			}); 
+			
+			const folderDiv = document.createElement('div'); 
+			folderDiv.className = 'folder-item'; 
+			if (catName === currentCategory && folderName === currentFolder && (currentPage === 'lists' || currentPage === 'study' || currentPage === 'manage')) { 
+				folderDiv.classList.add('active'); 
+			} 
+			
+			const folderInfo = document.createElement('div'); 
+			folderInfo.className = 'folder-info'; 
+			folderInfo.onclick = function() { showListsPage(catName, folderName); }; 
+			folderInfo.innerHTML = '<span>📖</span><span style="flex:1">' + escapeHtml(folderName) + '</span><span class="folder-badge">' + cardCount + '</span>'; 
+			
+			const folderActions = document.createElement('div'); 
+			folderActions.className = 'folder-actions'; 
+			const folderEditBtn = document.createElement('button'); 
+			folderEditBtn.className = 'btn-edit-folder'; 
+			folderEditBtn.innerHTML = '✏️'; 
+			folderEditBtn.onclick = function(e) { e.stopPropagation(); showEditFolderModal(catName, folderName); }; 
+			const folderDeleteBtn = document.createElement('button'); 
+			folderDeleteBtn.className = 'btn-delete-folder'; 
+			folderDeleteBtn.innerHTML = '✕'; 
+			folderDeleteBtn.onclick = function(e) { e.stopPropagation(); deleteFolder(catName, folderName); }; 
+			folderActions.appendChild(folderEditBtn); 
+			folderActions.appendChild(folderDeleteBtn); 
+			
+			folderDiv.appendChild(folderInfo); 
+			folderDiv.appendChild(folderActions); 
+			foldersDiv.appendChild(folderDiv); 
+		}); 
+		
+		catDiv.appendChild(foldersDiv); 
+		container.appendChild(catDiv); 
+	}); 
+}
+function escapeHtml(text) { const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }; return text.replace(/[&<>"']/g, m => map[m]); }
+function loadListsPage() { 
+	const container = document.getElementById('listsGrid'); 
+	container.innerHTML = ''; 
+	if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) return; 
+	const lists = categories[currentCategory][currentFolder]; 
+	Object.keys(lists).forEach(listName => { 
+		const cards = lists[listName]; 
+		const cardCount = cards.length; 
+		let toReviewCount = 0; 
+		if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][listName]) { 
+			const listResults = results[currentCategory][currentFolder][listName]; 
+			Object.values(listResults).forEach(result => { 
+				if (result === 'partial' || result === 'unknown') toReviewCount++; 
+			}); 
+		} 
+		
+		const card = document.createElement('div'); 
+		card.className = 'list-card'; 
+		
+		const buttonsDiv = document.createElement('div'); 
+		buttonsDiv.className = 'list-card-buttons'; 
+		const editBtn = document.createElement('button'); 
+		editBtn.className = 'btn-edit-list'; 
+		editBtn.innerHTML = '✏️'; 
+		editBtn.onclick = function(e) { e.stopPropagation(); showEditListModal(listName); }; 
+		const deleteBtn = document.createElement('button'); 
+		deleteBtn.className = 'btn-delete-list'; 
+		deleteBtn.innerHTML = '✕'; 
+		deleteBtn.onclick = function(e) { e.stopPropagation(); deleteList(listName); }; 
+		buttonsDiv.appendChild(editBtn); 
+		buttonsDiv.appendChild(deleteBtn); 
+		
+		const integrateBtn = document.createElement('button');
+		integrateBtn.className = 'btn-edit-list';
+		integrateBtn.title = 'Intégrer cette liste';
+		integrateBtn.textContent = '🔗';
+		integrateBtn.onclick = function(e) {
+			e.stopPropagation();
+			copyListEmbed(listName);
+		};
+		buttonsDiv.appendChild(integrateBtn);
+		
+		let progressHTML = ''; 
+		if (toReviewCount > 0) { 
+			progressHTML = '<div class="list-card-progress">🔄 ' + toReviewCount + ' à revoir</div>'; 
+		} 
+		
+		card.innerHTML = '<div class="list-card-left"><div class="list-card-title">' + escapeHtml(listName) + '</div><div class="list-card-count">' + cardCount + ' carte' + (cardCount > 1 ? 's' : '') + '</div>' + progressHTML + '</div><div class="list-card-actions"><button class="btn-list-action btn-study" onclick="showStudyPage(\'' + escapeHtml(currentCategory).replace(/'/g, "\\'") + '\',\'' + escapeHtml(currentFolder).replace(/'/g, "\\'") + '\',\'' + escapeHtml(listName).replace(/'/g, "\\'") + '\')">📖 Réviser</button><button class="btn-list-action btn-manage" onclick="showManageCardsPage(\'' + escapeHtml(currentCategory).replace(/'/g, "\\'") + '\',\'' + escapeHtml(currentFolder).replace(/'/g, "\\'") + '\',\'' + escapeHtml(listName).replace(/'/g, "\\'") + '\')">✏️ Gérer</button></div>'; 
+		card.appendChild(buttonsDiv); 
+		container.appendChild(card); 
+	}); 
+}
+function loadManageCardsPage() {
+	if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) return;
+	const cards = categories[currentCategory][currentFolder][currentList];
+	const container = document.getElementById('cardsList');
+	document.getElementById('cardCount').textContent = cards.length;
+	
+	if (cards.length === 0) {
+		container.innerHTML = '<div class="empty-cards-message">Aucune carte. Ajoute-en une ci-dessus !</div>';
+		return;
+	}
+	
+	container.innerHTML = '';
+	cards.forEach((card, idx) => {
+		const div = document.createElement('div');
+		div.className = 'card-edit-item';
+		
+		// Aperçus sans HTML
+		const questionPreview = (card.question || '').replace(/<[^>]*>/g, '').substring(0, 100);
+		const answerPreview   = (card.answer   || '').replace(/<[^>]*>/g, '').substring(0, 100);
+		
+		// IMPORTANT: une seule instruction "div.innerHTML = ... ;"
+		div.innerHTML =
+		  '<div class="card-edit-header">' +
+		    '<div class="card-edit-number">Carte #' + (idx + 1) + '</div>' +
+		    '<div class="card-edit-actions">' +
+		      '<button class="btn-edit-card" onclick="startEditCard(' + idx + ')">✏️</button>' +
+		      '<button class="btn-delete-card" onclick="deleteCard(' + idx + ')">✕</button>' +
+		    '</div>' +
+		  '</div>' +
+		  '<div class="card-edit-content">' +
+		    '<div class="card-edit-text"><span class="card-edit-label">Q:</span> ' + questionPreview + '...</div>' +
+		    '<div class="card-edit-text"><span class="card-edit-label">R:</span> ' + answerPreview + '...</div>' +
+		  '</div>' +
+		  // Éditeur inline masqué par défaut
+		  '<div class="card-inline-editor" id="editor-' + idx + '" style="display:none">' +
+		    '<div class="editor-row">' +
+		      '<label class="card-edit-label" style="display:block;margin-bottom:6px">Question / Recto :</label>' +
+		      '<div class="editor-toolbar">' +
+		        '<button class="editor-btn" onclick="formatExistingCard(' + idx + ', \'bold\', \'Q\')"><b>G</b></button>' +
+		        '<button class="editor-btn" onclick="formatExistingCard(' + idx + ', \'italic\', \'Q\')"><i>I</i></button>' +
+		        '<button class="editor-btn" onclick="formatExistingCard(' + idx + ', \'underline\', \'Q\')"><u>S</u></button>' +
+		        '<input type="color" class="color-picker" onchange="colorExistingCard(' + idx + ', this.value, \'fore\', \'Q\')" value="#000000" title="Couleur">' +
+		        '<input type="color" class="color-picker" onchange="colorExistingCard(' + idx + ', this.value, \'back\', \'Q\')" value="#ffff00" title="Surlignage">' +
+		        '<button class="editor-btn" onclick="insertImageExisting(' + idx + ', \'Q\')">🖼️</button>' +
+		        '<button class="editor-btn" onclick="clearFormatExisting(' + idx + ', \'Q\')">✖</button>' +
+		      '</div>' +
+		      '<div class="editor-content" id="editQ-' + idx + '" contenteditable="true"></div>' +
+		    '</div>' +
+		    '<div class="editor-row">' +
+		      '<label class="card-edit-label" style="display:block;margin-bottom:6px">Réponse / Verso :</label>' +
+		      '<div class="editor-toolbar">' +
+		        '<button class="editor-btn" onclick="formatExistingCard(' + idx + ', \'bold\', \'A\')"><b>G</b></button>' +
+		        '<button class="editor-btn" onclick="formatExistingCard(' + idx + ', \'italic\', \'A\')"><i>I</i></button>' +
+		        '<button class="editor-btn" onclick="formatExistingCard(' + idx + ', \'underline\', \'A\')"><u>S</u></button>' +
+		        '<input type="color" class="color-picker" onchange="colorExistingCard(' + idx + ', this.value, \'fore\', \'A\')" value="#000000" title="Couleur">' +
+		        '<input type="color" class="color-picker" onchange="colorExistingCard(' + idx + ', this.value, \'back\', \'A\')" value="#ffff00" title="Surlignage">' +
+		        '<button class="editor-btn" onclick="insertImageExisting(' + idx + ', \'A\')">🖼️</button>' +
+		        '<button class="editor-btn" onclick="clearFormatExisting(' + idx + ', \'A\')">✖</button>' +
+		      '</div>' +
+		      '<div class="editor-content" id="editA-' + idx + '" contenteditable="true"></div>' +
+		    '</div>' +
+		    '<div class="actions">' +
+		      '<button class="btn-save-card" onclick="saveEditedCard(' + idx + ')">Enregistrer</button>' +
+		      '<button class="btn-cancel-card" onclick="cancelEditCard(' + idx + ')">Annuler</button>' +
+		    '</div>' +
+		  '</div>';
+		container.appendChild(div);
+	});
+}
+function updateHomeStats() { let totalCourses = 0; let totalCards = 0; Object.values(categories).forEach(cat => { Object.values(cat).forEach(folder => { totalCourses++; Object.values(folder).forEach(lists => { totalCards += lists.length; }); }); }); document.getElementById('totalCourses').textContent = totalCourses; document.getElementById('totalCards').textContent = totalCards; const list = document.getElementById('courseList'); list.innerHTML = ''; if (totalCourses === 0) { list.innerHTML = '<p style="color:#999;text-align:center;padding:20px">Aucun cours créé.</p>'; return; } Object.keys(categories).forEach(catName => { Object.keys(categories[catName]).forEach(folderName => { let cardCount = 0; const listCount = Object.keys(categories[catName][folderName]).length; Object.values(categories[catName][folderName]).forEach(lists => { cardCount += lists.length; }); const div = document.createElement('div'); div.className = 'course-card'; div.onclick = () => showListsPage(catName, folderName); div.innerHTML = '<div class="course-card-left"><div class="course-card-title">' + escapeHtml(folderName) + '</div><div class="course-card-info">' + listCount + ' liste' + (listCount > 1 ? 's' : '') + ' • ' + cardCount + ' carte' + (cardCount > 1 ? 's' : '') + '</div></div><div class="course-card-arrow">→</div>'; list.appendChild(div); }); }); }
+function loadCurrentList() { if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) { showEmptyState(); return; } const cards = categories[currentCategory][currentFolder][currentList]; if (isReviewMode && reviewIndices.length === 0) { showEmptyState(); return; } if (cards.length === 0) { showEmptyState(); } else { hideEmptyState(); loadCard(); } }
+function showEmptyState() { document.getElementById('cardSection').style.display = 'none'; document.getElementById('endSection').style.display = 'none'; document.getElementById('emptyState').style.display = 'block'; document.getElementById('progressBar').style.width = '0%'; }
+function hideEmptyState() { document.getElementById('cardSection').style.display = 'block'; document.getElementById('endSection').style.display = 'none'; document.getElementById('emptyState').style.display = 'none'; }
+function loadCard() { if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) return; const cards = categories[currentCategory][currentFolder][currentList]; if (isReviewMode) { if (currentIndex >= reviewIndices.length) { showEndScreen(); return; } const idx = reviewIndices[currentIndex]; const card = cards[idx]; document.getElementById('question').innerHTML = card.question; document.getElementById('answer').innerHTML = card.answer; } else { if (currentIndex >= cards.length) { showEndScreen(); return; } const card = cards[currentIndex]; document.getElementById('question').innerHTML = card.question; document.getElementById('answer').innerHTML = card.answer; } document.getElementById('flashcard').classList.remove('flipped'); isFlipped = false; updateProgress(); updateStats(); }
+function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); isFlipped = !isFlipped; }
+function editCurrentCard() {
+	if (!currentCategory || !currentFolder || !currentList) { alert("Aucune liste sélectionnée."); return; }
+	const cards = categories[currentCategory][currentFolder][currentList] || [];
+	if (cards.length === 0) { alert("Aucune carte dans cette liste."); return; }
+	
+	let idx;
+	if (isReviewMode) {
+		if (reviewIndices.length === 0) { alert("Aucune carte en mode révision."); return; }
+		const pos = Math.min(currentIndex, Math.max(0, reviewIndices.length - 1));
+		idx = reviewIndices[pos];
+	} else {
+		idx = Math.min(currentIndex, Math.max(0, cards.length - 1));
+	}
+	
+	showManageCardsPage(currentCategory, currentFolder, currentList);
+	setTimeout(() => startEditCard(idx), 0);
+}
+function answer(type) { if (!results[currentCategory]) results[currentCategory] = {}; if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {}; if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {}; const idx = isReviewMode ? reviewIndices[currentIndex] : currentIndex; results[currentCategory][currentFolder][currentList][idx] = type; saveResults(); stats[type]++; currentIndex++; loadCard(); }
+function updateProgress() { const cards = categories[currentCategory][currentFolder][currentList]; const total = isReviewMode ? reviewIndices.length : cards.length; const current = currentIndex; const percent = current / total * 100; document.getElementById('progressBar').style.width = percent + '%'; }
+function updateStats() { const cards = categories[currentCategory][currentFolder][currentList]; const total = isReviewMode ? reviewIndices.length : cards.length; document.getElementById('stats').textContent = 'Carte ' + (currentIndex + 1) + '/' + total + ' | Connu: ' + stats.known + ' | Partiel: ' + stats.partial + ' | Pas connu: ' + stats.unknown; }
+function showEndScreen() { 
+	document.getElementById('cardSection').style.display = 'none'; 
+	document.getElementById('endSection').style.display = 'block'; 
+	const total = stats.known + stats.partial + stats.unknown; 
+	const knownPercent = total > 0 ? Math.round(stats.known / total * 100) : 0; 
+	const partialPercent = total > 0 ? Math.round(stats.partial / total * 100) : 0; 
+	const unknownPercent = total > 0 ? Math.round(stats.unknown / total * 100) : 0; 
+	document.getElementById('legendKnown').textContent = 'Connu: ' + stats.known + ' (' + knownPercent + '%)'; 
+	document.getElementById('legendPartial').textContent = 'Partiel: ' + stats.partial + ' (' + partialPercent + '%)'; 
+	document.getElementById('legendUnknown').textContent = 'Pas connu: ' + stats.unknown + ' (' + unknownPercent + '%)'; 
+	drawPieChart(); 
+	const toReview = getCardsToReview().length; 
+	const btnReview = document.getElementById('btnReviewWrong'); 
+	if (toReview > 0) { 
+		btnReview.disabled = false; 
+		btnReview.textContent = '🔄 Réviser (' + toReview + ')'; 
+	} else { 
+		btnReview.disabled = true; 
+		btnReview.textContent = '🔄 Aucune'; 
+	} 
+	const nextList = getNextList(); 
+	const btnNext = document.getElementById('btnNextList'); 
+	if (nextList) { 
+		btnNext.disabled = false; 
+		btnNext.textContent = 'Liste suivante : ' + nextList + ' →'; 
+	} else { 
+		btnNext.disabled = true; 
+		btnNext.textContent = 'Dernière liste ✓'; 
+	} 
+}
+function drawPieChart() { 
+	const total = stats.known + stats.partial + stats.unknown; 
+	if (total === 0) { 
+		document.getElementById('barKnown').style.width = '0%'; 
+		document.getElementById('barKnown').textContent = '0'; 
+		document.getElementById('barPartial').style.width = '0%'; 
+		document.getElementById('barPartial').textContent = '0'; 
+		document.getElementById('barUnknown').style.width = '0%'; 
+		document.getElementById('barUnknown').textContent = '0'; 
+		return; 
+	} 
+	const knownPercent = Math.round(stats.known / total * 100); 
+	const partialPercent = Math.round(stats.partial / total * 100); 
+	const unknownPercent = Math.round(stats.unknown / total * 100); 
+	document.getElementById('barKnown').style.width = knownPercent + '%'; 
+	document.getElementById('barKnown').textContent = stats.known; 
+	document.getElementById('barPartial').style.width = partialPercent + '%'; 
+	document.getElementById('barPartial').textContent = stats.partial; 
+	document.getElementById('barUnknown').style.width = unknownPercent + '%'; 
+	document.getElementById('barUnknown').textContent = stats.unknown; 
+}
+function restartSession() { currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; isReviewMode = false; reviewIndices = []; document.getElementById('studyModeIndicator').style.display = 'none'; document.getElementById('endSection').style.display = 'none'; document.getElementById('cardSection').style.display = 'block'; loadCard(); }
+function reviewWrongCards() { showStudyPage(currentCategory, currentFolder, currentList, true); }
+function addCard() { const q = document.getElementById('newQuestion').innerHTML.trim(); const a = document.getElementById('newAnswer').innerHTML.trim(); if (!q || !a || q === '<br>' || a === '<br>') { alert('Veuillez remplir la question et la réponse.'); return; } if (!currentCategory || !currentFolder || !currentList) { alert("Sélectionne d'abord une liste."); return; } categories[currentCategory][currentFolder][currentList].push({question: q, answer: a}); saveData(); document.getElementById('newQuestion').innerHTML = ''; document.getElementById('newAnswer').innerHTML = ''; updateCategoryList(); if (currentPage === 'manage') loadManageCardsPage(); }
+function deleteCard(idx) { if (!confirm('Supprimer cette carte ?')) return; categories[currentCategory][currentFolder][currentList].splice(idx, 1); if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][currentList]) { delete results[currentCategory][currentFolder][currentList][idx]; const newResults = {}; Object.keys(results[currentCategory][currentFolder][currentList]).forEach(key => { const i = parseInt(key); if (i > idx) newResults[i - 1] = results[currentCategory][currentFolder][currentList][key]; else if (i < idx) newResults[i] = results[currentCategory][currentFolder][currentList][key]; }); results[currentCategory][currentFolder][currentList] = newResults; saveResults(); } saveData(); updateCategoryList(); if (currentPage === 'manage') loadManageCardsPage(); }
+
+// --- ÉDITION DE CARTES EXISTANTES ---
+let currentEditingExisting = { idx: null, side: null };
+
+function startEditCard(idx) {
+	if (!currentCategory || !currentFolder || !currentList) return;
+	const card = categories[currentCategory][currentFolder][currentList][idx];
+	const q = document.getElementById('editQ-' + idx);
+	const a = document.getElementById('editA-' + idx);
+	
+	// Masquer tous les éditeurs d'abord (pour n'en montrer qu'un seul à la fois)
+    document.querySelectorAll('.card-inline-editor').forEach(panel => {
+        if (panel.id !== 'editor-' + idx) {
+            panel.style.display = 'none';
+        }
+    });
+
+	if (!q || !a) return;
+	
+	q.innerHTML = card.question || '';
+	a.innerHTML = card.answer || '';
+	
+	const panel = document.getElementById('editor-' + idx);
+	if (panel) {
+		panel.style.display = 'block';
+		panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		q.focus(); // Mettre le focus sur le champ question
+	}
+}
+function cancelEditCard(idx) {
+	const panel = document.getElementById('editor-' + idx);
+	if (panel) panel.style.display = 'none';
+}
+function saveEditedCard(idx) {
+	if (!currentCategory || !currentFolder || !currentList) { alert("Erreur de contexte."); return; }
+	const qEl = document.getElementById('editQ-' + idx);
+	const aEl = document.getElementById('editA-' + idx);
+	if (!qEl || !aEl) return;
+	
+	const newQ = (qEl.innerHTML || '').trim();
+	const newA = (aEl.innerHTML || '').trim();
+	
+	if (!newQ || !newA || newQ === '<br>' || newA === '<br>') {
+		alert('Veuillez remplir la question et la réponse.');
+		return;
+	}
+	
+	categories[currentCategory][currentFolder][currentList][idx] = { question: newQ, answer: newA };
+	saveData();
+	updateCategoryList();
+	// Recharger la liste des cartes pour afficher la mise à jour et masquer l'éditeur
+	loadManageCardsPage();
+}
+function formatExistingCard(idx, command, side) {
+	const el = document.getElementById((side === 'Q' ? 'editQ-' : 'editA-') + idx);
+	if (!el) return;
+	el.focus();
+	document.execCommand(command, false, null);
+}
+function colorExistingCard(idx, value, kind, side) {
+	const el = document.getElementById((side === 'Q' ? 'editQ-' : 'editA-') + idx);
+	if (!el) return;
+	el.focus();
+	if (kind === 'fore') document.execCommand('foreColor', false, value);
+	else document.execCommand('backColor', false, value);
+}
+function clearFormatExisting(idx, side) {
+	const el = document.getElementById((side === 'Q' ? 'editQ-' : 'editA-') + idx);
+	if (!el) return;
+	el.innerHTML = el.innerText;
+	el.focus();
+}
+function insertImageExisting(idx, side) {
+	currentEditingExisting = { idx, side };
+	document.getElementById('imageInput').click();
+}
+// Le code de l'écouteur imageInput a été corrigé plus haut pour gérer les deux cas.
+
+
+// MODALS FLASHCARDS
+function showNewCategoryModal() { document.getElementById('newCategoryModal').classList.add('show'); const input = document.getElementById('categoryNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
+function closeNewCategoryModal() { document.getElementById('newCategoryModal').classList.remove('show'); document.getElementById('categoryNameInput').value = ''; }
+function createCategory() { const input = document.getElementById('categoryNameInput'); const name = input.value.trim(); if (!name) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (categories[name]) { alert('Cette catégorie existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } categories[name] = {}; openCategories[name] = true; saveData(); updateCategoryList(); closeNewCategoryModal(); }
+function deleteCategory(catName) { if (!confirm('Supprimer "' + catName + '" et tous ses cours ?')) return; delete categories[catName]; delete results[catName]; delete openCategories[catName]; saveData(); saveResults(); if (currentCategory === catName) showPage('home'); updateCategoryList(); }
+function showEditCategoryModal(catName) { renameTarget = catName; document.getElementById('renameCategoryModal').classList.add('show'); const input = document.getElementById('renameCategoryInput'); input.value = catName; setTimeout(() => input.focus(), 150); }
+function closeRenameCategoryModal() { document.getElementById('renameCategoryModal').classList.remove('show'); document.getElementById('renameCategoryInput').value = ''; renameTarget = null; }
+function renameCategory() { const input = document.getElementById('renameCategoryInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (categories[newName] && newName !== renameTarget) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (renameTarget && categories[renameTarget]) { categories[newName] = categories[renameTarget]; delete categories[renameTarget]; if (results[renameTarget]) { results[newName] = results[renameTarget]; delete results[renameTarget]; saveResults(); } if (openCategories[renameTarget]) { openCategories[newName] = openCategories[renameTarget]; delete openCategories[renameTarget]; } if (currentCategory === renameTarget) currentCategory = newName; saveData(); updateCategoryList(); closeRenameCategoryModal(); } }
+function updateFolderCategorySelect() { const select = document.getElementById('folderCategorySelect'); select.innerHTML = ''; const catNames = Object.keys(categories); if (catNames.length === 0) { const opt = document.createElement('option'); opt.value = ''; opt.textContent = 'Aucune catégorie - Créez-en une !'; select.appendChild(opt); } else { catNames.forEach(catName => { const opt = document.createElement('option'); opt.value = catName; opt.textContent = catName; if (catName === currentCategory) opt.selected = true; select.appendChild(opt); }); } }
+function showNewFolderModal() { updateFolderCategorySelect(); document.getElementById('newFolderModal').classList.add('show'); const input = document.getElementById('folderNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
+function closeNewFolderModal() { document.getElementById('newFolderModal').classList.remove('show'); document.getElementById('folderNameInput').value = ''; }
+function createFolder() { const input = document.getElementById('folderNameInput'); const name = input.value.trim(); const catSelect = document.getElementById('folderCategorySelect'); const selectedCat = catSelect.value; if (!selectedCat) { alert('Veuillez créer une catégorie d\'abord.'); return; } if (!name) { alert('Veuillez entrer un nom de cours.'); setTimeout(() => input.focus(), 150); return; } if (categories[selectedCat][name]) { alert('Ce cours existe déjà dans cette catégorie.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } categories[selectedCat][name] = {'Liste par défaut': []}; saveData(); updateCategoryList(); closeNewFolderModal(); showListsPage(selectedCat, name); }
+function deleteFolder(catName, folderName) { if (!confirm('Supprimer "' + folderName + '" ?')) return; delete categories[catName][folderName]; if (results[catName]) { delete results[catName][folderName]; saveResults(); } if (Object.keys(categories[catName]).length === 0) { delete categories[catName]; delete openCategories[catName]; } saveData(); if (currentCategory === catName && currentFolder === folderName) showPage('home'); updateCategoryList(); }
+function showEditFolderModal(catName, folderName) { renameTarget = {cat: catName, folder: folderName}; document.getElementById('renameFolderModal').classList.add('show'); const input = document.getElementById('renameFolderInput'); input.value = folderName; setTimeout(() => input.focus(), 150); }
+function closeRenameFolderModal() { document.getElementById('renameFolderModal').classList.remove('show'); document.getElementById('renameFolderInput').value = ''; renameTarget = null; }
+function showRenameFolderModal() { if (!currentCategory || !currentFolder) return; showEditFolderModal(currentCategory, currentFolder); }
+function renameFolder() { const input = document.getElementById('renameFolderInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } const catName = renameTarget.cat; const oldName = renameTarget.folder; if (categories[catName][newName] && newName !== oldName) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (categories[catName][oldName]) { categories[catName][newName] = categories[catName][oldName]; delete categories[catName][oldName]; if (results[catName] && results[catName][oldName]) { results[catName][newName] = results[catName][oldName]; delete results[catName][oldName]; saveResults(); } if (currentCategory === catName && currentFolder === oldName) currentFolder = newName; saveData(); updateCategoryList(); if (currentPage === 'lists') { document.getElementById('listsTitle').textContent = newName; } closeRenameFolderModal(); } }
+function showNewListModal() { if (!currentCategory || !currentFolder) { alert('Erreur : aucun cours sélectionné.'); return; } document.getElementById('newListModal').classList.add('show'); const input = document.getElementById('listNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
+function closeNewListModal() { document.getElementById('newListModal').classList.remove('show'); document.getElementById('listNameInput').value = ''; }
+function createList() { const input = document.getElementById('listNameInput'); const name = input.value.trim(); if (!name) { alert('Veuillez entrer un nom de liste.'); setTimeout(() => input.focus(), 150); return; } if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) { alert('Erreur.'); return; } if (categories[currentCategory][currentFolder][name]) { alert('Cette liste existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } categories[currentCategory][currentFolder][name] = []; saveData(); updateCategoryList(); closeNewListModal(); loadListsPage(); }
+function deleteList(listName) { if (!confirm('Supprimer "' + listName + '" ?')) return; delete categories[currentCategory][currentFolder][listName]; if (results[currentCategory] && results[currentCategory][currentFolder]) { delete results[currentCategory][currentFolder][listName]; saveResults(); } if (Object.keys(categories[currentCategory][currentFolder]).length === 0) { categories[currentCategory][currentFolder]['Liste par défaut'] = []; } saveData(); updateCategoryList(); loadListsPage(); }
+function showEditListModal(listName) { renameTarget = listName; document.getElementById('renameListModal').classList.add('show'); const input = document.getElementById('renameListInput'); input.value = listName; setTimeout(() => input.focus(), 150); }
+function closeRenameListModal() { document.getElementById('renameListModal').classList.remove('show'); document.getElementById('renameListInput').value = ''; renameTarget = null; }
+function renameList() { const input = document.getElementById('renameListInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) { alert('Erreur.'); return; } if (categories[currentCategory][currentFolder][newName] && newName !== renameTarget) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (renameTarget && categories[currentCategory][currentFolder][renameTarget]) { categories[currentCategory][currentFolder][newName] = categories[currentCategory][currentFolder][renameTarget]; delete categories[currentCategory][currentFolder][renameTarget]; if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][renameTarget]) { results[currentCategory][currentFolder][newName] = results[currentCategory][currentFolder][renameTarget]; delete results[currentCategory][currentFolder][renameTarget]; saveResults(); } if (currentList === renameTarget) currentList = newName; saveData(); updateCategoryList(); loadListsPage(); closeRenameListModal(); } }
+function exportCards() { if (!currentCategory || !currentFolder || !currentList) { alert('Sélectionne une liste.'); return; } const data = {categoryName: currentCategory, folderName: currentFolder, listName: currentList, cards: categories[currentCategory][currentFolder][currentList]}; const json = JSON.stringify(data, null, 2); const blob = new Blob([json], {type: 'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = currentCategory.replace(/[^a-z0-9]/gi, '_') + '_' + currentFolder.replace(/[^a-z0-9]/gi, '_') + '_' + currentList.replace(/[^a-z0-9]/gi, '_') + '_' + new Date().toISOString().split('T')[0] + '.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+
+function baseAppUrl() {
+	// Reconstruit l’URL de l’app sans query (pour éviter d’empiler des params)
+	const u = new URL(window.location.href);
+	u.search = ''; // on repart propre
+	u.hash = '';
+	return u.toString();
+}
+
+function buildEmbedUrl({cat, folder, list, view}) {
+	const u = new URL(baseAppUrl());
+	u.searchParams.set('embed', '1');
+	if (cat)    u.searchParams.set('cat', cat);
+	if (folder) u.searchParams.set('folder', folder);
+	if (list)   u.searchParams.set('list', list);
+	if (view)   u.searchParams.set('view', view); // 'study' | 'manage' | 'lists'
+	return u.toString();
+}
+
+function buildIframeCode(src, opts) {
+	const width = (opts && opts.width) || '100%';
+	const height = (opts && opts.height) || '600';
+	const style = (opts && opts.style) || 'border:1px solid #e5e7eb;border-radius:12px;';
+	return `<iframe src="${src}" width="${width}" height="${height}" style="${style}" allowfullscreen loading="lazy"></iframe>`;
+}
+
+function copyFolderEmbed() {
+	if (!currentCategory || !currentFolder) { alert('Aucun cours sélectionné.'); return; }
+	// Vue de cours = lists (pour laisser l’utilisateur choisir une liste)
+	const src = buildEmbedUrl({ cat: currentCategory, folder: currentFolder, view: 'lists' });
+	const code = buildIframeCode(src, { height: '700' });
+	copyText(code);
+}
+
+function copyListEmbed(listName) {
+	const cat = currentCategory;
+	const folder = currentFolder;
+	const list = listName;
+	if (!cat || !folder || !list) { alert('Sélection invalide.'); return; }
+	// Par défaut on pointe vers la révision (study). Tu peux choisir 'manage' si besoin.
+	const src = buildEmbedUrl({ cat, folder, list, view: 'study' });
+	const code = buildIframeCode(src, { height: '700' });
+	copyText(code);
+}
+
+async function copyText(text) {
+	try {
+		await navigator.clipboard.writeText(text);
+		alert('Code d’intégration copié ✓');
+	} catch (e) {
+		// Fallback
+		const ta = document.createElement('textarea');
+		ta.value = text;
+		document.body.appendChild(ta);
+		ta.select();
+		try { document.execCommand('copy'); alert('Code d’intégration copié ✓'); }
+		catch { alert('Impossible de copier automatiquement. Sélectionne et copie manuellement.'); }
+		document.body.removeChild(ta);
+	}
+}
+
+function exportAll() {
+	// Vérifications basiques
+	if (!categories || typeof categories !== 'object') {
+		alert("Aucune donnée à exporter.");
+		return;
+	}
+
+	// Construire un snapshot complet et lisible
+	const snapshot = {
+		exportVersion: "1.0",
+		exportedAt: new Date().toISOString(),
+		summary: {
+			categories: 0,
+			courses: 0,
+			lists: 0,
+			cards: 0
+		},
+		data: [],
+		results: results || {}
+	};
+	
+	// Parcours complet
+	Object.keys(categories).forEach(catName => {
+		const cat = categories[catName] || {};
+		const catOut = { categoryName: catName, courses: [] };
+		snapshot.summary.categories++;
+		Object.keys(cat).forEach(folderName => {
+			const folder = cat[folderName] || {};
+			const folderOut = { folderName, lists: [] };
+			snapshot.summary.courses++;
+			Object.keys(folder).forEach(listName => {
+				const cards = Array.isArray(folder[listName]) ? folder[listName] : [];
+				const listOut = { listName, cards };
+				snapshot.summary.lists++;
+				snapshot.summary.cards += cards.length;
+				folderOut.lists.push(listOut);
+			});
+			catOut.courses.push(folderOut);
+		});
+		snapshot.data.push(catOut);
+	});
+	
+	// Création du fichier
+	const json = JSON.stringify(snapshot, null, 2);
+	const blob = new Blob([json], { type: 'application/json' });
+	const url = URL.createObjectURL(blob);
+	
+	// Nom lisible et sûr
+	const safe = s => (s || '').toString().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]+/g, '_');
+	const filename = `flashcards_export_all_${safe(new Date().toISOString().split('T')[0])}.json`;
+	
+	// Téléchargement
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = filename;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+}
+function importCards() { document.getElementById('fileInput').click(); }
+document.getElementById('fileInput').addEventListener('change', function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const data = JSON.parse(e.target.result); if (!data.categoryName || !data.folderName || !data.listName || !Array.isArray(data.cards)) { alert('Format de fichier invalide.'); return; } if (!categories[data.categoryName]) { categories[data.categoryName] = {}; } if (!categories[data.categoryName][data.folderName]) { categories[data.categoryName][data.folderName] = {}; } if (categories[data.categoryName][data.folderName][data.listName]) { if (!confirm('La liste "' + data.listName + '" existe déjà dans "' + data.folderName + '". Écraser ?')) { return; } } categories[data.categoryName][data.folderName][data.listName] = data.cards; saveData(); updateCategoryList(); if (currentPage === 'home') { updateHomeStats(); } } catch (err) { alert('Erreur lors de la lecture du fichier.'); } }; reader.readAsText(file); event.target.value = ''; });
+function clearCurrentList() { if (!currentCategory || !currentFolder || !currentList) return; if (!confirm('⚠️ Vider la liste ?')) return; categories[currentCategory][currentFolder][currentList] = []; if (results[currentCategory] && results[currentCategory][currentFolder]) { delete results[currentCategory][currentFolder][currentList]; saveResults(); } saveData(); currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; updateCategoryList(); loadManageCardsPage(); }
+document.getElementById('categoryNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createCategory(); });
+document.getElementById('folderNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createFolder(); });
+document.getElementById('listNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createList(); });
+document.getElementById('renameCategoryInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') renameCategory(); });
+document.getElementById('renameFolderInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') renameFolder(); });
+document.getElementById('renameListInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') renameList(); });
+document.getElementById('newCategoryModal').addEventListener('click', function(e) { if (e.target === this) closeNewCategoryModal(); });
+document.getElementById('newFolderModal').addEventListener('click', function(e) { if (e.target === this) closeNewFolderModal(); });
+document.getElementById('newListModal').addEventListener('click', function(e) { if (e.target === this) closeNewListModal(); });
+document.getElementById('renameCategoryModal').addEventListener('click', function(e) { if (e.target === this) closeRenameCategoryModal(); });
+document.getElementById('renameFolderModal').addEventListener('click', function(e) { if (e.target === this) closeRenameFolderModal(); });
+document.getElementById('renameListModal').addEventListener('click', function(e) { if (e.target === this) closeRenameListModal(); });
+
+// ====== COMPARATEUR DE TEXTE ======
+function openComparator() {
+    document.getElementById('comparatorModal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+function closeComparator() {
+    document.getElementById('comparatorModal').classList.remove('show');
+    document.body.style.overflow = 'auto';
+}
+
+// Variables comparateur
+let showContext = false;
+let lastFocusedId = null;
+let showOnlyDeletions = false;
+let lastFocusedType = null;
+let lastSelectedBtn = null;
+
+const $ = sel => document.querySelector(sel);
+const oldTA = $("#oldText");
+const newTA = $("#newText");
+const outComp = $("#diffOutput");
+const changesListComp = $("#changesList");
+const insCountComp = $("#insCount");
+const delCountComp = $("#delCount");
+const repCountComp = $("#repCount");
+const hintComp = $("#hint");
+const copyBtnComp = $("#copyBtn");
+const toggleContextBtnComp = $("#toggleContext");
+const backBtn = $("#backToSelected");
+const onlyDelBtn = document.getElementById("toggleOnlyDeletions");
+
+function escapeHtmlComp(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function normalizeSpaces(s) { 
+	// Remplacement des sauts de ligne par un espace, sauf pour les vrais double sauts de ligne
+	// On veut conserver la structure du texte (paragraphes) mais normaliser l'affichage
+	return s.replace(/\r\n|\r/g, '\n').replace(/([^\n])\n/g, '$1 ').replace(/\t/g, ' '); 
+}
+function emojiFor(t) { return t==='insertion' ? '➕' : t==='suppression' ? '➖' : '♻️'; }
+function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+function isOnlySpaces(s) { return !s || /^\s+$/.test(s); }
+function isWhitespaceOnlyChange(removed, added) {
+    const r = (removed||"").replace(/\s+/g,'');
+    const a = (added||"").replace(/\s+/g,'');
+    return r === a && (removed!==added);
+}
+
+function updateBackButton() {
+    if (lastSelectedBtn) {
+        backBtn.classList.add('visible');
+        backBtn.disabled = false;
+    } else {
+        backBtn.classList.remove('visible');
+        backBtn.disabled = true;
+    }
+}
+function clearFocusComp() {
+    if (lastFocusedId) {
+        const prev = document.getElementById(lastFocusedId);
+        if (prev && prev.classList) prev.classList.remove('focused');
+        const ghost = document.getElementById(lastFocusedId + '-ghost');
+        if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+        const delGhost = document.getElementById(lastFocusedId + '-delghost');
+        if (delGhost && delGhost.parentNode) delGhost.parentNode.removeChild(delGhost);
+    }
+    lastFocusedId = null;
+    lastFocusedType = null;
+}
+function showDeletionGhostAfter(anchorEl, id, removedText) {
+    const old = document.getElementById(id + '-delghost');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    const ghost = document.createElement('span');
+    ghost.id = id + '-delghost';
+    ghost.className = 'del-ghost';
+    // Utiliser la version normalisée pour l'affichage du fantôme, mais garder les sauts de ligne si présents pour la lisibilité
+	const content = (removedText || '').replace(/\r\n|\r/g, '\n').replace(/\n/g, '↵');
+    ghost.innerHTML = `<mark class="del">(${escapeHtmlComp(content)})</mark>`;
+    anchorEl.insertAdjacentElement('afterend', ghost);
+}
+function focusChangeComp(id, type, options) {
+    clearFocusComp();
+    const el = document.getElementById(id);
+    if (!el) return;
         
-        let data = JSON.parse(localStorage.getItem('flashcardsData')) || {};
-        let currentCategory = null, currentFolder = null, currentList = null;
-        let currentCardIndex = 0;
-
-        // 1. GESTION COULEURS
-        function updateColors() {
-            const r = document.documentElement.style;
-            const p1 = document.getElementById('colorP1').value;
-            const p2 = document.getElementById('colorP2').value;
-            const s1 = document.getElementById('colorS1').value;
-            const s2 = document.getElementById('colorS2').value;
-            const bg = document.getElementById('colorBg').value;
-
-            r.setProperty('--primary-color-start', p1);
-            r.setProperty('--primary-color-end', p2);
-            r.setProperty('--secondary-color-start', s1);
-            r.setProperty('--secondary-color-end', s2);
-            r.setProperty('--bg-body', bg);
-
-            localStorage.setItem('appColors', JSON.stringify({p1, p2, s1, s2, bg}));
-        }
-
-        function loadColors() {
-            const c = JSON.parse(localStorage.getItem('appColors'));
-            if(c) {
-                document.getElementById('colorP1').value = c.p1;
-                document.getElementById('colorP2').value = c.p2;
-                document.getElementById('colorS1').value = c.s1;
-                document.getElementById('colorS2').value = c.s2;
-                document.getElementById('colorBg').value = c.bg;
-                updateColors();
-            }
-        }
-
-        function resetColors() {
-            localStorage.removeItem('appColors');
-            location.reload();
-        }
-
-        // 2. NAVIGATION
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(pageId + 'Page').classList.add('active');
-            
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            if(pageId === 'home') document.querySelector('.nav-item:nth-child(1)').classList.add('active');
-            if(pageId === 'settings') document.querySelector('.nav-item:nth-child(2)').classList.add('active');
-        }
-
-        function showListsPage(cat, folder) {
-            currentCategory = cat; currentFolder = folder;
-            document.getElementById('listsTitle').innerText = folder;
-            renderLists();
-            showPage('lists');
-        }
-
-        function showStudyPage(cat, folder, list) {
-            currentCategory = cat; currentFolder = folder; currentList = list;
-            document.getElementById('studyTitle').innerText = list;
-            currentCardIndex = 0;
-            loadCard();
-            showPage('study');
-        }
-
-        // 3. RENDU SIDEBAR
-        function renderSidebar() {
-            const c = document.getElementById('categoryList');
-            const s = document.getElementById('catSelect');
-            c.innerHTML = ''; s.innerHTML = '';
-            
-            let totalC = 0, totalCards = 0;
-
-            Object.keys(data).forEach(cat => {
-                // Option pour select
-                let opt = document.createElement('option'); opt.value = cat; opt.innerText = cat; s.appendChild(opt);
-
-                // Sidebar items
-                let div = document.createElement('div');
-                div.innerHTML = `<div style="padding:10px; font-weight:bold; background:#f5f7fa; margin-top:5px;">${cat}</div>`;
+    if (el.tagName === 'MARK') {
+        el.classList.add('focused');
+        lastFocusedId = id;
+        lastFocusedType = type || null;
+    } else {
+        lastFocusedId = id;
+        lastFocusedType = type || 'suppression';
                 
-                Object.keys(data[cat]).forEach(fold => {
-                    totalC++;
-                    let f = document.createElement('div');
-                    f.className = 'nav-item';
-                    f.style.paddingLeft = "20px";
-                    f.innerText = "📖 " + fold;
-                    f.onclick = () => showListsPage(cat, fold);
-                    div.appendChild(f);
-                    
-                    // Compte cartes
-                    Object.values(data[cat][fold]).forEach(l => totalCards += l.length);
-                });
-                c.appendChild(div);
-            });
-            document.getElementById('totalCourses').innerText = totalC;
-            document.getElementById('totalCards').innerText = totalCards;
-        }
-
-        function renderLists() {
-            const g = document.getElementById('listsGrid'); g.innerHTML = '';
-            if(!data[currentCategory] || !data[currentCategory][currentFolder]) return;
-            
-            Object.keys(data[currentCategory][currentFolder]).forEach(list => {
-                let div = document.createElement('div');
-                div.className = 'list-card';
-                div.innerHTML = `<div><div class="list-card-title">${list}</div><small>${data[currentCategory][currentFolder][list].length} cartes</small></div>
-                <button class="btn-study" onclick="showStudyPage('${currentCategory}', '${currentFolder}', '${list}')">Ouvrir</button>`;
-                g.appendChild(div);
-            });
-        }
-
-        // 4. LOGIQUE METIER
-        function loadCard() {
-            const list = data[currentCategory][currentFolder][currentList];
-            if(list && list.length > 0) {
-                if(currentCardIndex >= list.length) currentCardIndex = 0;
-                document.getElementById('question').innerText = list[currentCardIndex].q;
-                document.getElementById('answer').innerText = list[currentCardIndex].a;
-            } else {
-                document.getElementById('question').innerText = "Vide";
-                document.getElementById('answer').innerText = "...";
-            }
-            document.getElementById('flashcard').classList.remove('flipped');
-        }
-
-        function nextCard() {
-            const list = data[currentCategory][currentFolder][currentList];
-            if(list && list.length > 0) {
-                currentCardIndex = (currentCardIndex + 1) % list.length;
-                loadCard();
+        if ((type === 'suppression') && options && options.removedText) {
+            showDeletionGhostAfter(el, id, options.removedText);
+        } else {
+            let ghost = document.getElementById(id + '-ghost');
+            if (!ghost) {
+                ghost = document.createElement('span');
+                ghost.id = id + '-ghost';
+                ghost.className = 'focus-ghost';
+                el.insertAdjacentElement('afterend', ghost);
             }
         }
-
-        function addCard() {
-            const q = document.getElementById('newQ').value;
-            const a = document.getElementById('newA').value;
-            if(q && a) {
-                data[currentCategory][currentFolder][currentList].push({q, a});
-                saveData();
-                document.getElementById('newQ').value = '';
-                document.getElementById('newA').value = '';
-                loadCard();
-                renderSidebar(); // maj stats
-            }
-        }
-
-        // Modals logic
-        function showNewCategoryModal() { document.getElementById('newCategoryModal').classList.add('show'); }
-        function showNewFolderModal() { document.getElementById('newFolderModal').classList.add('show'); }
-        function showNewListModal() { document.getElementById('newListModal').classList.add('show'); }
-        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('show')); }
-
-        function createCategory() {
-            let n = document.getElementById('catName').value;
-            if(n && !data[n]) { data[n] = {}; saveData(); closeModals(); renderSidebar(); }
-        }
-        function createFolder() {
-            let c = document.getElementById('catSelect').value;
-            let n = document.getElementById('folderName').value;
-            if(c && n) { data[c][n] = {}; saveData(); closeModals(); renderSidebar(); }
-        }
-        function createList() {
-            let n = document.getElementById('listName').value;
-            if(n) { data[currentCategory][currentFolder][n] = []; saveData(); closeModals(); renderLists(); }
-        }
-
-        function saveData() { localStorage.setItem('flashcardsData', JSON.stringify(data)); }
+    }
         
-        // Export/Import simplifiés
-        function exportCards() {
-            const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'backup.json'; a.click();
-        }
-        document.getElementById('fileInput').onchange = function(e) {
-            const reader = new FileReader();
-            reader.onload = function(ev) { data = JSON.parse(ev.target.result); saveData(); renderSidebar(); alert('Importé !'); };
-            reader.readAsText(e.target.files[0]);
-        };
+    (el.tagName === 'MARK' ? el : document.getElementById(id)).scrollIntoView({behavior:'smooth', block:'center'});
+}
+function computeComp() {
+    const oldTxt = oldTA.value || "";
+    const newTxt = newTA.value || "";
+    // Utilisation de diffWordsWithSpace pour une meilleure gestion des espaces/sauts de ligne
+    const parts = (window.Diff && Diff.diffWordsWithSpace) ? Diff.diffWordsWithSpace(oldTxt, newTxt) : [{removed:true,value:oldTxt},{added:true,value:newTxt}];
+    
+    let html = "";
+    let changes = [];
+    let ins=0, del=0, rep=0, idxChange=0;
+	
+    for (let i=0; i<parts.length; i++) {
+        const p = parts[i];
+		
+		// 1. Gérer les remplacements (removed + added consécutifs)
+        if (p.removed && !p.added) {
+            const next = parts[i+1];
+			
+            if (next && next.added && !next.removed) {
+				const isWhitespaceOnly = isWhitespaceOnlyChange(p.value, next.value);
+				
+                if (!isOnlySpaces(next.value) && !isOnlySpaces(p.value) && !isWhitespaceOnly) {
+                    // C'est un vrai remplacement de contenu
+                    const anchorId = `chg-${++idxChange}`;
+					
+					// Afficher la suppression barrée, suivie de l'insertion
+					const removedHtml = `<mark class="del" id="${anchorId}-del">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
+                    const addedHtml = `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(next.value))}</mark>`;
+					
+					html += removedHtml + addedHtml;
 
-        // Comparateur simplifié
-        function openComparator() { document.getElementById('comparatorModal').style.display = 'block'; }
-        function closeComparator() { document.getElementById('comparatorModal').style.display = 'none'; }
-        function computeComp() {
-            const oldT = document.getElementById('oldText').value;
-            const newT = document.getElementById('newText').value;
-            if(window.Diff) {
-                const diff = Diff.diffWordsWithSpace(oldT, newT);
-                let html = '';
-                diff.forEach(part => {
-                    const color = part.added ? '#d4edda' : part.removed ? '#f8d7da' : 'transparent';
-                    const span = `<span style="background:${color}; text-decoration:${part.removed ? 'line-through' : 'none'}">${part.value}</span>`;
-                    html += span;
-                });
-                document.getElementById('diffOutput').innerHTML = html;
-            } else {
-                document.getElementById('diffOutput').innerText = "Erreur librairie Diff non chargée.";
+                    rep++;
+                    changes.push({id: anchorId, type: 'remplacement', added: next.value, removed: p.value, isWhitespaceOnly: false});
+                    i++;
+                    continue;
+                } else {
+                    // Remplacement de style ou d'espaces/sauts de ligne non significatif. On l'ignore dans le résultat
+                    // MAIS on le compte comme un remplacement s'il est techniquement différent (pour le décompte)
+					if (isWhitespaceOnly) {
+						// Ignorer la paire et passer l'itération
+						html += escapeHtmlComp(normalizeSpaces(next.value)); // Afficher le texte non modifié
+						rep++; // On compte un remplacement s'il est dans la liste de changements
+						changes.push({id: `chg-${++idxChange}`, type: 'remplacement', added: next.value, removed: p.value, isWhitespaceOnly: true});
+						i++;
+						continue;
+					}
+                }
+            }
+			
+            // 2. Si non remplacé (ou si le remplacement a été ignoré car blanc/stylistique dans le 'else' ci-dessus, il n'arrive pas ici)
+			if (isOnlySpaces(p.value)) continue; // Si la suppression n'est que des blancs, on l'ignore
+			
+            const anchorId = `chg-${++idxChange}`;
+            // On utilise un <a> vide comme ancre pour les suppressions, car <mark> a un style de ligne barrée que l'on veut conserver.
+			html += `<mark class="del" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
+            del++;
+            changes.push({id: anchorId, type: 'suppression', added: '', removed: p.value, isWhitespaceOnly: false});
+            continue;
+        }
+
+		// 3. Gérer les insertions (ajoutées seules, non précédées d'une suppression pour un remplacement)
+        if (p.added && !p.removed) {
+            if (isOnlySpaces(p.value)) continue;
+            const anchorId = `chg-${++idxChange}`;
+            html += `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
+            ins++;
+            changes.push({id: anchorId, type: 'insertion', added: p.value, removed: '', isWhitespaceOnly: false});
+            continue;
+        }
+		
+		// 4. Texte non modifié
+		html += escapeHtmlComp(normalizeSpaces(p.value));
+    }
+	
+	// Remplacer les sauts de ligne non normalisés par <br> ou <p>
+	// Pour l'affichage dans le div, on remplace \n par un <br>
+    outComp.innerHTML = html.replace(/\n/g, '<br>');
+
+	
+	// Mettre à jour la liste des changements en filtrant les changements d'espaces/sauts de ligne
+	const finalChanges = changes.filter(c => !c.isWhitespaceOnly);
+	
+    renderChangesListComp(finalChanges);
+	
+	// Afficher les totaux réels (sans changements d'espaces/sauts de ligne ignorés)
+    insCountComp.textContent = finalChanges.filter(c => c.type === 'insertion').length;
+    delCountComp.textContent = finalChanges.filter(c => c.type === 'suppression').length;
+    repCountComp.textContent = finalChanges.filter(c => c.type === 'remplacement').length;
+	
+    hintComp.textContent = `${finalChanges.length} modifications détectées${rep? " • remplacements: "+rep : ""}.`;
+}
+
+function flashSidebarCard(btn) {
+    const prevShadow = btn.style.boxShadow;
+    btn.style.boxShadow = '0 0 0 3px rgba(255,209,102,0.45)';
+    setTimeout(() => { btn.style.boxShadow = prevShadow; }, 750);
+}
+function renderChangesListComp(changes) {
+    changesListComp.innerHTML = "";
+    
+	// 1. Appliquer le filtre de suppression (si actif)
+    let filtered = changes;
+	if (showOnlyDeletions) {
+	    filtered = changes.filter(c => c.type === 'suppression' || c.type === 'remplacement'); // Les remplacements contiennent une suppression
+	}
+
+    if (!filtered.length) {
+        changesListComp.innerHTML = '<div style="color:#8b93a6;padding:8px">Aucun changement.</div>';
+        updateBackButton();
+        return;
+    }
+
+    const ctxSpan = showContext ? 24 : 0;
+    let toRestoreId = (lastSelectedBtn && lastSelectedBtn.dataset.id) ? lastSelectedBtn.dataset.id : null;
+    lastSelectedBtn = null;
+
+    for (const c of filtered) {
+        const btn = document.createElement('button');
+        btn.className = 'comp-change';
+        btn.type = 'button';
+        btn.dataset.id = c.id;
+        btn.dataset.type = c.type;
+        if (c.type === 'suppression' || c.type === 'remplacement') {
+            btn.dataset.removed = c.removed;
+        }
+
+        let tokenHtml = '';
+        if (c.type === 'insertion') {
+            tokenHtml = `<mark class="token">${escapeHtmlComp(c.added.replace(/\n/g, '↵'))}</mark>`;
+        } else if (c.type === 'suppression') {
+            tokenHtml = `<mark class="token del">${escapeHtmlComp(c.removed.replace(/\n/g, '↵'))}</mark>`;
+        } else {
+            // Remplacement
+            tokenHtml = `<mark class="token del">${escapeHtmlComp(c.removed.replace(/\n/g, '↵'))}</mark> <span style="display:inline-block;width:6px"></span> <mark class="token">${escapeHtmlComp(c.added.replace(/\n/g, '↵'))}</mark>`;
+        }
+
+        let ctx = '';
+        if (ctxSpan > 0) {
+            const src = c.type==='suppression' ? (oldTA.value||"") : (newTA.value||"");
+            const needle = (c.type==='suppression' ? c.removed : c.added) || "";
+			
+			// Pour la recherche dans le contexte, on utilise le texte brut sans normalisation des espaces pour un meilleur match
+			const pos = needle.length > 0 ? src.indexOf(needle) : -1;
+			
+            if (pos>=0) {
+                const start = Math.max(0,pos-ctxSpan);
+                const end = Math.min(src.length, pos+needle.length+ctxSpan);
+				// Remplacer les sauts de ligne par un petit symbole (↵) et normaliser les espaces pour l'affichage du contexte
+                ctx = (start>0?'…':'') + src.slice(start,end).replace(/\r\n|\r/g, '\n').replace(/\n/g, '↵').replace(/\s+/g,' ') + (end<src.length?'…':'');
             }
         }
+		
+        btn.innerHTML = `<span class="type">${emojiFor(c.type)} ${cap(c.type)}</span> ${tokenHtml} ${ctx ? `<span class="ctx">${escapeHtmlComp(ctx)}</span>` : ``}`;
 
-        // Init
-        window.onload = function() {
-            loadColors();
-            if(Object.keys(data).length === 0) {
-                data = {"Mon Cours Ex": {"Chapitre 1": {"Intro": [{q:"Exemple Q", a:"Exemple R"}]}}};
-                saveData();
-            }
-            renderSidebar();
-        };
+        btn.addEventListener('click', () => {
+            const prev = document.querySelector('.comp-change.selected');
+            if (prev) prev.classList.remove('selected');
+            btn.classList.add('selected');
+            lastSelectedBtn = btn;
+
+            // Pour un remplacement, on veut pointer sur l'insertion
+            let focusId = btn.dataset.id;
+            let focusType = btn.dataset.type;
+            const isReplacement = focusType === 'remplacement';
+            
+            // Si c'est un remplacement, on cible l'insertion (<mark.ins>) qui a l'ID de la modification
+            if (isReplacement) focusType = 'insertion'; 
+
+            const opts = (btn.dataset.type === 'suppression') ? { removedText: btn.dataset.removed || '' } : undefined;
+            
+            // Si c'est un remplacement, on doit cibler l'ID de la marque d'insertion
+            focusChangeComp(isReplacement ? focusId : focusId, focusType, opts);
+            updateBackButton();
+        });
+
+        changesListComp.appendChild(btn);
+
+        if (toRestoreId && c.id === toRestoreId) {
+            btn.classList.add('selected');
+            lastSelectedBtn = btn;
+        }
+    }
+
+    updateBackButton();
+}
+
+document.getElementById("compareBtn").addEventListener('click', () => {
+    if (lastSelectedBtn) { lastSelectedBtn.classList.remove('selected'); lastSelectedBtn = null; }
+    clearFocusComp();
+    computeComp();
+    updateBackButton();
+});
+document.getElementById("toggleContext").addEventListener('click', () => {
+    showContext = !showContext;
+    document.getElementById("toggleContext").textContent = showContext ? "Contexte —" : "± Contexte";
+    const prevSelectedId = lastSelectedBtn ? lastSelectedBtn.dataset.id : null;
+    const prevFocused = lastFocusedId;
+    computeComp(); // recalculera la liste des changements avec/sans contexte
+    // La fonction computeComp() efface le focus, mais nous voulons le restaurer si possible après le re-render
+    if (prevSelectedId) {
+        const candidate = Array.from(document.querySelectorAll('.comp-change')).find(b => b.dataset.id === prevSelectedId);
+        if (candidate) {
+            candidate.classList.add('selected');
+            lastSelectedBtn = candidate;
+        } else {
+            lastSelectedBtn = null;
+        }
+    }
+    if (prevFocused) {
+        const el = document.getElementById(prevFocused);
+        if (el && el.tagName === 'MARK') {
+            el.classList.add('focused');
+            lastFocusedId = prevFocused;
+        } else {
+            lastFocusedId = null;
+            lastFocusedType = null;
+        }
+    }
+    updateBackButton();
+});
+document.getElementById("copyBtn").addEventListener('click', async () => {
+    try {
+        await navigator.clipboard.writeText(outComp.innerHTML);
+        copyBtnComp.textContent = 'Copié ✓';
+        setTimeout(() => copyBtnComp.textContent = 'Copier le résultat', 900);
+    } catch(e) {
+        alert("Impossible de copier. Sélectionne et copie manuellement.");
+    }
+});
+backBtn.addEventListener('click', () => {
+    if (!lastSelectedBtn) return;
+    lastSelectedBtn.scrollIntoView({behavior:'smooth', block:'center'});
+    flashSidebarCard(lastSelectedBtn);
+});
+onlyDelBtn.addEventListener('click', () => {
+	showOnlyDeletions = !showOnlyDeletions;
+	onlyDelBtn.classList.toggle('active', showOnlyDeletions);
+	onlyDelBtn.textContent = showOnlyDeletions ? '➖ Suppressions (ON)' : '➖ Suppressions uniquement';
+	// On re-render la liste avec le filtre
+	const prevSelectedId = lastSelectedBtn ? lastSelectedBtn.dataset.id : null;
+	const prevFocused = lastFocusedId;
+	// On ne recalcule pas le diff, juste on rerend la liste depuis les dernières "changes"
+	// Comme computeComp() encapsule la construction des "changes",
+	// on appelle computeComp() pour rester simple et cohérent:
+	computeComp();
+	
+	// Restaurer sélection/focus si possible
+	if (prevSelectedId) {
+		const cand = Array.from(document.querySelectorAll('.comp-change')).find(b => b.dataset.id === prevSelectedId);
+		if (cand) {
+			cand.classList.add('selected');
+			lastSelectedBtn = cand;
+		} else {
+			lastSelectedBtn = null;
+		}
+	}
+	if (prevFocused) {
+		const el = document.getElementById(prevFocused);
+		if (el && el.tagName === 'MARK') {
+			el.classList.add('focused');
+			lastFocusedId = prevFocused;
+		} else {
+			lastFocusedId = null;
+			lastFocusedType = null;
+		}
+	}
+	updateBackButton();
+});
+
+// Exemples par défaut
+oldTA.value = "Le contrat entre en vigueur le 1er janvier 2024.\nLe prix est de 100€.\nLe client accepte les conditions.";
+newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 €.\nLe client accepte pleinement les conditions générales.";
+
+// INIT FLASHCARDS
+loadData();
+bootstrapEmbedIfAny();
     </script>
 </body>
 </html>
