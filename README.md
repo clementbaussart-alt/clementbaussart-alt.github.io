@@ -14,7 +14,7 @@
             display: flex; 
         } 
         
-        /* SIDEBAR FIXE (MODIFICATIONS MINIMALES) */
+        /* SIDEBAR FIXE (MODIFICATIONS CLÉS) */
         .sidebar { 
             width: 280px; 
             background: white; 
@@ -26,10 +26,12 @@
             left: 0; 
             top: 0; 
             z-index: 100; 
+            /* Neutralisation de la transition */
+            transition: none;
         } 
         
-        /* SUPPRESSION : Styles inutiles pour le mode caché (la barre est toujours visible) */
-        /* .sidebar.hidden { transform: translateX(-280px); } */
+        /* SUPPRESSION : Styles inutiles pour le mode caché */
+        .sidebar.hidden { /* Neutralisation */ transform: translateX(0); }
         
         .sidebar-header { padding: 30px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .sidebar-header h1 { font-size: 22px; margin-bottom: 5px; }
@@ -78,21 +80,40 @@
         .btn-edit-folder:hover { color: #667eea; }
         .btn-delete-folder:hover { color: #ff6b6b; }
         
-        /* SUPPRESSION : Styles pour le bouton de bascule inutile */
+        /* SUPPRESSION : Styles du bouton de bascule */
         .toggle-sidebar-btn { display: none; } 
         
-        /* CONTENU PRINCIPAL */
+        /* CONTENU PRINCIPAL FIXE (MODIFICATIONS CLÉS) */
         .main-content { 
-            margin-left: 280px; /* GARDE CETTE MARGE FIXE pour le menu */
+            margin-left: 280px; /* Marge fixe pour laisser la place au menu */
             flex: 1; 
             padding: 40px; 
             overflow-y: auto; 
             height: 100vh; 
-            transition: none; /* Désactive la transition de marge */
+            /* Neutralisation de la transition */
+            transition: none;
         }
         
         /* SUPPRESSION : Style inutile pour le mode caché */
-        /* .main-content.sidebar-hidden { margin-left: 0; } */
+        .main-content.sidebar-hidden { margin-left: 280px; }
+        
+        /* MEDIA QUERY IMPORTANTE pour l'affichage sur mobile */
+        /* Si vous voulez que la barre latérale disparaisse sur les petits écrans: */
+        @media (max-width: 768px) {
+            .sidebar { 
+                width: 100%;
+                height: auto;
+                position: relative; /* Ne pas prendre tout l'écran verticalement */
+                box-shadow: none;
+            }
+            .main-content {
+                margin-left: 0; /* Pas de marge sur mobile */
+                padding: 20px;
+                height: auto;
+            }
+            /* Si vous voulez cacher la barre latérale sur mobile par défaut: */
+            /* .sidebar { display: none; } */
+        }
         
         /* RESTE DU CSS (NON MODIFIÉ) */
         .container { background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); padding: 40px; max-width: 800px; margin: 0 auto; }
@@ -109,7 +130,7 @@
         .stat-card { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
         .stat-card-value { font-size: 36px; font-weight: 700; color: #667eea; margin-bottom: 10px; }
         .stat-card-label { font-size: 14px; color: #666; font-weight: 500; }
-        .quick-actions { margin-top: 40px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .quick-actions { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
         .btn-action { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
         .btn-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
         .btn-action-secondary { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
@@ -493,8 +514,6 @@
         // VARIABLES GLOBALES FLASHCARDS
         let categories = {}, results = {}, currentCategory = null, currentFolder = null, currentList = null, currentPage = 'home', currentIndex = 0, isFlipped = false, isReviewMode = false, reviewIndices = [], stats = {known: 0, partial: 0, unknown: 0}, currentEditingSide = null, renameTarget = null, openCategories = {};
         
-        // SUPPRIMÉ : La fonction toggleSidebar() qui n'est plus nécessaire.
-        
         // ——— MODE INTÉGRÉ (iframe) ———
         function getQueryParams() {	const p = new URLSearchParams(window.location.search);	return {		embed: p.get('embed') === '1',		cat: p.get('cat') || null,		folder: p.get('folder') || null,		list: p.get('list') || null,		view: p.get('view') || null // "manage" | "study" | "lists" (optionnel)	};}
         
@@ -502,14 +521,6 @@
             try {		
                 const qp = getQueryParams();		
                 if (!qp.embed) return;		
-                // REMPLACÉ : Au lieu de basculer la classe 'hidden', on doit ajuster la marge.
-                // Puisque la barre est fixe, on ne fait rien de spécial ici si elle est censée rester affichée.
-                // Si l'embed DOIT cacher la barre, le CSS ci-dessus doit être ajusté pour un embed.
-                // Pour l'instant, on suppose que l'embed utilise la barre fixe.
-                // Si vous souhaitez cacher la barre pour un embed, il faudrait utiliser:
-                // document.getElementById('sidebar')?.style.display = 'none';
-                // document.getElementById('mainContent')?.style.marginLeft = '0';
-
                 // Si cat/folder/list sont fournis, on navigue directement
                 if (qp.cat && qp.folder && qp.list) {
                     if (qp.view === 'manage') {
@@ -586,61 +597,189 @@
             e.target.value = ''; 
         });
 
-        // Les écouteurs de couleur restent inchangés
         document.getElementById('textColorQ').addEventListener('change', function(e) { document.execCommand('foreColor', false, e.target.value); document.getElementById('newQuestion').focus(); });
         document.getElementById('bgColorQ').addEventListener('change', function(e) { document.execCommand('backColor', false, e.target.value); document.getElementById('newQuestion').focus(); });
         document.getElementById('textColorA').addEventListener('change', function(e) { document.execCommand('foreColor', false, e.target.value); document.getElementById('newAnswer').focus(); });
         document.getElementById('bgColorA').addEventListener('change', function(e) { document.execCommand('backColor', false, e.target.value); document.getElementById('newAnswer').focus(); });
-        
-        // Les fonctions d'affichage de page restent inchangées
+
         function showPage(e) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); if (e === 'home') { document.getElementById('homePage').classList.add('active'); document.querySelector('.nav-item').classList.add('active'); currentPage = 'home'; currentCategory = null; currentFolder = null; currentList = null; updateHomeStats(); } }
         function showListsPage(category, folder) { currentCategory = category; currentFolder = folder; currentList = null; currentPage = 'lists'; document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); document.getElementById('listsPage').classList.add('active'); document.getElementById('listsTitle').textContent = folder; updateCategoryList(); loadListsPage(); }
         function showManageCardsPage(category, folderName, listName) { currentCategory = category; currentFolder = folderName; currentList = listName; currentPage = 'manage'; document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); document.getElementById('manageCardsPage').classList.add('active'); document.getElementById('manageTitle').textContent = 'Gérer : ' + listName; document.getElementById('backToLists').onclick = function() { showListsPage(currentCategory, currentFolder); }; updateCategoryList(); loadManageCardsPage(); }
-        function showStudyPage(category, folderName, listName, reviewMode) { 
-            if (reviewMode === undefined) reviewMode = false; 
-            currentCategory = category; 
-            currentFolder = folderName; 
-            currentList = listName; 
-            currentIndex = 0; 
-            stats = {known: 0, partial: 0, unknown: 0}; 
-            isReviewMode = reviewMode; 
-            
-            if (isReviewMode) { 
-                reviewIndices = getCardsToReview(); 
-                if (reviewIndices.length === 0) { 
-                    alert('Aucune carte à revoir !'); 
-                    return; 
+        function showStudyPage(category, folderName, listName, reviewMode) { if (reviewMode === undefined) reviewMode = false; currentCategory = category; currentFolder = folderName; currentList = listName; currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; isReviewMode = reviewMode; if (isReviewMode) { reviewIndices = getCardsToReview(); if (reviewIndices.length === 0) { alert('Aucune carte à revoir !'); return; } } else { reviewIndices = []; } document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); document.getElementById('studyPage').classList.add('active'); document.getElementById('studyTitle').textContent = listName; document.getElementById('studyModeIndicator').style.display = isReviewMode ? 'inline-block' : 'none'; document.getElementById('backToListsStudy').onclick = function() { showListsPage(currentCategory, currentFolder); }; currentPage = 'study'; updateCategoryList(); loadCurrentList(); }
+        function getCardsToReview() { if (!currentCategory || !currentFolder || !currentList || !results[currentCategory] || !results[currentCategory][currentFolder] || !results[currentCategory][currentFolder][currentList]) return []; const e = results[currentCategory][currentFolder][currentList], t = []; Object.keys(e).forEach(r => { const o = e[r]; if (o === 'partial' || o === 'unknown') t.push(parseInt(r)); }); return t; }
+        function getNextList() { if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) return null; const lists = Object.keys(categories[currentCategory][currentFolder]); const currentIndex = lists.indexOf(currentList); if (currentIndex === -1 || currentIndex === lists.length - 1) return null; return lists[currentIndex + 1]; }
+        function goToNextList() { const nextList = getNextList(); if (nextList) { showStudyPage(currentCategory, currentFolder, nextList, false); } }
+        function loadData() { const catData = localStorage.getItem('flashcards_categories_v3'); if (catData) { try { categories = JSON.parse(catData); } catch (e) { console.error('Erreur:', e); categories = {}; } } else { categories = {}; } const openData = localStorage.getItem('flashcards_open_categories'); if (openData) { try { openCategories = JSON.parse(openData); } catch (e) { openCategories = {}; } } const resData = localStorage.getItem('flashcards_results_v3'); if (resData) { try { results = JSON.parse(resData); } catch (e) { results = {}; } } if (Object.keys(categories).length === 0) { categories = {'📚 Mes cours': {'Droit Administratif': {'Chapitre 1': [{question: "Qu'est-ce que le principe de légalité ?", answer: "Le principe selon lequel l'administration doit agir conformément aux règles de droit."}]}}}; openCategories['📚 Mes cours'] = true; } updateCategoryList(); updateHomeStats(); }
+        function saveData() { localStorage.setItem('flashcards_categories_v3', JSON.stringify(categories)); localStorage.setItem('flashcards_open_categories', JSON.stringify(openCategories)); updateHomeStats(); }
+        function saveResults() { localStorage.setItem('flashcards_results_v3', JSON.stringify(results)); }
+        function toggleCategory(catName) { openCategories[catName] = !openCategories[catName]; localStorage.setItem('flashcards_open_categories', JSON.stringify(openCategories)); updateCategoryList(); }
+        function updateCategoryList() { 
+            const container = document.getElementById('categoryList'); 
+            container.innerHTML = ''; 
+            Object.keys(categories).forEach(catName => { 
+                const catDiv = document.createElement('div'); 
+                catDiv.className = 'category-item'; 
+                const catHeader = document.createElement('div'); 
+                catHeader.className = 'category-header'; 
+                if (catName === currentCategory && (currentPage === 'lists' || currentPage === 'study' || currentPage === 'manage')) { 
+                    catHeader.classList.add('active'); 
                 } 
-            } else { 
-                reviewIndices = []; 
-            } 
-            
-            document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); 
-            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); 
-            document.getElementById('studyPage').classList.add('active'); 
-            document.getElementById('studyTitle').textContent = listName; 
-            document.getElementById('studyModeIndicator').style.display = isReviewMode ? 'inline-block' : 'none'; 
-            document.getElementById('backToListsStudy').onclick = function() { showListsPage(currentCategory, currentFolder); }; 
-            currentPage = 'study'; 
-            updateCategoryList(); 
-            loadCurrentList(); 
+                let totalCards = 0; 
+                Object.values(categories[catName]).forEach(folder => { 
+                    Object.values(folder).forEach(lists => { 
+                        totalCards += lists.length; 
+                    }); 
+                }); 
+                const leftDiv = document.createElement('div'); 
+                leftDiv.className = 'category-left'; 
+                const isOpen = openCategories[catName]; 
+                const toggleSpan = document.createElement('span'); 
+                toggleSpan.className = 'category-toggle' + (isOpen ? ' open' : ''); 
+                toggleSpan.innerHTML = '▶'; 
+                toggleSpan.onclick = function(e) { e.stopPropagation(); toggleCategory(catName); }; 
+                const nameSpan = document.createElement('span'); 
+                nameSpan.className = 'category-name'; 
+                nameSpan.textContent = catName; 
+                const countSpan = document.createElement('span'); 
+                countSpan.className = 'category-count'; 
+                countSpan.textContent = totalCards; 
+                leftDiv.appendChild(toggleSpan); 
+                leftDiv.appendChild(nameSpan); 
+                leftDiv.appendChild(countSpan); 
+                const actionsDiv = document.createElement('div'); 
+                actionsDiv.className = 'category-actions'; 
+                const editBtn = document.createElement('button'); 
+                editBtn.className = 'btn-edit-category'; 
+                editBtn.innerHTML = '✏️'; 
+                editBtn.onclick = function(e) { e.stopPropagation(); showEditCategoryModal(catName); }; 
+                const deleteBtn = document.createElement('button'); 
+                deleteBtn.className = 'btn-delete-category'; 
+                deleteBtn.innerHTML = '✕'; 
+                deleteBtn.onclick = function(e) { e.stopPropagation(); deleteCategory(catName); }; 
+                actionsDiv.appendChild(editBtn); 
+                actionsDiv.appendChild(deleteBtn); 
+                catHeader.appendChild(leftDiv); 
+                catHeader.appendChild(actionsDiv); 
+                catDiv.appendChild(catHeader); 
+                const foldersDiv = document.createElement('div'); 
+                foldersDiv.className = 'category-folders' + (isOpen ? ' open' : ''); 
+                Object.keys(categories[catName]).forEach(folderName => { 
+                    let cardCount = 0; 
+                    Object.values(categories[catName][folderName]).forEach(lists => { 
+                        cardCount += lists.length; 
+                    }); 
+                    const folderDiv = document.createElement('div'); 
+                    folderDiv.className = 'folder-item'; 
+                    if (catName === currentCategory && folderName === currentFolder && (currentPage === 'lists' || currentPage === 'study' || currentPage === 'manage')) { 
+                        folderDiv.classList.add('active'); 
+                    } 
+                    const folderInfo = document.createElement('div'); 
+                    folderInfo.className = 'folder-info'; 
+                    folderInfo.onclick = function() { showListsPage(catName, folderName); }; 
+                    folderInfo.innerHTML = '<span>📖</span><span style="flex:1">' + escapeHtml(folderName) + '</span><span class="folder-badge">' + cardCount + '</span>'; 
+                    const folderActions = document.createElement('div'); 
+                    folderActions.className = 'folder-actions'; 
+                    const folderEditBtn = document.createElement('button'); 
+                    folderEditBtn.className = 'btn-edit-folder'; 
+                    folderEditBtn.innerHTML = '✏️'; 
+                    folderEditBtn.onclick = function(e) { e.stopPropagation(); showEditFolderModal(catName, folderName); }; 
+                    const folderDeleteBtn = document.createElement('button'); 
+                    folderDeleteBtn.className = 'btn-delete-folder'; 
+                    folderDeleteBtn.innerHTML = '✕'; 
+                    folderDeleteBtn.onclick = function(e) { e.stopPropagation(); deleteFolder(catName, folderName); }; 
+                    folderActions.appendChild(folderEditBtn); 
+                    folderActions.appendChild(folderDeleteBtn); 
+                    folderDiv.appendChild(folderInfo); 
+                    folderDiv.appendChild(folderActions); 
+                    foldersDiv.appendChild(folderDiv); 
+                }); 
+                catDiv.appendChild(foldersDiv); 
+                container.appendChild(catDiv); 
+            }); 
         }
-
-        // Le reste des fonctions JavaScript (getCardsToReview, loadData, saveData, etc.) n'est pas modifié car il n'impacte pas la fixité de l'interface.
-        // ... (Le reste du code JavaScript est censé être ici, en continuité avec la version précédente que vous m'avez fournie).
+        function escapeHtml(text) { const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }; return text.replace(/[&<>"']/g, m => map[m]); }
+        function loadListsPage() { const container = document.getElementById('listsGrid'); container.innerHTML = ''; if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) return; const lists = categories[currentCategory][currentFolder]; Object.keys(lists).forEach(listName => { const cards = lists[listName]; const cardCount = cards.length; let toReviewCount = 0; if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][listName]) { const listResults = results[currentCategory][currentFolder][listName]; Object.values(listResults).forEach(result => { if (result === 'partial' || result === 'unknown') toReviewCount++; }); } const card = document.createElement('div'); card.className = 'list-card'; const buttonsDiv = document.createElement('div'); buttonsDiv.className = 'list-card-buttons'; const editBtn = document.createElement('button'); editBtn.className = 'btn-edit-list'; editBtn.innerHTML = '✏️'; editBtn.onclick = function(e) { e.stopPropagation(); showEditListModal(listName); }; const deleteBtn = document.createElement('button'); deleteBtn.className = 'btn-delete-list'; deleteBtn.innerHTML = '✕'; deleteBtn.onclick = function(e) { e.stopPropagation(); deleteList(listName); }; buttonsDiv.appendChild(editBtn); buttonsDiv.appendChild(deleteBtn); const integrateBtn = document.createElement('button');integrateBtn.className = 'btn-edit-list';integrateBtn.title = 'Intégrer cette liste';integrateBtn.textContent = '🔗';integrateBtn.onclick = function(e) {	e.stopPropagation();	copyListEmbed(listName);};buttonsDiv.appendChild(integrateBtn); let progressHTML = ''; if (toReviewCount > 0) { progressHTML = '<div class="list-card-progress">🔄 ' + toReviewCount + ' à revoir</div>'; } card.innerHTML = '<div class="list-card-left"><div class="list-card-title">' + escapeHtml(listName) + '</div><div class="list-card-count">' + cardCount + ' carte' + (cardCount > 1 ? 's' : '') + '</div>' + progressHTML + '</div><div class="list-card-actions"><button class="btn-list-action btn-study" onclick="showStudyPage(\'' + escapeHtml(currentCategory).replace(/'/g, "\\'") + '\',\'' + escapeHtml(currentFolder).replace(/'/g, "\\'") + '\',\'' + escapeHtml(listName).replace(/'/g, "\\'") + '\')">📖 Réviser</button><button class="btn-list-action btn-manage" onclick="showManageCardsPage(\'' + escapeHtml(currentCategory).replace(/'/g, "\\'") + '\',\'' + escapeHtml(currentFolder).replace(/'/g, "\\'") + '\',\'' + escapeHtml(listName).replace(/'/g, "\\'") + '\')">✏️ Gérer</button></div>'; card.appendChild(buttonsDiv); container.appendChild(card); }); }
+        function loadManageCardsPage() {	if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) return;	const cards = categories[currentCategory][currentFolder][currentList];	const container = document.getElementById('cardsList');	document.getElementById('cardCount').textContent = cards.length;	if (cards.length === 0) {		container.innerHTML = '<div class="empty-cards-message">Aucune carte. Ajoute-en une ci-dessus !</div>';		return;	}	container.innerHTML = '';	cards.forEach((card, idx) => {		const div = document.createElement('div');		div.className = 'card-edit-item';		const questionPreview = (card.question || '').replace(/<[^>]*>/g, '').substring(0, 100);		const answerPreview   = (card.answer   || '').replace(/<[^>]*>/g, '').substring(0, 100);		div.innerHTML =		  '<div class="card-edit-header">' +		    '<div class="card-edit-number">Carte #' + (idx + 1) + '</div>' +		    '<div class="card-edit-actions">' +		      '<button class="btn-edit-card" onclick="startEditCard(' + idx + ')">✏️</button>' +		      '<button class="btn-delete-card" onclick="deleteCard(' + idx + ')">✕</button>' +
+		    '</div>' +		  '</div>' +		  '<div class="card-edit-content">' +		    '<div class="card-edit-text"><span class="card-edit-label">Q:</span> ' + questionPreview + '...</div>' +		    '<div class="card-edit-text"><span class="card-edit-label">R:</span> ' + answerPreview + '...</div>' +		  '</div>' +		  '<div class="card-inline-editor" id="editor-' + idx + '" style="display:none">' +		    '<div class="editor-row">' +		      '<label class="card-edit-label" style="display:block;margin-bottom:6px">Question / Recto :</label>' +		      '<div class="editor-toolbar">' +		        '<button class="editor-btn" onclick="formatExistingCard(' + idx + ', \'bold\', \'Q\')"><b>G</b></button>' +		        '<button class="editor-btn" onclick="formatExistingCard(' + idx + ', \'italic\', \'Q\')"><i>I</i></button>' +		        '<button class="editor-btn" onclick="formatExistingCard(' + idx + ', \'underline\', \'Q\')"><u>S</u></button>' +		        '<input type="color" class="color-picker" onchange="colorExistingCard(' + idx + ', this.value, \'fore\', \'Q\')" value="#000000" title="Couleur">' +		        '<input type="color" class="color-picker" onchange="colorExistingCard(' + idx + ', this.value, \'back\', \'Q\')" value="#ffff00" title="Surlignage">' +		        '<button class="editor-btn" onclick="insertImageExisting(' + idx + ', \'Q\')">🖼️</button>' +		        '<button class="editor-btn" onclick="clearFormatExisting(' + idx + ', \'Q\')">✖</button>' +		      '</div>' +		      '<div class="editor-content" id="editQ-' + idx + '" contenteditable="true"></div>' +		    '</div>' +		    '<div class="editor-row">' +		      '<label class="card-edit-label" style="display:block;margin-bottom:6px">Réponse / Verso :</label>' +		      '<div class="editor-toolbar">' +		        '<button class="editor-btn" onclick="formatExistingCard(' + idx + ', \'bold\', \'A\')"><b>G</b></button>' +		        '<button class="editor-btn" onclick="formatExistingCard(' + idx + ', \'italic\', \'A\')"><i>I</i></button>' +		        '<button class="editor-btn" onclick="formatExistingCard(' + idx + ', \'underline\', \'A\')"><u>S</u></button>' +		        '<input type="color" class="color-picker" onchange="colorExistingCard(' + idx + ', this.value, \'fore\', \'A\')" value="#000000" title="Couleur">' +		        '<input type="color" class="color-picker" onchange="colorExistingCard(' + idx + ', this.value, \'back\', \'A\')" value="#ffff00" title="Surlignage">' +		        '<button class="editor-btn" onclick="insertImageExisting(' + idx + ', \'A\')">🖼️</button>' +		        '<button class="editor-btn" onclick="clearFormatExisting(' + idx + ', \'A\')">✖</button>' +		      '</div>' +		      '<div class="editor-content" id="editA-' + idx + '" contenteditable="true"></div>' +		    '</div>' +		    '<div class="actions">' +		      '<button class="btn-save-card" onclick="saveEditedCard(' + idx + ')">Enregistrer</button>' +		      '<button class="btn-cancel-card" onclick="cancelEditCard(' + idx + ')">Annuler</button>' +		    '</div>' +		  '</div>';		container.appendChild(div);	});}
+        function updateHomeStats() { let totalCourses = 0; let totalCards = 0; Object.values(categories).forEach(cat => { Object.values(cat).forEach(folder => { totalCourses++; Object.values(folder).forEach(lists => { totalCards += lists.length; }); }); }); document.getElementById('totalCourses').textContent = totalCourses; document.getElementById('totalCards').textContent = totalCards; const list = document.getElementById('courseList'); list.innerHTML = ''; if (totalCourses === 0) { list.innerHTML = '<p style="color:#999;text-align:center;padding:20px">Aucun cours créé.</p>'; return; } Object.keys(categories).forEach(catName => { Object.keys(categories[catName]).forEach(folderName => { let cardCount = 0; const listCount = Object.keys(categories[catName][folderName]).length; Object.values(categories[catName][folderName]).forEach(lists => { cardCount += lists.length; }); const div = document.createElement('div'); div.className = 'course-card'; div.onclick = () => showListsPage(catName, folderName); div.innerHTML = '<div class="course-card-left"><div class="course-card-title">' + escapeHtml(folderName) + '</div><div class="course-card-info">' + listCount + ' liste' + (listCount > 1 ? 's' : '') + ' • ' + cardCount + ' carte' + (cardCount > 1 ? 's' : '') + '</div></div><div class="course-card-arrow">→</div>'; list.appendChild(div); }); }); }
+        function loadCurrentList() { if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) { showEmptyState(); return; } const cards = categories[currentCategory][currentFolder][currentList]; if (isReviewMode && reviewIndices.length === 0) { showEmptyState(); return; } if (cards.length === 0) { showEmptyState(); } else { hideEmptyState(); loadCard(); } }
+        function showEmptyState() { document.getElementById('cardSection').style.display = 'none'; document.getElementById('endSection').style.display = 'none'; document.getElementById('emptyState').style.display = 'block'; document.getElementById('progressBar').style.width = '0%'; }
+        function hideEmptyState() { document.getElementById('cardSection').style.display = 'block'; document.getElementById('endSection').style.display = 'none'; document.getElementById('emptyState').style.display = 'none'; }
+        function loadCard() { if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) return; const cards = categories[currentCategory][currentFolder][currentList]; if (isReviewMode) { if (currentIndex >= reviewIndices.length) { showEndScreen(); return; } const idx = reviewIndices[currentIndex]; const card = cards[idx]; document.getElementById('question').innerHTML = card.question; document.getElementById('answer').innerHTML = card.answer; } else { if (currentIndex >= cards.length) { showEndScreen(); return; } const card = cards[currentIndex]; document.getElementById('question').innerHTML = card.question; document.getElementById('answer').innerHTML = card.answer; } document.getElementById('flashcard').classList.remove('flipped'); isFlipped = false; updateProgress(); updateStats(); }
+        function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); isFlipped = !isFlipped; }
+        function editCurrentCard() {	if (!currentCategory || !currentFolder || !currentList) { alert("Aucune liste sélectionnée."); return; }	const cards = categories[currentCategory][currentFolder][currentList] || [];	if (cards.length === 0) { alert("Aucune carte dans cette liste."); return; }	let idx;	if (isReviewMode) {		if (reviewIndices.length === 0) { alert("Aucune carte en mode révision."); return; }		const pos = Math.min(currentIndex, Math.max(0, reviewIndices.length - 1));		idx = reviewIndices[pos];	} else {		idx = Math.min(currentIndex, Math.max(0, cards.length - 1));	}	showManageCardsPage(currentCategory, currentFolder, currentList);	setTimeout(() => startEditCard(idx), 0);}
+        function answer(type) { if (!results[currentCategory]) results[currentCategory] = {}; if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {}; if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {}; const idx = isReviewMode ? reviewIndices[currentIndex] : currentIndex; results[currentCategory][currentFolder][currentList][idx] = type; saveResults(); stats[type]++; currentIndex++; loadCard(); }
+        function updateProgress() { const cards = categories[currentCategory][currentFolder][currentList]; const total = isReviewMode ? reviewIndices.length : cards.length; const current = currentIndex; const percent = current / total * 100; document.getElementById('progressBar').style.width = percent + '%'; }
+        function updateStats() { const cards = categories[currentCategory][currentFolder][currentList]; const total = isReviewMode ? reviewIndices.length : cards.length; document.getElementById('stats').textContent = 'Carte ' + (currentIndex + 1) + '/' + total + ' | Connu: ' + stats.known + ' | Partiel: ' + stats.partial + ' | Pas connu: ' + stats.unknown; }
+        function showEndScreen() { document.getElementById('cardSection').style.display = 'none'; document.getElementById('endSection').style.display = 'block'; const total = stats.known + stats.partial + stats.unknown; const knownPercent = total > 0 ? Math.round(stats.known / total * 100) : 0; const partialPercent = total > 0 ? Math.round(stats.partial / total * 100) : 0; const unknownPercent = total > 0 ? Math.round(stats.unknown / total * 100) : 0; document.getElementById('legendKnown').textContent = 'Connu: ' + stats.known + ' (' + knownPercent + '%)'; document.getElementById('legendPartial').textContent = 'Partiel: ' + stats.partial + ' (' + partialPercent + '%)'; document.getElementById('legendUnknown').textContent = 'Pas connu: ' + stats.unknown + ' (' + unknownPercent + '%)'; drawPieChart(); const toReview = getCardsToReview().length; const btnReview = document.getElementById('btnReviewWrong'); if (toReview > 0) { btnReview.disabled = false; btnReview.textContent = '🔄 Réviser (' + toReview + ')'; } else { btnReview.disabled = true; btnReview.textContent = '🔄 Aucune'; } const nextList = getNextList(); const btnNext = document.getElementById('btnNextList'); if (nextList) { btnNext.disabled = false; btnNext.textContent = 'Liste suivante : ' + nextList + ' →'; } else { btnNext.disabled = true; btnNext.textContent = 'Dernière liste ✓'; } }
+        function drawPieChart() { const total = stats.known + stats.partial + stats.unknown; if (total === 0) { document.getElementById('barKnown').style.width = '0%'; document.getElementById('barKnown').textContent = '0'; document.getElementById('barPartial').style.width = '0%'; document.getElementById('barPartial').textContent = '0'; document.getElementById('barUnknown').style.width = '0%'; document.getElementById('barUnknown').textContent = '0'; return; } const knownPercent = Math.round(stats.known / total * 100); const partialPercent = Math.round(stats.partial / total * 100); const unknownPercent = Math.round(stats.unknown / total * 100); document.getElementById('barKnown').style.width = knownPercent + '%'; document.getElementById('barKnown').textContent = stats.known; document.getElementById('barPartial').style.width = partialPercent + '%'; document.getElementById('barPartial').textContent = stats.partial; document.getElementById('barUnknown').style.width = unknownPercent + '%'; document.getElementById('barUnknown').textContent = stats.unknown; }
+        function restartSession() { currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; isReviewMode = false; reviewIndices = []; document.getElementById('studyModeIndicator').style.display = 'none'; document.getElementById('endSection').style.display = 'none'; document.getElementById('cardSection').style.display = 'block'; loadCard(); }
+        function reviewWrongCards() { showStudyPage(currentCategory, currentFolder, currentList, true); }
+        function addCard() { const q = document.getElementById('newQuestion').innerHTML.trim(); const a = document.getElementById('newAnswer').innerHTML.trim(); if (!q || !a || q === '<br>' || a === '<br>') { alert('Veuillez remplir la question et la réponse.'); return; } if (!currentCategory || !currentFolder || !currentList) { alert("Sélectionne d'abord une liste."); return; } categories[currentCategory][currentFolder][currentList].push({question: q, answer: a}); saveData(); document.getElementById('newQuestion').innerHTML = ''; document.getElementById('newAnswer').innerHTML = ''; updateCategoryList(); if (currentPage === 'manage') loadManageCardsPage(); }
+        function deleteCard(idx) { if (!confirm('Supprimer cette carte ?')) return; categories[currentCategory][currentFolder][currentList].splice(idx, 1); if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][currentList]) { delete results[currentCategory][currentFolder][currentList][idx]; const newResults = {}; Object.keys(results[currentCategory][currentFolder][currentList]).forEach(key => { const i = parseInt(key); if (i > idx) newResults[i - 1] = results[currentCategory][currentFolder][currentList][key]; else if (i < idx) newResults[i] = results[currentCategory][currentFolder][currentList][key]; }); results[currentCategory][currentFolder][currentList] = newResults; saveResults(); } saveData(); updateCategoryList(); if (currentPage === 'manage') loadManageCardsPage(); }
         
-        // --- ÉDITION DE CARTES EXISTANTES ---
+        // ——— ÉDITION DE CARTES EXISTANTES ———
         let currentEditingExisting = { idx: null, side: null };
-
-        function startEditCard(idx) {
-            // ... (implémentation de startEditCard)
+        function startEditCard(idx) {	if (!currentCategory || !currentFolder || !currentList) return;	const card = categories[currentCategory][currentFolder][currentList][idx];	const q = document.getElementById('editQ-' + idx);	const a = document.getElementById('editA-' + idx);	if (!q || !a) return;	q.innerHTML = card.question || '';	a.innerHTML = card.answer || '';	const panel = document.getElementById('editor-' + idx);	if (panel) {		panel.style.display = 'block';		panel.scrollIntoView({ behavior: 'smooth', block: 'center' });	}}
+        function cancelEditCard(idx) {	const panel = document.getElementById('editor-' + idx);	if (panel) panel.style.display = 'none';}
+        function saveEditedCard(idx) {	if (!currentCategory || !currentFolder || !currentList) { alert("Erreur de contexte."); return; }	const qEl = document.getElementById('editQ-' + idx);	const aEl = document.getElementById('editA-' + idx);	if (!qEl || !aEl) return;	const newQ = (qEl.innerHTML || '').trim();	const newA = (aEl.innerHTML || '').trim();	if (!newQ || !newA || newQ === '<br>' || newA === '<br>') {		alert('Veuillez remplir la question et la réponse.');		return;	}	categories[currentCategory][currentFolder][currentList][idx] = { question: newQ, answer: newA };	saveData();	updateCategoryList();	loadManageCardsPage();}
+        function formatExistingCard(idx, command, side) {	const el = document.getElementById((side === 'Q' ? 'editQ-' : 'editA-') + idx);	if (!el) return;	el.focus();	document.execCommand(command, false, null);}
+        function colorExistingCard(idx, value, kind, side) {	const el = document.getElementById((side === 'Q' ? 'editQ-' : 'editA-') + idx);	if (!el) return;	el.focus();	if (kind === 'fore') document.execCommand('foreColor', false, value);	else document.execCommand('backColor', false, value);}
+        function clearFormatExisting(idx, side) {	const el = document.getElementById((side === 'Q' ? 'editQ-' : 'editA-') + idx);	if (!el) return;	el.innerHTML = el.innerText;	el.focus();}
+        function insertImageExisting(idx, side) {	currentEditingExisting = { idx, side };	document.getElementById('imageInput').click();}
+        
+        // MODALS FLASHCARDS
+        function showNewCategoryModal() { document.getElementById('newCategoryModal').classList.add('show'); const input = document.getElementById('categoryNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
+        function closeNewCategoryModal() { document.getElementById('newCategoryModal').classList.remove('show'); document.getElementById('categoryNameInput').value = ''; }
+        function createCategory() { const input = document.getElementById('categoryNameInput'); const name = input.value.trim(); if (!name) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (categories[name]) { alert('Cette catégorie existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } categories[name] = {}; openCategories[name] = true; saveData(); updateCategoryList(); closeNewCategoryModal(); }
+        function deleteCategory(catName) { if (!confirm('Supprimer "' + catName + '" et tous ses cours ?')) return; delete categories[catName]; delete results[catName]; delete openCategories[catName]; saveData(); saveResults(); if (currentCategory === catName) showPage('home'); updateCategoryList(); }
+        function showEditCategoryModal(catName) { renameTarget = catName; document.getElementById('renameCategoryModal').classList.add('show'); const input = document.getElementById('renameCategoryInput'); input.value = catName; setTimeout(() => input.focus(), 150); }
+        function closeRenameCategoryModal() { document.getElementById('renameCategoryModal').classList.remove('show'); document.getElementById('renameCategoryInput').value = ''; renameTarget = null; }
+        function renameCategory() { const input = document.getElementById('renameCategoryInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (categories[newName] && newName !== renameTarget) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (renameTarget && categories[renameTarget]) { categories[newName] = categories[renameTarget]; delete categories[renameTarget]; if (results[renameTarget]) { results[newName] = results[renameTarget]; delete results[renameTarget]; saveResults(); } if (openCategories[renameTarget]) { openCategories[newName] = openCategories[renameTarget]; delete openCategories[renameTarget]; } if (currentCategory === renameTarget) currentCategory = newName; saveData(); updateCategoryList(); closeRenameCategoryModal(); } }
+        function updateFolderCategorySelect() { const select = document.getElementById('folderCategorySelect'); select.innerHTML = ''; const catNames = Object.keys(categories); if (catNames.length === 0) { const opt = document.createElement('option'); opt.value = ''; opt.textContent = 'Aucune catégorie - Créez-en une !'; select.appendChild(opt); } else { catNames.forEach(catName => { const opt = document.createElement('option'); opt.value = catName; opt.textContent = catName; if (catName === currentCategory) opt.selected = true; select.appendChild(opt); }); } }
+        function showNewFolderModal() { updateFolderCategorySelect(); document.getElementById('newFolderModal').classList.add('show'); const input = document.getElementById('folderNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
+        function closeNewFolderModal() { document.getElementById('newFolderModal').classList.remove('show'); document.getElementById('folderNameInput').value = ''; }
+        function createFolder() { const input = document.getElementById('folderNameInput'); const name = input.value.trim(); const catSelect = document.getElementById('folderCategorySelect'); const selectedCat = catSelect.value; if (!selectedCat) { alert('Veuillez créer une catégorie d\'abord.'); return; } if (!name) { alert('Veuillez entrer un nom de cours.'); setTimeout(() => input.focus(), 150); return; } if (categories[selectedCat][name]) { alert('Ce cours existe déjà dans cette catégorie.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } categories[selectedCat][name] = {'Liste par défaut': []}; saveData(); updateCategoryList(); closeNewFolderModal(); showListsPage(selectedCat, name); }
+        function deleteFolder(catName, folderName) { if (!confirm('Supprimer "' + folderName + '" ?')) return; delete categories[catName][folderName]; if (results[catName]) { delete results[catName][folderName]; saveResults(); } if (Object.keys(categories[catName]).length === 0) { delete categories[catName]; delete openCategories[catName]; } saveData(); if (currentCategory === catName && currentFolder === folderName) showPage('home'); updateCategoryList(); }
+        function showEditFolderModal(catName, folderName) { renameTarget = {cat: catName, folder: folderName}; document.getElementById('renameFolderModal').classList.add('show'); const input = document.getElementById('renameFolderInput'); input.value = folderName; setTimeout(() => input.focus(), 150); }
+        function closeRenameFolderModal() { document.getElementById('renameFolderModal').classList.remove('show'); document.getElementById('renameFolderInput').value = ''; renameTarget = null; }
+        function showRenameFolderModal() { if (!currentCategory || !currentFolder) return; showEditFolderModal(currentCategory, currentFolder); }
+        function renameFolder() { const input = document.getElementById('renameFolderInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } const catName = renameTarget.cat; const oldName = renameTarget.folder; if (categories[catName][newName] && newName !== oldName) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (categories[catName][oldName]) { categories[catName][newName] = categories[catName][oldName]; delete categories[catName][oldName]; if (results[catName] && results[catName][oldName]) { results[catName][newName] = results[catName][oldName]; delete results[catName][oldName]; saveResults(); } if (currentCategory === catName && currentFolder === oldName) currentFolder = newName; saveData(); updateCategoryList(); if (currentPage === 'lists') { document.getElementById('listsTitle').textContent = newName; } closeRenameFolderModal(); } }
+        function showNewListModal() { if (!currentCategory || !currentFolder) { alert('Erreur : aucun cours sélectionné.'); return; } document.getElementById('newListModal').classList.add('show'); const input = document.getElementById('listNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
+        function closeNewListModal() { document.getElementById('newListModal').classList.remove('show'); document.getElementById('listNameInput').value = ''; }
+        function createList() { const input = document.getElementById('listNameInput'); const name = input.value.trim(); if (!name) { alert('Veuillez entrer un nom de liste.'); setTimeout(() => input.focus(), 150); return; } if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) { alert('Erreur.'); return; } if (categories[currentCategory][currentFolder][name]) { alert('Cette liste existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } categories[currentCategory][currentFolder][name] = []; saveData(); updateCategoryList(); closeNewListModal(); loadListsPage(); }
+        function deleteList(listName) { if (!confirm('Supprimer "' + listName + '" ?')) return; delete categories[currentCategory][currentFolder][listName]; if (results[currentCategory] && results[currentCategory][currentFolder]) { delete results[currentCategory][currentFolder][listName]; saveResults(); } if (Object.keys(categories[currentCategory][currentFolder]).length === 0) { categories[currentCategory][currentFolder]['Liste par défaut'] = []; } saveData(); updateCategoryList(); loadListsPage(); }
+        function showEditListModal(listName) { renameTarget = listName; document.getElementById('renameListModal').classList.add('show'); const input = document.getElementById('renameListInput'); input.value = listName; setTimeout(() => input.focus(), 150); }
+        function closeRenameListModal() { document.getElementById('renameListModal').classList.remove('show'); document.getElementById('renameListInput').value = ''; renameTarget = null; }
+        function renameList() { const input = document.getElementById('renameListInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) { alert('Erreur.'); return; } if (categories[currentCategory][currentFolder][newName] && newName !== renameTarget) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (renameTarget && categories[currentCategory][currentFolder][renameTarget]) { categories[currentCategory][currentFolder][newName] = categories[currentCategory][currentFolder][renameTarget]; delete categories[currentCategory][currentFolder][renameTarget]; if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][renameTarget]) { results[currentCategory][currentFolder][newName] = results[currentCategory][currentFolder][renameTarget]; delete results[currentCategory][currentFolder][renameTarget]; saveResults(); } if (currentList === renameTarget) currentList = newName; saveData(); updateCategoryList(); loadListsPage(); closeRenameListModal(); } }
+        function exportCards() { if (!currentCategory || !currentFolder || !currentList) { alert('Sélectionne une liste.'); return; } const data = {categoryName: currentCategory, folderName: currentFolder, listName: currentList, cards: categories[currentCategory][currentFolder][currentList]}; const json = JSON.stringify(data, null, 2); const blob = new Blob([json], {type: 'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = currentCategory.replace(/[^a-z0-9]/gi, '_') + '_' + currentFolder.replace(/[^a-z0-9]/gi, '_') + '_' + currentList.replace(/[^a-z0-9]/gi, '_') + '_' + new Date().toISOString().split('T')[0] + '.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+        
+        function baseAppUrl() {	
+            const u = new URL(window.location.href);	
+            u.search = ''; 
+            u.hash = '';	
+            return u.toString();
         }
 
-        // ... (Les autres fonctions d'édition, navigation et gestion de modales)
+        function buildEmbedUrl({cat, folder, list, view}) {	
+            const u = new URL(baseAppUrl());	
+            u.searchParams.set('embed', '1');	
+            if (cat)    u.searchParams.set('cat', cat);	
+            if (folder) u.searchParams.set('folder', folder);	
+            if (list)   u.searchParams.set('list', list);	
+            if (view)   u.searchParams.set('view', view); 
+            return u.toString();
+        }
+
+        function buildIframeCode(src, opts) {	
+            const width = (opts && opts.width) || '100%';	
+            const height = (opts && opts.height) || '600';	
+            const style = (opts && opts.style) || 'border:1px solid #e5e7eb;border-radius:12px;';	
+            return `<iframe src="${src}" width="${width}" height="${height}" style="${style}" allowfullscreen loading="lazy"></iframe>`;
+        }
 
         function copyFolderEmbed() {
             if (!currentCategory || !currentFolder) { alert('Aucun cours sélectionné.'); return; }
-            // Vue de cours = lists (pour laisser l’utilisateur choisir une liste)
             const src = buildEmbedUrl({ cat: currentCategory, folder: currentFolder, view: 'lists' });
             const code = buildIframeCode(src, { height: '700' });
             copyText(code);
@@ -651,13 +790,91 @@
             const folder = currentFolder;
             const list = listName;
             if (!cat || !folder || !list) { alert('Sélection invalide.'); return; }
-            // Par défaut on pointe vers la révision (study). Tu peux choisir 'manage' si besoin.
             const src = buildEmbedUrl({ cat, folder, list, view: 'study' });
             const code = buildIframeCode(src, { height: '700' });
             copyText(code);
         }
 
-        // ... (Les autres fonctions d'export/import et des modals)
+        async function copyText(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                alert('Code d’intégration copié ✓');
+            } catch (e) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy'); alert('Code d’intégration copié ✓'); }
+                catch { alert('Impossible de copier automatiquement. Sélectionne et copie manuellement.'); }
+                document.body.removeChild(ta);
+            }
+        }
+
+        function exportAll() {	
+            if (!categories || typeof categories !== 'object') {		
+                alert("Aucune donnée à exporter.");		
+                return;	
+            }
+            const snapshot = {		
+                exportVersion: "1.0",		
+                exportedAt: new Date().toISOString(),		
+                summary: {			
+                    categories: 0,			
+                    courses: 0,			
+                    lists: 0,			
+                    cards: 0		
+                },		
+                data: [],		
+                results: results || {}	
+            };
+            Object.keys(categories).forEach(catName => {		
+                const cat = categories[catName] || {};		
+                const catOut = { categoryName: catName, courses: [] };		
+                snapshot.summary.categories++;		
+                Object.keys(cat).forEach(folderName => {			
+                    const folder = cat[folderName] || {};			
+                    const folderOut = { folderName, lists: [] };			
+                    snapshot.summary.courses++;			
+                    Object.keys(folder).forEach(listName => {				
+                        const cards = Array.isArray(folder[listName]) ? folder[listName] : [];				
+                        const listOut = { listName, cards };				
+                        snapshot.summary.lists++;				
+                        snapshot.summary.cards += cards.length;				
+                        folderOut.lists.push(listOut);			
+                    });			
+                    catOut.courses.push(folderOut);		
+                });		
+                snapshot.data.push(catOut);	
+            });
+            const json = JSON.stringify(snapshot, null, 2);	
+            const blob = new Blob([json], { type: 'application/json' });	
+            const url = URL.createObjectURL(blob);	
+            const safe = s => (s || '').toString().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]+/g, '_');	
+            const filename = `flashcards_export_all_${safe(new Date().toISOString().split('T')[0])}.json`;	
+            const a = document.createElement('a');	
+            a.href = url;	
+            a.download = filename;	
+            document.body.appendChild(a);	
+            a.click();	
+            document.body.removeChild(a);	
+            URL.revokeObjectURL(url);
+        }
+
+        function importCards() { document.getElementById('fileInput').click(); }
+        document.getElementById('fileInput').addEventListener('change', function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const data = JSON.parse(e.target.result); if (!data.categoryName || !data.folderName || !data.listName || !Array.isArray(data.cards)) { alert('Format de fichier invalide.'); return; } if (!categories[data.categoryName]) { categories[data.categoryName] = {}; } if (!categories[data.categoryName][data.folderName]) { categories[data.categoryName][data.folderName] = {}; } if (categories[data.categoryName][data.folderName][data.listName]) { if (!confirm('La liste "' + data.listName + '" existe déjà dans "' + data.folderName + '". Écraser ?')) { return; } } categories[data.categoryName][data.folderName][data.listName] = data.cards; saveData(); updateCategoryList(); if (currentPage === 'home') { updateHomeStats(); } } catch (err) { alert('Erreur lors de la lecture du fichier.'); } }; reader.readAsText(file); event.target.value = ''; });
+        function clearCurrentList() { if (!currentCategory || !currentFolder || !currentList) return; if (!confirm('⚠️ Vider la liste ?')) return; categories[currentCategory][currentFolder][currentList] = []; if (results[currentCategory] && results[currentCategory][currentFolder]) { delete results[currentCategory][currentFolder][currentList]; saveResults(); } saveData(); currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; updateCategoryList(); loadManageCardsPage(); }
+        document.getElementById('categoryNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createCategory(); });
+        document.getElementById('folderNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createFolder(); });
+        document.getElementById('listNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createList(); });
+        document.getElementById('renameCategoryInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') renameCategory(); });
+        document.getElementById('renameFolderInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') renameFolder(); });
+        document.getElementById('renameListInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') renameList(); });
+        document.getElementById('newCategoryModal').addEventListener('click', function(e) { if (e.target === this) closeNewCategoryModal(); });
+        document.getElementById('newFolderModal').addEventListener('click', function(e) { if (e.target === this) closeNewFolderModal(); });
+        document.getElementById('newListModal').addEventListener('click', function(e) { if (e.target === this) closeNewListModal(); });
+        document.getElementById('renameCategoryModal').addEventListener('click', function(e) { if (e.target === this) closeRenameCategoryModal(); });
+        document.getElementById('renameFolderModal').addEventListener('click', function(e) { if (e.target === this) closeRenameFolderModal(); });
+        document.getElementById('renameListModal').addEventListener('click', function(e) { if (e.target === this) closeRenameListModal(); });
         
         // ====== COMPARATEUR DE TEXTE ======
         function openComparator() {
@@ -668,40 +885,341 @@
             document.getElementById('comparatorModal').classList.remove('show');
             document.body.style.overflow = 'auto';
         }
+        
+        // Variables comparateur
+        let showContext = false;
+        let lastFocusedId = null;
+        let showOnlyDeletions = false;
+        let lastFocusedType = null;
+        let lastSelectedBtn = null;
+        
+        const $ = sel => document.querySelector(sel);
+        const oldTA = $("#oldText");
+        const newTA = $("#newText");
+        const outComp = $("#diffOutput");
+        const changesListComp = $("#changesList");
+        const insCountComp = $("#insCount");
+        const delCountComp = $("#delCount");
+        const repCountComp = $("#repCount");
+        const hintComp = $("#hint");
+        const copyBtnComp = $("#copyBtn");
+        const toggleContextBtnComp = $("#toggleContext");
+        const backBtn = $("#backToSelected");
+        const onlyDelBtn = document.getElementById("toggleOnlyDeletions");
+        
+        function escapeHtmlComp(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+        function normalizeSpaces(s) { 
+            return s.replace(/\r\n|\r/g, '\n').replace(/([^\n])\n/g, '$1 ').replace(/\t/g, ' '); 
+        }
+        function emojiFor(t) { return t==='insertion' ? '➕' : t==='suppression' ? '➖' : '♻️'; }
+        function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+        function isOnlySpaces(s) { return !s || /^\s+$/.test(s); }
+        function isWhitespaceOnlyChange(removed, added) {
+            const r = (removed||"").replace(/\s+/g,'');
+            const a = (added||"").replace(/\s+/g,'');
+            return r === a && (removed!==added);
+        }
+        
+        function updateBackButton() {
+            if (lastSelectedBtn) {
+                backBtn.classList.add('visible');
+                backBtn.disabled = false;
+            } else {
+                backBtn.classList.remove('visible');
+                backBtn.disabled = true;
+            }
+        }
+        function clearFocusComp() {
+            if (lastFocusedId) {
+                const prev = document.getElementById(lastFocusedId);
+                if (prev && prev.classList) prev.classList.remove('focused');
+                const ghost = document.getElementById(lastFocusedId + '-ghost');
+                if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+                const delGhost = document.getElementById(lastFocusedId + '-delghost');
+                if (delGhost && delGhost.parentNode) delGhost.parentNode.removeChild(delGhost);
+            }
+            lastFocusedId = null;
+            lastFocusedType = null;
+        }
+        function showDeletionGhostAfter(anchorEl, id, removedText) {
+            const old = document.getElementById(id + '-delghost');
+            if (old && old.parentNode) old.parentNode.removeChild(old);
+            const ghost = document.createElement('span');
+            ghost.id = id + '-delghost';
+            ghost.className = 'del-ghost';
+            const content = (removedText || '').replace(/\r\n|\r/g, '\n').replace(/\n/g, '↵');
+            ghost.innerHTML = `<mark class="del">(${escapeHtmlComp(content)})</mark>`;
+            anchorEl.insertAdjacentElement('afterend', ghost);
+        }
+        function focusChangeComp(id, type, options) {
+            clearFocusComp();
+            const el = document.getElementById(id);
+            if (!el) return;
+                
+            if (el.tagName === 'MARK') {
+                el.classList.add('focused');
+                lastFocusedId = id;
+                lastFocusedType = type || null;
+            } else {
+                lastFocusedId = id;
+                lastFocusedType = type || 'suppression';
+                        
+                if ((type === 'suppression') && options && options.removedText) {
+                    showDeletionGhostAfter(el, id, options.removedText);
+                } else {
+                    let ghost = document.getElementById(id + '-ghost');
+                    if (!ghost) {
+                        ghost = document.createElement('span');
+                        ghost.id = id + '-ghost';
+                        ghost.className = 'focus-ghost';
+                        el.insertAdjacentElement('afterend', ghost);
+                    }
+                }
+            }
+                
+            (el.tagName === 'MARK' ? el : document.getElementById(id)).scrollIntoView({behavior:'smooth', block:'center'});
+        }
+        function computeComp() {
+            const oldTxt = oldTA.value || "";
+            const newTxt = newTA.value || "";
+            const parts = (window.Diff && Diff.diffWordsWithSpace) ? Diff.diffWordsWithSpace(oldTxt, newTxt) : [{removed:true,value:oldTxt},{added:true,value:newTxt}];
+            
+            let html = "";
+            let changes = [];
+            let ins=0, del=0, rep=0, idxChange=0;
+            
+            for (let i=0; i<parts.length; i++) {
+                const p = parts[i];
+                
+                if (p.removed && !p.added) {
+                    const next = parts[i+1];
+                    
+                    if (next && next.added && !next.removed) {
+                        const isWhitespaceOnly = isWhitespaceOnlyChange(p.value, next.value);
+                        
+                        if (!isOnlySpaces(next.value) && !isOnlySpaces(p.value) && !isWhitespaceOnly) {
+                            const anchorId = `chg-${++idxChange}`;
+                            
+                            const removedHtml = `<mark class="del" id="${anchorId}-del">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
+                            const addedHtml = `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(next.value))}</mark>`;
+                            
+                            html += removedHtml + addedHtml;
 
-        // ... (Le reste des fonctions du comparateur)
+                            rep++;
+                            changes.push({id: anchorId, type: 'remplacement', added: next.value, removed: p.value, isWhitespaceOnly: false});
+                            i++;
+                            continue;
+                        } else if (isWhitespaceOnly) {
+                            html += escapeHtmlComp(normalizeSpaces(next.value)); 
+                            rep++;
+                            changes.push({id: `chg-${++idxChange}`, type: 'remplacement', added: next.value, removed: p.value, isWhitespaceOnly: true});
+                            i++;
+                            continue;
+                        }
+                    }
+                    
+                    if (isOnlySpaces(p.value)) continue;
+                    
+                    const anchorId = `chg-${++idxChange}`;
+                    html += `<mark class="del" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
+                    del++;
+                    changes.push({id: anchorId, type: 'suppression', added: '', removed: p.value, isWhitespaceOnly: false});
+                    continue;
+                }
+        
+                if (p.added && !p.removed) {
+                    if (isOnlySpaces(p.value)) continue;
+                    const anchorId = `chg-${++idxChange}`;
+                    html += `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
+                    ins++;
+                    changes.push({id: anchorId, type: 'insertion', added: p.value, removed: '', isWhitespaceOnly: false});
+                    continue;
+                }
+                
+                html += escapeHtmlComp(normalizeSpaces(p.value));
+            }
+            
+            outComp.innerHTML = html.replace(/\n/g, '<br>');
 
+            const finalChanges = changes.filter(c => !c.isWhitespaceOnly);
+            
+            renderChangesListComp(finalChanges);
+            
+            insCountComp.textContent = finalChanges.filter(c => c.type === 'insertion').length;
+            delCountComp.textContent = finalChanges.filter(c => c.type === 'suppression').length;
+            repCountComp.textContent = finalChanges.filter(c => c.type === 'remplacement').length;
+            
+            hintComp.textContent = `${finalChanges.length} modifications détectées${rep? " • remplacements: "+rep : ""}.`;
+        }
+        
+        function flashSidebarCard(btn) {
+            const prevShadow = btn.style.boxShadow;
+            btn.style.boxShadow = '0 0 0 3px rgba(255,209,102,0.45)';
+            setTimeout(() => { btn.style.boxShadow = prevShadow; }, 750);
+        }
+        function renderChangesListComp(changes) {
+            changesListComp.innerHTML = "";
+            let filtered = changes;
+            if (showOnlyDeletions) {
+                filtered = changes.filter(c => c.type === 'suppression' || c.type === 'remplacement');
+            }
+        
+            if (!filtered.length) {
+                changesListComp.innerHTML = '<div style="color:#8b93a6;padding:8px">Aucun changement.</div>';
+                updateBackButton();
+                return;
+            }
+        
+            const ctxSpan = showContext ? 24 : 0;
+            let toRestoreId = (lastSelectedBtn && lastSelectedBtn.dataset.id) ? lastSelectedBtn.dataset.id : null;
+            lastSelectedBtn = null;
+        
+            for (const c of filtered) {
+                const btn = document.createElement('button');
+                btn.className = 'comp-change';
+                btn.type = 'button';
+                btn.dataset.id = c.id;
+                btn.dataset.type = c.type;
+                if (c.type === 'suppression' || c.type === 'remplacement') {
+                    btn.dataset.removed = c.removed;
+                }
+        
+                let tokenHtml = '';
+                if (c.type === 'insertion') {
+                    tokenHtml = `<mark class="token">${escapeHtmlComp(c.added.replace(/\n/g, '↵'))}</mark>`;
+                } else if (c.type === 'suppression') {
+                    tokenHtml = `<mark class="token del">${escapeHtmlComp(c.removed.replace(/\n/g, '↵'))}</mark>`;
+                } else {
+                    tokenHtml = `<mark class="token del">${escapeHtmlComp(c.removed.replace(/\n/g, '↵'))}</mark> <span style="display:inline-block;width:6px"></span> <mark class="token">${escapeHtmlComp(c.added.replace(/\n/g, '↵'))}</mark>`;
+                }
+        
+                let ctx = '';
+                if (ctxSpan > 0) {
+                    const src = c.type==='suppression' ? (oldTA.value||"") : (newTA.value||"");
+                    const needle = (c.type==='suppression' ? c.removed : c.added) || "";
+                    const pos = needle.length > 0 ? src.indexOf(needle) : -1;
+                    
+                    if (pos>=0) {
+                        const start = Math.max(0,pos-ctxSpan);
+                        const end = Math.min(src.length, pos+needle.length+ctxSpan);
+                        ctx = (start>0?'…':'') + src.slice(start,end).replace(/\r\n|\r/g, '\n').replace(/\n/g, '↵').replace(/\s+/g,' ') + (end<src.length?'…':'');
+                    }
+                }
+                
+                btn.innerHTML = `<span class="type">${emojiFor(c.type)} ${cap(c.type)}</span> ${tokenHtml} ${ctx ? `<span class="ctx">${escapeHtmlComp(ctx)}</span>` : ``}`;
+        
+                btn.addEventListener('click', () => {
+                    const prev = document.querySelector('.comp-change.selected');
+                    if (prev) prev.classList.remove('selected');
+                    btn.classList.add('selected');
+                    lastSelectedBtn = btn;
+        
+                    let focusId = btn.dataset.id;
+                    let focusType = btn.dataset.type;
+                    const isReplacement = focusType === 'remplacement';
+                    
+                    if (isReplacement) focusType = 'insertion'; 
+        
+                    const opts = (btn.dataset.type === 'suppression' || isReplacement) ? { removedText: btn.dataset.removed || '' } : undefined;
+                    
+                    focusChangeComp(isReplacement ? focusId : focusId, focusType, opts);
+                    updateBackButton();
+                });
+        
+                changesListComp.appendChild(btn);
+        
+                if (toRestoreId && c.id === toRestoreId) {
+                    btn.classList.add('selected');
+                    lastSelectedBtn = btn;
+                }
+            }
+        
+            updateBackButton();
+        }
+
+        document.getElementById("compareBtn").addEventListener('click', () => {
+            if (lastSelectedBtn) { lastSelectedBtn.classList.remove('selected'); lastSelectedBtn = null; }
+            clearFocusComp();
+            computeComp();
+            updateBackButton();
+        });
+        document.getElementById("toggleContext").addEventListener('click', () => {
+            showContext = !showContext;
+            document.getElementById("toggleContext").textContent = showContext ? "Contexte —" : "± Contexte";
+            const prevSelectedId = lastSelectedBtn ? lastSelectedBtn.dataset.id : null;
+            const prevFocused = lastFocusedId;
+            computeComp();
+            if (prevSelectedId) {
+                const candidate = Array.from(document.querySelectorAll('.comp-change')).find(b => b.dataset.id === prevSelectedId);
+                if (candidate) {
+                    candidate.classList.add('selected');
+                    lastSelectedBtn = candidate;
+                } else {
+                    lastSelectedBtn = null;
+                }
+            }
+            if (prevFocused) {
+                const el = document.getElementById(prevFocused);
+                if (el && el.tagName === 'MARK') {
+                    el.classList.add('focused');
+                    lastFocusedId = prevFocused;
+                } else {
+                    lastFocusedId = null;
+                    lastFocusedType = null;
+                }
+            }
+            updateBackButton();
+        });
+        document.getElementById("copyBtn").addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(outComp.innerHTML);
+                copyBtnComp.textContent = 'Copié ✓';
+                setTimeout(() => copyBtnComp.textContent = 'Copier le résultat', 900);
+            } catch(e) {
+                alert("Impossible de copier. Sélectionne et copie manuellement.");
+            }
+        });
+        backBtn.addEventListener('click', () => {
+            if (!lastSelectedBtn) return;
+            lastSelectedBtn.scrollIntoView({behavior:'smooth', block:'center'});
+            flashSidebarCard(lastSelectedBtn);
+        });
+        onlyDelBtn.addEventListener('click', () => {
+            showOnlyDeletions = !showOnlyDeletions;
+            onlyDelBtn.classList.toggle('active', showOnlyDeletions);
+            onlyDelBtn.textContent = showOnlyDeletions ? '➖ Suppressions (ON)' : '➖ Suppressions uniquement';
+            const prevSelectedId = lastSelectedBtn ? lastSelectedBtn.dataset.id : null;
+            const prevFocused = lastFocusedId;
+            computeComp();
+            if (prevSelectedId) {
+                const cand = Array.from(document.querySelectorAll('.comp-change')).find(b => b.dataset.id === prevSelectedId);
+                if (cand) {
+                    cand.classList.add('selected');
+                    lastSelectedBtn = cand;
+                } else {
+                    lastSelectedBtn = null;
+                }
+            }
+            if (prevFocused) {
+                const el = document.getElementById(prevFocused);
+                if (el && el.tagName === 'MARK') {
+                    el.classList.add('focused');
+                    lastFocusedId = prevFocused;
+                } else {
+                    lastFocusedId = null;
+                    lastFocusedType = null;
+                }
+            }
+            updateBackButton();
+        });
+        
+        // Exemples par défaut
+        oldTA.value = "Le contrat entre en vigueur le 1er janvier 2024.\nLe prix est de 100€.\nLe client accepte les conditions.";
+        newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 €.\nLe client accepte pleinement les conditions générales.";
+        
         // INIT FLASHCARDS
         loadData();
         bootstrapEmbedIfAny();
-    </script>
-    <script>
-        /*
-        NOTE IMPORTANTE : Le code JavaScript complet de votre application est très long. 
-        Pour éviter une nouvelle coupure, j'ai inclus ici uniquement les fonctions 
-        critiques que j'ai modifiées (ou que j'ai dû commenter/supprimer).
-
-        Veuillez coller le reste de votre code JavaScript original (tout ce qui est après 
-        la fonction showStudyPage, y compris loadData, saveData, toutes les fonctions 
-        de gestion des modals, du comparateur, etc.) À LA PLACE DE CE COMMENTAIRE.
-        */
-
-        // Je vais insérer ici uniquement la fonction que j'ai enlevée du HTML :
-        // Le JavaScript de bascule du menu est INTENTIONNELLEMENT RETIRÉ :
-        /*
-        function toggleSidebar() { 
-            const sidebar = document.getElementById('sidebar'); 
-            const mainContent = document.getElementById('mainContent'); 
-            const toggleBtn = document.getElementById('toggleSidebarBtn'); 
-            sidebar.classList.toggle('hidden'); 
-            mainContent.classList.toggle('sidebar-hidden'); 
-            toggleBtn.classList.toggle('sidebar-hidden'); 
-        }
-        */
-        
-        // Veuillez réinsérer tout le code JavaScript manquant ici.
-
-        // FIN DU CODE JAVASCRIPT
     </script>
 </body>
 </html>
