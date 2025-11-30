@@ -1496,26 +1496,58 @@ if (majorityKnown && GIF_KNOWN_URL) {
     }
     function importCards() { document.getElementById('fileInput').click(); }
     document.getElementById('fileInput').addEventListener('change', function(event) {
-  const file = event.target.files[0];
+  const file = event.target.files && event.target.files[0];
   if (!file) return;
 
+  console.log('[IMPORT] name:', file.name, 'type:', file.type, 'size:', file.size);
+
   const reader = new FileReader();
+  reader.onerror = () => alert('Lecture de fichier impossible (FileReader).');
   reader.onload = function(e) {
     try {
-      const data = JSON.parse(e.target.result);
+      let raw = e.target.result || '';
+      // 1) Nettoyage basique: supprime BOM et fences markdown éventuels
+      raw = raw.replace(/^\uFEFF/, '').trim();
+      if (raw.startsWith('```')) {
+        // retire fences ```json ... ```
+        raw = raw.replace(/^```[a-zA-Z0-9]*\s*/, '').replace(/```$/, '').trim();
+      }
 
-      // Cas 1: format "liste unique"
-      if (data.categoryName && data.folderName && data.listName && Array.isArray(data.cards)) {
-        if (!categories[data.categoryName]) categories[data.categoryName] = {};
-        if (!categories[data.categoryName][data.folderName]) categories[data.categoryName][data.folderName] = {};
-        // Demander si on écrase une liste existante
-        if (categories[data.categoryName][data.folderName][data.listName] &&
-            !confirm('La liste "' + data.listName + '" existe déjà. Écraser ?')) {
-          event.target.value = '';
-          return;
+      // 2) Parse JSON
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (err) {
+        console.error('[IMPORT] JSON.parse error:', err);
+        alert('JSON invalide (échec du parsing). Vérifie qu’il n’y a pas de ``` ou de guillemets simples.');
+        event.target.value = '';
+        return;
+      }
+
+      // 3) Détection format + import
+      const isList =
+        data && data.categoryName && data.folderName && data.listName && Array.isArray(data.cards);
+      const isAll =
+        data && data.exportVersion && Array.isArray(data.data);
+
+      if (!isList && !isAll) {
+        console.warn('[IMPORT] Format non reconnu. Aperçu des clés:', Object.keys(data||{}));
+        alert('Format non reconnu. Fichier attendu: "liste unique" ou "export tout".');
+        event.target.value = '';
+        return;
+      }
+
+      if (isList) {
+        const { categoryName, folderName, listName, cards } = data;
+        if (!categories[categoryName]) categories[categoryName] = {};
+        if (!categories[categoryName][folderName]) categories[categoryName][folderName] = {};
+        if (categories[categoryName][folderName][listName]) {
+          if (!confirm(`La liste "${listName}" existe déjà. Écraser ?`)) {
+            event.target.value = '';
+            return;
+          }
         }
-        categories[data.categoryName][data.folderName][data.listName] = data.cards;
-
+        categories[categoryName][folderName][listName] = Array.isArray(cards) ? cards : [];
         saveData();
         updateCategoryList();
         if (currentPage === 'home') updateHomeStats();
@@ -1524,28 +1556,64 @@ if (majorityKnown && GIF_KNOWN_URL) {
         return;
       }
 
-      // Cas 2: format "export tout"
-      if (data.exportVersion && Array.isArray(data.data)) {
-        // Merge “data”
-        data.data.forEach(cat => {
+      if (isAll) {
+        // Import "export tout"
+        let catCount=0, courseCount=0, listCount=0, cardCount=0;
+        (data.data || []).forEach(cat => {
           const catName = cat.categoryName;
           if (!catName) return;
+          catCount++;
           if (!categories[catName]) categories[catName] = {};
           (cat.courses || []).forEach(course => {
             const folderName = course.folderName;
             if (!folderName) return;
+            courseCount++;
             if (!categories[catName][folderName]) categories[catName][folderName] = {};
             (course.lists || []).forEach(lst => {
               const listName = lst.listName;
-              const cards = Array.isArray(lst.cards) ? lst.cards : [];
               if (!listName) return;
-              // Si la liste existe, demander confirmation d’écraser
-              if (categories[catName][folderName][listName] &&
-                  !confirm('La liste "' + listName + '" existe déjà dans "' + folderName + '". Écraser ?')) {
-                return;
+              const cards = Array.isArray(lst.cards) ? lst.cards : [];
+              listCount++;
+              cardCount += cards.length;
+              if (categories[catName][folderName][listName]) {
+                const ok = confirm(`"${listName}" existe dans "${folderName}". Écraser ?`);
+                if (!ok) return;
               }
               categories[catName][folderName][listName] = cards;
             });
+          });
+        });
+        if (data.results && typeof data.results === 'object') {
+          // merge non destructif des résultats
+          function deepMerge(dst, src){
+            Object.keys(src).forEach(k=>{
+              if (src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])) {
+                if (!dst[k] || typeof dst[k] !== 'object') dst[k] = {};
+                deepMerge(dst[k], src[k]);
+              } else {
+                if (dst[k] === undefined) dst[k] = src[k];
+              }
+            });
+          }
+          if (!results || typeof results !== 'object') results = {};
+          deepMerge(results, data.results);
+          saveResults();
+        }
+        saveData();
+        updateCategoryList();
+        if (currentPage === 'home') updateHomeStats();
+        alert(`Import complet terminé ✓\nCatégories:${catCount} • Cours:${courseCount} • Listes:${listCount} • Cartes:${cardCount}`);
+        event.target.value = '';
+        return;
+      }
+
+    } catch (err) {
+      console.error('[IMPORT] Exception:', err);
+      alert('Erreur imprévue pendant l’import. Regarde la console pour le détail.');
+    }
+  };
+  reader.readAsText(file);
+});
           });
         });
 
