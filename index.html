@@ -466,11 +466,12 @@
                             </div>
                         </div>
                     </div>
-                    <div class="end-actions">
-                        <button class="btn-restart" onclick="restartSession()">Recommencer</button>
-                        <button class="btn-review" id="btnReviewWrong" onclick="reviewWrongCards()">🔄 Réviser à revoir</button>
-                        <button class="btn-next-list" id="btnNextList" onclick="goToNextList()">Liste suivante →</button>
-                    </div>
+                    <div class="quick-actions">
+    <button class="btn-action" onclick="showNewFolderModal()">➕ Créer un cours</button>
+    <button class="btn-action btn-action-secondary" onclick="showImportTextModal()">📋 Importer (Texte/CSV)</button>
+    <button class="btn-action btn-action-secondary" onclick="importCards()">📥 Restaurer (JSON)</button>
+    <button class="btn-export-all" onclick="exportAll()">📦 Exporter tout</button>
+</div>
                     <div id="resultGif" class="result-gif"><img id="resultGifImg" src="" alt="Bravo !"></div>
                 </div>
             </div>
@@ -620,6 +621,42 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js"></script>
+    <div class="modal" id="importTextModal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">Importer depuis Texte / Quizlet</div>
+        
+        <div class="input-group">
+            <label>1. Destination :</label>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <select id="importCatSelect" onchange="updateImportFolderSelect()" style="flex:1"></select>
+                <select id="importFolderSelect" style="flex:1"></select>
+            </div>
+            <input type="text" id="importListName" placeholder="Nom de la liste (ex: Chapitre 1)">
+        </div>
+
+        <div class="input-group">
+            <label>2. Séparateur entre Question et Réponse :</label>
+            <select id="importSeparator">
+                <option value="tab">Tabulation (Quizlet par défaut)</option>
+                <option value=",">Virgule (,)</option>
+                <option value=";">Point-virgule (;)</option>
+                <option value=":">Deux-points (:)</option>
+                <option value="-">Tiret (-)</option>
+                <option value="|">Barre verticale (|)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>3. Collez votre texte ici :</label>
+            <textarea id="importTextContent" style="width:100%; height:200px; padding:10px; border:2px solid var(--border); border-radius:8px; font-family:monospace; resize:vertical;" placeholder="Terme 1    Définition 1&#10;Terme 2    Définition 2"></textarea>
+        </div>
+
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeImportTextModal()">Annuler</button>
+            <button class="btn-add" onclick="performTextImport()">Importer les cartes</button>
+        </div>
+    </div>
+</div>
 <script>
     // VARIABLES GLOBALES FLASHCARDS
     let categories = {}, results = {}, currentCategory = null, currentFolder = null, currentList = null, currentPage = 'home', currentIndex = 0, isFlipped = false, isReviewMode = false, reviewIndices = [], stats = {known: 0, partial: 0, unknown: 0}, currentEditingSide = null, renameTarget = null, openCategories = {};
@@ -1804,6 +1841,156 @@
         repCountComp.textContent = finalChanges.filter(c => c.type === 'remplacement').length;
         
         hintComp.textContent = `${finalChanges.length} modifications détectées${rep? " • remplacements: "+rep : ""}.`;
+    }
+    // --- LOGIQUE IMPORT TEXTE / CSV ---
+
+    function showImportTextModal() {
+        const modal = document.getElementById('importTextModal');
+        const catSelect = document.getElementById('importCatSelect');
+        const listInput = document.getElementById('importListName');
+        const txtArea = document.getElementById('importTextContent');
+        
+        // Reset des champs
+        listInput.value = '';
+        txtArea.value = '';
+        catSelect.innerHTML = '';
+        
+        // Remplir les catégories
+        const catNames = Object.keys(categories);
+        if (catNames.length === 0) {
+            alert("Créez d'abord une catégorie et un cours via le bouton 'Créer un cours'.");
+            return;
+        }
+        
+        catNames.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            catSelect.appendChild(opt);
+        });
+
+        // Sélectionner la catégorie courante si elle existe
+        if (currentCategory && categories[currentCategory]) {
+            catSelect.value = currentCategory;
+        }
+
+        updateImportFolderSelect();
+        modal.classList.add('show');
+        setTimeout(() => listInput.focus(), 100);
+    }
+
+    function updateImportFolderSelect() {
+        const catSelect = document.getElementById('importCatSelect');
+        const folderSelect = document.getElementById('importFolderSelect');
+        const catName = catSelect.value;
+        
+        folderSelect.innerHTML = '';
+        
+        if (catName && categories[catName]) {
+            const folders = Object.keys(categories[catName]);
+            if (folders.length === 0) {
+                const opt = document.createElement('option');
+                opt.text = "(Aucun cours)";
+                folderSelect.appendChild(opt);
+            } else {
+                folders.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f;
+                    opt.textContent = f;
+                    folderSelect.appendChild(opt);
+                });
+                // Pré-sélectionner le dossier courant si pertinent
+                if (currentCategory === catName && currentFolder && categories[catName][currentFolder]) {
+                    folderSelect.value = currentFolder;
+                }
+            }
+        }
+    }
+
+    function closeImportTextModal() {
+        document.getElementById('importTextModal').classList.remove('show');
+    }
+
+    function performTextImport() {
+        const catName = document.getElementById('importCatSelect').value;
+        const folderName = document.getElementById('importFolderSelect').value;
+        const listName = document.getElementById('importListName').value.trim();
+        const rawText = document.getElementById('importTextContent').value;
+        const sepType = document.getElementById('importSeparator').value;
+
+        // Validations
+        if (!catName || !folderName || folderName === "(Aucun cours)") {
+            alert("Veuillez sélectionner une catégorie et un cours valides.");
+            return;
+        }
+        if (!listName) {
+            alert("Veuillez donner un nom à la liste.");
+            return;
+        }
+        if (!rawText.trim()) {
+            alert("Le texte à importer est vide.");
+            return;
+        }
+
+        // Détermination du séparateur réel
+        let separator = sepType;
+        if (sepType === 'tab') separator = '\t';
+
+        // Analyse du texte ligne par ligne
+        const lines = rawText.split(/\r?\n/);
+        let importedCount = 0;
+        const newCards = [];
+
+        lines.forEach(line => {
+            if (!line.trim()) return; // Ignorer lignes vides
+            
+            // On sépare la ligne en 2 parties maximum (Question / Reste)
+            // Si la réponse contient le séparateur, on ne veut pas couper encore
+            const parts = line.split(separator);
+            
+            if (parts.length >= 2) {
+                const q = parts[0].trim();
+                // On rejoint le reste au cas où le séparateur serait dans la réponse
+                const a = parts.slice(1).join(separator).trim();
+                
+                if (q && a) {
+                    newCards.push({ question: q, answer: a });
+                    importedCount++;
+                }
+            }
+        });
+
+        if (importedCount === 0) {
+            alert("Aucune carte détectée. Vérifiez le séparateur (ex: Tabulation vs Virgule).");
+            return;
+        }
+
+        // Sauvegarde dans la structure de données
+        if (!categories[catName][folderName][listName]) {
+            // Création nouvelle liste
+            categories[catName][folderName][listName] = [];
+        } else {
+            // La liste existe, on demande si on fusionne
+            if (!confirm(`La liste "${listName}" existe déjà. Voulez-vous ajouter ces ${importedCount} cartes à la suite ?`)) {
+                return;
+            }
+        }
+
+        // Ajout des cartes
+        categories[catName][folderName][listName].push(...newCards);
+        
+        saveData();
+        updateCategoryList(); // Met à jour la barre latérale
+        
+        // Si on est sur l'accueil, mettre à jour les stats
+        if (currentPage === 'home') updateHomeStats();
+        
+        // Feedback et fermeture
+        alert(`${importedCount} cartes importées avec succès dans "${listName}" !`);
+        closeImportTextModal();
+        
+        // Redirection immédiate vers la liste créée
+        showListsPage(catName, folderName);
     }
 
     function flashSidebarCard(btn) {
