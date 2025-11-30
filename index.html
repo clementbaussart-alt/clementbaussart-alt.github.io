@@ -221,246 +221,632 @@
     </div>
 </div>
 
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Pro + Import</title>
+    <style>
+        :root {
+            /* Couleurs principales du thème par défaut */
+            --bg-gradient-from: #667eea;
+            --bg-gradient-to: #764ba2;
+            --primary: #667eea;
+            --primary-2: #764ba2;
+            --accent: #11998e;
+            --accent-2: #38ef7d;
+            --danger: #ff6b6b;
+            --text: #333333;
+            --text-soft: #666666;
+            --panel: #ffffff;
+            --panel-muted: #f5f7fa;
+            --border: #e0e0e0;
+            --shadow: rgba(0,0,0,0.08);
+            --card-bg: #ffffff;
+            --known: #38ef7d;
+            --partial: #f5a623;
+            --unknown: #ff6b6b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%); 
+            min-height: 100vh; 
+            display: flex; 
+            color: var(--text);
+        }
+        
+        /* SIDEBAR */
+        .sidebar { width: 280px; background: var(--panel); box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100; transition: transform 0.3s ease; border-right: 1px solid var(--border); }
+        .sidebar.hidden { transform: translateX(-280px); }
+        .sidebar-header { padding: 30px 20px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); color: white; }
+        .sidebar-header h1 { font-size: 22px; margin-bottom: 5px; }
+        .sidebar-nav { padding: 20px; border-bottom: 2px solid var(--border); }
+        .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 10px; font-weight: 500; color: var(--text); }
+        .nav-item:hover { background: var(--panel-muted); }
+        .nav-item.active { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); color: white; }
+        
+        .folder-section { flex: 1; overflow-y: auto; padding: 20px; background: var(--panel); }
+        .folder-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .btn-new-folder, .btn-new-category { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s; }
+        .btn-new-category { background: var(--accent); }
+        
+        /* Tree View */
+        .category-item { margin-bottom: 10px; }
+        .category-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: var(--panel-muted); border-radius: 6px; cursor: pointer; transition: all 0.3s; color: var(--text); }
+        .category-header:hover { background: var(--border); }
+        .category-left { display: flex; align-items: center; gap: 8px; flex: 1; }
+        .category-toggle { font-size: 12px; transition: transform 0.3s; }
+        .category-toggle.open { transform: rotate(90deg); }
+        .category-name { font-weight: 600; font-size: 14px; }
+        .category-count { background: rgba(0,0,0, 0.1); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-left: 5px; }
+        .category-actions { display: flex; gap: 5px; opacity: 0; transition: all 0.3s; }
+        .category-header:hover .category-actions { opacity: 1; }
+        .btn-edit-category, .btn-delete-category { background: none; border: none; color: var(--text-soft); cursor: pointer; font-size: 14px; padding: 0; width: 20px; height: 20px; }
+        .category-folders { padding-left: 15px; margin-top: 5px; display: none; }
+        .category-folders.open { display: block; }
+        .folder-item { padding: 10px 15px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: space-between; color: var(--text); }
+        .folder-item:hover { background: var(--panel-muted); }
+        .folder-actions { display: flex; gap: 5px; opacity: 0; transition: all 0.3s; }
+        .folder-item:hover .folder-actions { opacity: 1; }
+        .btn-edit-folder, .btn-delete-folder { background: none; border: none; color: var(--text-soft); cursor: pointer; font-size: 14px; }
+
+        /* MAIN CONTENT */
+        .toggle-sidebar-btn { position: fixed; left: 290px; top: 20px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); border: none; color: white; width: 48px; height: 48px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 101; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .toggle-sidebar-btn.sidebar-hidden { left: 10px; }
+        .main-content { margin-left: 280px; flex: 1; padding: 40px; overflow-y: auto; height: 100vh; transition: margin-left 0.3s ease; }
+        .main-content.sidebar-hidden { margin-left: 0; }
+        
+        .container { background: var(--panel); border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); padding: 40px; max-width: 800px; margin: 0 auto; color: var(--text); }
+        .app-header { background: var(--panel); border-radius: 20px 20px 0 0; padding: 20px 40px; max-width: 800px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; }
+        
+        .btn-comparator { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); color: white; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 600; cursor: pointer; margin-left: 10px; }
+
+        /* HOME */
+        .home-hero h1 { font-size: 48px; margin-bottom: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 40px; }
+        .stat-card { background: var(--panel-muted); padding: 30px; border-radius: 15px; text-align:center; }
+        .stat-card-value { font-size: 36px; font-weight: 700; color: var(--primary); }
+        
+        .quick-actions { margin-top: 40px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .btn-action { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s; }
+        .btn-action:hover { transform: translateY(-2px); }
+        .btn-action-secondary { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); }
+        .btn-export-all { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #111; }
+        
+        .course-list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .course-card { background: var(--panel-muted); padding: 15px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; border: 1px solid var(--border); }
+        .course-card:hover { background: #e8ebff; }
+
+        /* LISTS */
+        .list-card { background: var(--panel-muted); padding: 20px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); }
+        .btn-list-action { padding: 10px 20px; border: none; border-radius: 6px; color: white; cursor: pointer; font-weight: 600; margin-left: 5px; }
+        .btn-study { background: var(--primary); }
+        .btn-manage { background: var(--partial); }
+
+        /* STUDY */
+        .card-container { perspective: 1000px; margin: 30px 0; min-height: 300px; }
+        .card { background: transparent; width:100%; height:100%; border-radius: 15px; min-height: 300px; cursor: pointer; transition: transform 0.6s; transform-style: preserve-3d; position: relative; }
+        .card.flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 30px; background: var(--card-bg); border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid var(--border); font-size: 22px; text-align: center; overflow: auto; }
+        .card-back { transform: rotateY(180deg); }
+        .buttons { display: flex; gap: 10px; }
+        .buttons button { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+        .btn-known { background: var(--known); }
+        .btn-partial { background: var(--partial); }
+        .btn-unknown { background: var(--unknown); }
+
+        /* MANAGE */
+        .card-edit-item { background: var(--panel-muted); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border); }
+        .editor-content { background: var(--panel); border: 1px solid var(--border); padding: 10px; min-height: 60px; border-radius: 6px; margin-top: 5px; }
+
+        /* MODALS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: var(--panel); padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; color: var(--text); }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); }
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .btn-cancel { background: var(--border); border:none; padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--text); }
+        .btn-add { background: var(--primary); border:none; padding: 8px 16px; border-radius: 6px; cursor: pointer; color: white; }
+
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        /* THEME MODAL */
+        #themeModal .input-group input[type="color"] { height: 40px; padding: 2px; }
+
+        /* COMPARATEUR */
+        #comparatorModal { z-index: 2000; background: rgba(0,0,0,0.9); }
+        .comparator-container { display: grid; grid-template-columns: 1fr 300px; gap: 20px; height: 90vh; width: 95%; background: #14161a; border-radius: 10px; padding: 20px; color: #fff; }
+        .comp-controls textarea { width: 100%; background: #0e1014; color: #fff; border: 1px solid #333; padding: 10px; min-height: 100px; }
+        #diffOutput { background: #0e1014; padding: 20px; border-radius: 8px; height: 100%; overflow: auto; white-space: pre-wrap; line-height: 1.6; }
+        mark.ins { background: rgba(34,197,94,0.3); color: #fff; text-decoration: none; }
+        mark.del { background: rgba(239,68,68,0.3); color: #fff; text-decoration: line-through; }
+    </style>
+</head>
+<body>
+
+<button class="toggle-sidebar-btn" id="toggleSidebarBtn" onclick="toggleSidebar()">◀</button>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header"><h1>📚 Flashcards</h1><p>Pro + Import</p></div>
+    <div class="sidebar-nav"><div class="nav-item active" onclick="showPage('home')">🏠 Accueil</div></div>
+    <div class="folder-section">
+        <div class="folder-section-header">
+            <h3>Mes Cours</h3>
+            <div>
+                <button class="btn-new-category" onclick="showNewCategoryModal()">+ Cat</button>
+                <button class="btn-new-folder" onclick="showNewFolderModal()">+ Cours</button>
+            </div>
+        </div>
+        <div id="categoryList"></div>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent">
+    <div class="app-header">
+        <button class="btn-comparator" onclick="openComparator()">🔍 Comparateur</button>
+        <button class="btn-comparator" onclick="openThemeModal()">🎨 Thème</button>
+    </div>
+
+    <div id="homePage" class="page active">
+        <div class="container home-page" style="text-align: center;">
+            <div class="home-hero"><h1>Bienvenue ! 👋</h1><p>Le système complet pour tes révisions.</p></div>
+            
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-card-value" id="totalCourses">0</div><div>Cours</div></div>
+                <div class="stat-card"><div class="stat-card-value" id="totalCards">0</div><div>Cartes</div></div>
+            </div>
+
+            <div class="quick-actions">
+                <button class="btn-action" onclick="showNewFolderModal()">➕ Créer un cours</button>
+                <button class="btn-action btn-action-secondary" onclick="showImportTextModal()">📋 Importer (Texte/Quizlet)</button>
+                <button class="btn-action" style="background:#555;" onclick="importCards()">📥 Restaurer (JSON)</button>
+                <button class="btn-export-all" onclick="exportAll()">📦 Sauvegarder</button>
+            </div>
+
+            <div class="recent-courses" style="text-align: left; margin-top:40px;">
+                <h2>Mes cours</h2>
+                <div class="course-list" id="courseList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="listsPage" class="page">
+        <div class="container">
+            <h2 id="listsTitle">Cours</h2>
+            <p style="margin-bottom:20px; color:var(--text-soft);">Sélectionne une liste :</p>
+            <div class="lists-grid" id="listsGrid"></div>
+            <button class="btn-action" style="width:100%; margin-top:20px;" onclick="showNewListModal()">+ Nouvelle Liste</button>
+        </div>
+    </div>
+
+    <div id="manageCardsPage" class="page">
+        <div class="container">
+            <button style="background:none; border:none; color:var(--primary); cursor:pointer; margin-bottom:10px;" onclick="showListsPage(currentCategory, currentFolder)">← Retour</button>
+            <h2 id="manageTitle">Gérer</h2>
+            
+            <div style="background:var(--panel-muted); padding:20px; border-radius:10px; margin-bottom:20px;">
+                <div class="input-group">
+                    <label>Question</label>
+                    <div class="editor-content" id="newQuestion" contenteditable="true"></div>
+                </div>
+                <div class="input-group">
+                    <label>Réponse</label>
+                    <div class="editor-content" id="newAnswer" contenteditable="true"></div>
+                </div>
+                <button class="btn-add" onclick="addCard()">Ajouter la carte</button>
+            </div>
+
+            <div id="cardsList"></div>
+        </div>
+    </div>
+
+    <div id="studyPage" class="page">
+        <div class="container" style="text-align:center;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <button style="background:none; border:none; color:var(--primary); cursor:pointer;" onclick="showListsPage(currentCategory, currentFolder)">← Quitter</button>
+                <span id="studyCounter">0/0</span>
+            </div>
+            
+            <div style="height:6px; background:#eee; border-radius:10px; margin-bottom:20px; overflow:hidden;">
+                <div id="progressBar" style="height:100%; width:0%; background:var(--primary); transition:0.3s;"></div>
+            </div>
+
+            <div id="cardSection">
+                <div class="card-container">
+                    <div class="card" id="flashcard" onclick="flipCard()">
+                        <div class="card-face card-front" id="question"></div>
+                        <div class="card-face card-back" id="answer"></div>
+                    </div>
+                </div>
+                <p style="color:#999; font-size:12px; margin-bottom:20px;">Clique pour retourner</p>
+                <div class="buttons">
+                    <button class="btn-known" onclick="answer('known')">Connu</button>
+                    <button class="btn-partial" onclick="answer('partial')">Moyen</button>
+                    <button class="btn-unknown" onclick="answer('unknown')">Pas connu</button>
+                </div>
+            </div>
+            
+            <div id="endSection" style="display:none; padding:40px;">
+                <h2>Terminé ! 🎉</h2>
+                <button class="btn-action" onclick="showListsPage(currentCategory, currentFolder)">Retour aux listes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="fileInput" accept=".json" style="display:none;">
+
+<div class="modal" id="newCategoryModal">
+    <div class="modal-content">
+        <h3>Nouvelle Catégorie</h3>
+        <div class="input-group"><input type="text" id="categoryNameInput" placeholder="Ex: Droit, Anglais..."></div>
+        <div class="modal-buttons"><button class="btn-cancel" onclick="closeModals()">Annuler</button><button class="btn-add" onclick="createCategory()">Créer</button></div>
+    </div>
+</div>
+
+<div class="modal" id="newFolderModal">
+    <div class="modal-content">
+        <h3>Nouveau Cours</h3>
+        <div class="input-group"><select id="folderCategorySelect"></select></div>
+        <div class="input-group"><input type="text" id="folderNameInput" placeholder="Ex: Chapitre 1..."></div>
+        <div class="modal-buttons"><button class="btn-cancel" onclick="closeModals()">Annuler</button><button class="btn-add" onclick="createFolder()">Créer</button></div>
+    </div>
+</div>
+
+<div class="modal" id="newListModal">
+    <div class="modal-content">
+        <h3>Nouvelle Liste</h3>
+        <div class="input-group"><input type="text" id="listNameInput" placeholder="Ex: Vocabulaire..."></div>
+        <div class="modal-buttons"><button class="btn-cancel" onclick="closeModals()">Annuler</button><button class="btn-add" onclick="createList()">Créer</button></div>
+    </div>
+</div>
+
+<div class="modal" id="importTextModal">
+    <div class="modal-content" style="max-width: 600px;">
+        <h3>Importer (Quizlet / Texte)</h3>
+        <div class="input-group">
+            <label>1. Destination :</label>
+            <div style="display:flex; gap:10px;">
+                <select id="importCatSelect" onchange="updateImportFolderSelect()" style="flex:1"></select>
+                <select id="importFolderSelect" style="flex:1"></select>
+            </div>
+            <input type="text" id="importListName" placeholder="Nom de la liste à créer" style="margin-top:5px;">
+        </div>
+        <div class="input-group">
+            <label>2. Séparateur :</label>
+            <select id="importSeparator">
+                <option value="tab">Tabulation (Quizlet par défaut)</option>
+                <option value=";">Point-virgule (;)</option>
+                <option value=",">Virgule (,)</option>
+                <option value="-">Tiret (-)</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>3. Collez votre texte ici :</label>
+            <textarea id="importTextContent" style="width:100%; height:150px; font-family:monospace; resize:vertical;" placeholder="Terme    Définition&#10;Terme 2    Définition 2"></textarea>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeModals()">Annuler</button>
+            <button class="btn-add" onclick="performTextImport()">Importer</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="themeModal">
+    <div class="modal-content" style="max-height:80vh; overflow:auto;">
+        <h3>Personnaliser le Thème</h3>
+        <div class="input-group"><label>Fond Départ</label><input type="color" id="th_bg_from" onchange="setVar('--bg-gradient-from', this.value)"></div>
+        <div class="input-group"><label>Fond Arrivée</label><input type="color" id="th_bg_to" onchange="setVar('--bg-gradient-to', this.value)"></div>
+        <div class="input-group"><label>Primaire</label><input type="color" id="th_primary" onchange="setVar('--primary', this.value)"></div>
+        <div class="input-group"><label>Panneau</label><input type="color" id="th_panel" onchange="setVar('--panel', this.value)"></div>
+        <div class="input-group"><label>Texte</label><input type="color" id="th_text" onchange="setVar('--text', this.value)"></div>
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeModals()">Fermer</button>
+            <button class="btn-add" onclick="saveTheme()">Sauvegarder</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="comparatorModal">
+    <div class="comparator-container">
+        <div class="comp-controls">
+            <h3 style="margin-bottom:10px;">Comparateur de texte</h3>
+            <label>Ancien texte</label>
+            <textarea id="oldText" placeholder="Collez l'ancienne version..."></textarea>
+            <label style="margin-top:10px;">Nouveau texte</label>
+            <textarea id="newText" placeholder="Collez la nouvelle version..."></textarea>
+            <button class="btn-add" style="margin-top:20px; width:100%; padding:15px;" onclick="runComparison()">COMPARER</button>
+            <button class="btn-cancel" style="margin-top:10px; width:100%;" onclick="document.getElementById('comparatorModal').classList.remove('show')">Fermer</button>
+        </div>
+        <div class="comp-result">
+            <h3>Résultat</h3>
+            <div id="diffOutput">Le résultat s'affichera ici...</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js"></script>
 <script>
-    // DONNEES ET ETAT
-    let categories = JSON.parse(localStorage.getItem('fc_data') || '{}');
-    let currentCategory = null;
-    let currentFolder = null;
-    let currentList = null;
-    let studyQueue = [];
-    let studyIndex = 0;
+    // --- ETAT GLOBAL ---
+    let categories = {};
+    let currentCategory = null; 
+    let currentFolder = null; 
+    let currentList = null; 
+    let currentIndex = 0;
+    let studyList = [];
 
-    // INIT
-    if(Object.keys(categories).length === 0) {
-        categories = {"Exemple": {"Mon Premier Cours": {"Liste Démo": [{question:"Bienvenue", answer:"C'est parti !"}]}}};
-        saveData();
+    // --- CHARGEMENT ---
+    function loadData() {
+        const data = localStorage.getItem('flashcards_categories_v3');
+        if(data) {
+            categories = JSON.parse(data);
+        } else {
+            // Données de démo si vide
+            categories = {"Droit": {"Constitutionnel": {"Démo": [{question:"Qu'est-ce que l'État ?", answer:"Une personne morale de droit public."}]}}};
+        }
+        updateCategoryList();
+        updateHomeStats();
+        loadTheme();
     }
-    renderSidebar();
-    updateHomeStats();
+    
+    function saveData() {
+        localStorage.setItem('flashcards_categories_v3', JSON.stringify(categories));
+        updateCategoryList();
+        updateHomeStats();
+    }
 
-    // NAVIGATION
-    function showPage(id) {
+    // --- NAVIGATION ---
+    function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(id + 'Page').classList.add('active');
-        if(id === 'home') updateHomeStats();
+        document.getElementById(pageId + 'Page').classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        if(pageId === 'home') document.querySelector('.nav-item').classList.add('active');
+    }
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('hidden');
+        document.getElementById('mainContent').classList.toggle('sidebar-hidden');
     }
 
     function closeModals() {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
     }
 
-    // RENDERING
-    function renderSidebar() {
-        const div = document.getElementById('categoryList');
-        div.innerHTML = '';
+    // --- AFFICHAGE SIDEBAR ---
+    function updateCategoryList() {
+        const container = document.getElementById('categoryList');
+        container.innerHTML = '';
+        
         Object.keys(categories).forEach(cat => {
-            const catHeader = document.createElement('div');
-            catHeader.className = 'category-header';
-            catHeader.innerHTML = `<span>${cat}</span><span>▼</span>`;
-            catHeader.onclick = () => { foldersDiv.classList.toggle('open'); };
+            const catDiv = document.createElement('div');
+            catDiv.className = 'category-item';
             
-            const foldersDiv = document.createElement('div');
-            foldersDiv.className = 'category-folders';
+            // Header Catégorie
+            const header = document.createElement('div');
+            header.className = 'category-header';
+            header.innerHTML = `<div class="category-left"><span class="category-name">${cat}</span></div>`;
+            header.onclick = () => { folders.classList.toggle('open'); };
+            
+            const folders = document.createElement('div');
+            folders.className = 'category-folders';
             
             Object.keys(categories[cat]).forEach(folder => {
-                const fItem = document.createElement('div');
-                fItem.className = 'folder-item';
-                fItem.innerHTML = `<span>📖 ${folder}</span>`;
-                fItem.onclick = () => showListsPage(cat, folder);
-                foldersDiv.appendChild(fItem);
+                const fDiv = document.createElement('div');
+                fDiv.className = 'folder-item';
+                fDiv.innerHTML = `<span>📖 ${folder}</span>`;
+                fDiv.onclick = (e) => { e.stopPropagation(); showListsPage(cat, folder); };
+                folders.appendChild(fDiv);
             });
             
-            div.appendChild(catHeader);
-            div.appendChild(foldersDiv);
+            catDiv.appendChild(header);
+            catDiv.appendChild(folders);
+            container.appendChild(catDiv);
         });
     }
 
     function updateHomeStats() {
-        const list = document.getElementById('courseList');
-        list.innerHTML = '';
+        let courses = 0;
+        let cards = 0;
+        const listDiv = document.getElementById('courseList');
+        listDiv.innerHTML = '';
+
         Object.keys(categories).forEach(cat => {
             Object.keys(categories[cat]).forEach(folder => {
-                const d = document.createElement('div');
-                d.className = 'course-card';
-                const count = Object.keys(categories[cat][folder]).length;
-                d.innerHTML = `<b>${folder}</b> <small>${cat} • ${count} listes</small>`;
-                d.onclick = () => showListsPage(cat, folder);
-                list.appendChild(d);
+                courses++;
+                let folderCards = 0;
+                Object.values(categories[cat][folder]).forEach(l => folderCards += l.length);
+                cards += folderCards;
+
+                const cCard = document.createElement('div');
+                cCard.className = 'course-card';
+                cCard.innerHTML = `<div><strong>${folder}</strong><br><small>${cat}</small></div><div>${folderCards} cartes</div>`;
+                cCard.onclick = () => showListsPage(cat, folder);
+                listDiv.appendChild(cCard);
             });
         });
+
+        document.getElementById('totalCourses').textContent = courses;
+        document.getElementById('totalCards').textContent = cards;
     }
 
+    // --- PAGES ---
     function showListsPage(cat, folder) {
         currentCategory = cat; currentFolder = folder;
         document.getElementById('listsTitle').textContent = folder;
+        
         const grid = document.getElementById('listsGrid');
         grid.innerHTML = '';
-        const lists = categories[cat][folder];
         
+        const lists = categories[cat][folder];
         Object.keys(lists).forEach(listName => {
-            const card = document.createElement('div');
-            card.className = 'list-card';
-            card.innerHTML = `
-                <div><b>${listName}</b><br><small>${lists[listName].length} cartes</small></div>
+            const count = lists[listName].length;
+            const el = document.createElement('div');
+            el.className = 'list-card';
+            el.innerHTML = `
+                <div><strong>${listName}</strong><br><small>${count} cartes</small></div>
                 <div>
-                    <button class="btn-action" style="padding:5px 10px; font-size:12px;" onclick="event.stopPropagation(); loadStudy('${cat}','${folder}','${listName}')">Étudier</button>
-                    <button class="btn-action btn-action-secondary" style="padding:5px 10px; font-size:12px;" onclick="event.stopPropagation(); loadManage('${cat}','${folder}','${listName}')">Modifier</button>
-                    <button style="background:none;border:none;cursor:pointer;" onclick="event.stopPropagation(); deleteList('${listName}')">🗑️</button>
+                    <button class="btn-list-action btn-study" onclick="startStudy('${listName}')">Étudier</button>
+                    <button class="btn-list-action btn-manage" onclick="startManage('${listName}')">Gérer</button>
+                    <button style="background:none; border:none; color:red; cursor:pointer; margin-left:10px;" onclick="deleteList('${listName}')">🗑️</button>
                 </div>
             `;
-            grid.appendChild(card);
+            grid.appendChild(el);
         });
         showPage('lists');
     }
 
-    // LOGIQUE DATA
-    function saveData() { localStorage.setItem('fc_data', JSON.stringify(categories)); renderSidebar(); }
-
+    // --- CREATION (Modals) ---
+    function showNewCategoryModal() { document.getElementById('newCategoryModal').classList.add('show'); }
     function createCategory() {
-        const name = document.getElementById('catInput').value.trim();
+        const name = document.getElementById('categoryNameInput').value;
         if(name && !categories[name]) { categories[name] = {}; saveData(); closeModals(); }
     }
-    function createFolder() {
-        const cat = document.getElementById('folderCatSelect').value;
-        const name = document.getElementById('folderInput').value.trim();
-        if(cat && name && !categories[cat][name]) { categories[cat][name] = {}; saveData(); showListsPage(cat, name); closeModals(); }
+
+    function showNewFolderModal() {
+        const sel = document.getElementById('folderCategorySelect');
+        sel.innerHTML = '';
+        Object.keys(categories).forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c; opt.innerText = c;
+            sel.appendChild(opt);
+        });
+        document.getElementById('newFolderModal').classList.add('show');
     }
-    function createList() {
-        const name = document.getElementById('listInput').value.trim();
-        if(name && !categories[currentCategory][currentFolder][name]) { 
-            categories[currentCategory][currentFolder][name] = []; 
-            saveData(); showListsPage(currentCategory, currentFolder); closeModals(); 
+    function createFolder() {
+        const cat = document.getElementById('folderCategorySelect').value;
+        const name = document.getElementById('folderNameInput').value;
+        if(cat && name && !categories[cat][name]) {
+            categories[cat][name] = {}; saveData(); closeModals(); updateCategoryList();
         }
     }
+
+    function showNewListModal() { document.getElementById('newListModal').classList.add('show'); }
+    function createList() {
+        const name = document.getElementById('listNameInput').value;
+        if(name && !categories[currentCategory][currentFolder][name]) {
+            categories[currentCategory][currentFolder][name] = [];
+            saveData(); closeModals(); showListsPage(currentCategory, currentFolder);
+        }
+    }
+
     function deleteList(name) {
-        if(confirm('Supprimer ?')) {
+        if(confirm('Supprimer cette liste ?')) {
             delete categories[currentCategory][currentFolder][name];
             saveData(); showListsPage(currentCategory, currentFolder);
         }
     }
 
-    // MODALS OPENERS
-    function showNewCategoryModal() { document.getElementById('newCategoryModal').classList.add('show'); }
-    function showNewFolderModal() { 
-        const sel = document.getElementById('folderCatSelect'); sel.innerHTML='';
-        Object.keys(categories).forEach(c => { const o = document.createElement('option'); o.value=c; o.text=c; sel.appendChild(o); });
-        document.getElementById('newFolderModal').classList.add('show'); 
-    }
-    function showNewListModal() { document.getElementById('newListModal').classList.add('show'); }
-
-    // ETUDE & GESTION
-    function loadStudy(cat, folder, list) {
-        currentCategory=cat; currentFolder=folder; currentList=list;
-        studyQueue = categories[cat][folder][list];
-        studyIndex = 0;
-        if(studyQueue.length === 0) { alert('Liste vide'); return; }
-        document.getElementById('endScreen').style.display='none';
-        document.getElementById('studyContent').style.display='block';
-        showPage('study');
-        renderCard();
-    }
-    function renderCard() {
-        if(studyIndex >= studyQueue.length) {
-            document.getElementById('studyContent').style.display='none';
-            document.getElementById('endScreen').style.display='block';
-            return;
-        }
-        const card = studyQueue[studyIndex];
-        document.getElementById('question').innerHTML = card.question;
-        document.getElementById('answer').innerHTML = card.answer;
-        document.getElementById('flashcard').classList.remove('flipped');
-        document.getElementById('progressBar').style.width = ((studyIndex / studyQueue.length)*100) + '%';
-    }
-    function answer(type) { studyIndex++; renderCard(); }
-
-    function loadManage(cat, folder, list) {
-        currentCategory=cat; currentFolder=folder; currentList=list;
-        showPage('manage');
+    // --- GESTION DES CARTES ---
+    function startManage(listName) {
+        currentList = listName;
+        document.getElementById('manageTitle').textContent = 'Gérer : ' + listName;
         renderManageList();
+        showPage('manageCards');
     }
+
     function addCard() {
-        const q = document.getElementById('newQ').value;
-        const a = document.getElementById('newA').value;
+        const q = document.getElementById('newQuestion').innerText;
+        const a = document.getElementById('newAnswer').innerText;
         if(q && a) {
-            categories[currentCategory][currentFolder][currentList].push({question:q, answer:a});
+            categories[currentCategory][currentFolder][currentList].push({question: q, answer: a});
+            document.getElementById('newQuestion').innerText = '';
+            document.getElementById('newAnswer').innerText = '';
             saveData();
-            document.getElementById('newQ').value=''; document.getElementById('newA').value='';
             renderManageList();
         }
     }
+
     function renderManageList() {
-        const div = document.getElementById('cardsList'); div.innerHTML='';
+        const container = document.getElementById('cardsList');
+        container.innerHTML = '';
         const list = categories[currentCategory][currentFolder][currentList];
-        list.forEach((c, idx) => {
-            const d = document.createElement('div');
-            d.className='card-edit-item';
-            d.innerHTML = `<b>Q:</b> ${c.question}<br><b>R:</b> ${c.answer} <button style="float:right; background:red; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="deleteCard(${idx})">X</button>`;
-            div.appendChild(d);
+        
+        list.forEach((card, idx) => {
+            const div = document.createElement('div');
+            div.className = 'card-edit-item';
+            div.innerHTML = `
+                <b>Q:</b> ${card.question}<br>
+                <b>R:</b> ${card.answer}
+                <button style="float:right; color:red; border:none; background:none; cursor:pointer;" onclick="deleteCard(${idx})">Supprimer</button>
+            `;
+            container.appendChild(div);
         });
     }
+
     function deleteCard(idx) {
         categories[currentCategory][currentFolder][currentList].splice(idx, 1);
-        saveData(); renderManageList();
+        saveData();
+        renderManageList();
     }
 
-    // --- IMPORT / EXPORT ---
-
-    function exportAll() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(categories));
-        const anchor = document.createElement('a');
-        anchor.setAttribute("href", dataStr);
-        anchor.setAttribute("download", "flashcards_backup.json");
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
+    // --- ETUDE ---
+    function startStudy(listName) {
+        currentList = listName;
+        studyList = categories[currentCategory][currentFolder][currentList];
+        currentIndex = 0;
+        if(studyList.length === 0) { alert('Liste vide !'); return; }
+        
+        document.getElementById('endSection').style.display = 'none';
+        document.getElementById('cardSection').style.display = 'block';
+        showPage('study');
+        loadStudyCard();
     }
 
-    // Gestion de l'import JSON (Fichier)
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                let data = JSON.parse(e.target.result);
-                // Si c'est un format "export complet", on prend data.data s'il existe, sinon on prend brut
-                // Pour simplifier, on assume que le JSON est la structure categories
-                // Si c'est l'ancien format export all :
-                if (data.data && Array.isArray(data.data)) {
-                    // C'est le format complexe "Snapshot", on essaye de le convertir ou on demande l'ancien format
-                    alert("Format complexe détecté. Tentative de fusion...");
-                    // Note: Pour ce script simplifié, on s'attend à recevoir l'objet categories direct
-                    // Si votre JSON ressemble à { "data": [...] }, l'import risque d'échouer.
-                    // On garde simple : on remplace categories par le contenu.
-                } else {
-                    categories = data;
-                }
-                saveData();
-                renderSidebar();
-                updateHomeStats();
-                alert('Sauvegarde restaurée avec succès !');
-            } catch(err) {
-                alert('Erreur: Fichier JSON invalide.');
-                console.error(err);
-            }
-        };
-        reader.readAsText(file);
-    });
+    function loadStudyCard() {
+        if(currentIndex >= studyList.length) {
+            document.getElementById('cardSection').style.display = 'none';
+            document.getElementById('endSection').style.display = 'block';
+            return;
+        }
+        
+        const card = studyList[currentIndex];
+        document.getElementById('question').innerHTML = card.question;
+        document.getElementById('answer').innerHTML = card.answer;
+        document.getElementById('flashcard').classList.remove('flipped');
+        
+        document.getElementById('studyCounter').textContent = (currentIndex + 1) + '/' + studyList.length;
+        document.getElementById('progressBar').style.width = ((currentIndex / studyList.length) * 100) + '%';
+    }
 
-    // Gestion Import TEXTE / QUIZLET
+    function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
+    function answer(type) { currentIndex++; loadStudyCard(); }
+
+    // --- NOUVEAU : IMPORT TEXTE / QUIZLET ---
     function showImportTextModal() {
-        const sel = document.getElementById('importCatSelect'); sel.innerHTML='';
-        Object.keys(categories).forEach(c => { const o = document.createElement('option'); o.value=c; o.text=c; sel.appendChild(o); });
+        const sel = document.getElementById('importCatSelect');
+        sel.innerHTML = '';
+        
+        const catKeys = Object.keys(categories);
+        if(catKeys.length === 0) { alert("Créez d'abord une catégorie !"); return; }
+        
+        catKeys.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c; opt.innerText = c;
+            sel.appendChild(opt);
+        });
+        
+        // Pré-sélection
+        if(currentCategory) sel.value = currentCategory;
+        
         updateImportFolderSelect();
         document.getElementById('importTextModal').classList.add('show');
     }
 
     function updateImportFolderSelect() {
         const cat = document.getElementById('importCatSelect').value;
-        const folderSel = document.getElementById('importFolderSelect'); folderSel.innerHTML='';
-        if(cat && categories[cat]) {
+        const sel = document.getElementById('importFolderSelect');
+        sel.innerHTML = '';
+        if(categories[cat]) {
             Object.keys(categories[cat]).forEach(f => {
-                const o = document.createElement('option'); o.value=f; o.text=f; folderSel.appendChild(o);
+                const opt = document.createElement('option');
+                opt.value = f; opt.innerText = f;
+                sel.appendChild(opt);
             });
         }
     }
@@ -469,36 +855,122 @@
         const cat = document.getElementById('importCatSelect').value;
         const folder = document.getElementById('importFolderSelect').value;
         const listName = document.getElementById('importListName').value.trim();
-        const text = document.getElementById('importTextContent').value;
-        const sep = document.getElementById('importSeparator').value;
-        
-        if(!cat || !folder || !listName || !text) { alert('Veuillez tout remplir'); return; }
-        
-        let separator = sep;
-        if(sep === 'tab') separator = '\t';
+        const rawText = document.getElementById('importTextContent').value;
+        const sepVal = document.getElementById('importSeparator').value;
 
+        if(!cat || !folder || !listName || !rawText) { alert("Tout remplir svp"); return; }
+        
+        let separator = sepVal;
+        if(sepVal === 'tab') separator = '\t';
+
+        const lines = rawText.split('\n');
         const newCards = [];
-        const lines = text.split('\n');
+
         lines.forEach(line => {
             if(!line.trim()) return;
             const parts = line.split(separator);
             if(parts.length >= 2) {
                 const q = parts[0].trim();
-                const a = parts.slice(1).join(separator).trim();
-                newCards.push({question: q, answer: a});
+                const a = parts.slice(1).join(separator).trim(); // Rejoindre le reste si le séparateur est dans la réponse
+                if(q && a) newCards.push({question: q, answer: a});
             }
         });
 
-        if(newCards.length === 0) { alert('Aucune carte détectée. Vérifiez le séparateur.'); return; }
+        if(newCards.length === 0) {
+            alert("Aucune carte détectée. Vérifiez le séparateur (Tabulation vs Virgule etc).");
+            return;
+        }
 
-        if(!categories[cat][folder][listName]) categories[cat][folder][listName] = [];
-        categories[cat][folder][listName].push(...newCards);
+        if(!categories[cat][folder][listName]) {
+            categories[cat][folder][listName] = [];
+        }
+
+        // Ajout
+        newCards.forEach(c => categories[cat][folder][listName].push(c));
+        
         saveData();
         closeModals();
-        alert(newCards.length + ' cartes importées !');
+        alert(newCards.length + " cartes importées avec succès !");
+        
+        // Redirection
         showListsPage(cat, folder);
     }
-</script>
+
+    // --- IMPORT / EXPORT JSON ---
+    function exportAll() {
+        const str = JSON.stringify(categories, null, 2);
+        const blob = new Blob([str], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "backup_flashcards.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function importCards() { document.getElementById('fileInput').click(); }
+    
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const data = JSON.parse(evt.target.result);
+                // Support ancien format vs nouveau
+                if(data.data && Array.isArray(data.data)) {
+                     // Si format "Snapshot", c'est trop complexe pour ce script simple,
+                     // mais on peut essayer de voir si l'utilisateur a uploadé categories direct
+                     alert("Format complexe détecté. Veuillez utiliser un export brut.");
+                } else {
+                    categories = data;
+                }
+                saveData();
+                alert("Sauvegarde restaurée !");
+                location.reload();
+            } catch(err) {
+                alert("Fichier invalide");
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    // --- THEME & COMPARATEUR (Fonctions simplifiées pour intégration) ---
+    function openThemeModal() { document.getElementById('themeModal').classList.add('show'); }
+    function setVar(name, val) { document.documentElement.style.setProperty(name, val); saveTheme(); }
+    
+    function saveTheme() {
+        const theme = {
+            '--bg-gradient-from': getComputedStyle(document.documentElement).getPropertyValue('--bg-gradient-from'),
+            '--primary': getComputedStyle(document.documentElement).getPropertyValue('--primary'),
+            // ... autres vars
+        };
+        localStorage.setItem('fc_theme', JSON.stringify(theme));
+    }
+    
+    function loadTheme() {
+        // Chargement basique si existe
+    }
+
+    function openComparator() { document.getElementById('comparatorModal').classList.add('show'); }
+    function runComparison() {
+        const oldT = document.getElementById('oldText').value;
+        const newT = document.getElementById('newText').value;
+        const diff = Diff.diffWords(oldT, newT);
+        const display = document.getElementById('diffOutput');
+        display.innerHTML = '';
+        diff.forEach(part => {
+            const span = document.createElement('span');
+            if(part.added) { span.innerHTML = `<mark class="ins">${part.value}</mark>`; }
+            else if(part.removed) { span.innerHTML = `<mark class="del">${part.value}</mark>`; }
+            else { span.textContent = part.value; }
+            display.appendChild(span);
+        });
+    }
+
+    // INIT APP
+    loadData();
 <script>
     // VARIABLES GLOBALES FLASHCARDS
     let categories = {}, results = {}, currentCategory = null, currentFolder = null, currentList = null, currentPage = 'home', currentIndex = 0, isFlipped = false, isReviewMode = false, reviewIndices = [], stats = {known: 0, partial: 0, unknown: 0}, currentEditingSide = null, renameTarget = null, openCategories = {};
