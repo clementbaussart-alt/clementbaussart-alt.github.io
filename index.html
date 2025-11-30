@@ -1495,7 +1495,98 @@ if (majorityKnown && GIF_KNOWN_URL) {
         URL.revokeObjectURL(url);
     }
     function importCards() { document.getElementById('fileInput').click(); }
-    document.getElementById('fileInput').addEventListener('change', function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const data = JSON.parse(e.target.result); if (!data.categoryName || !data.folderName || !data.listName || !Array.isArray(data.cards)) { alert('Format de fichier invalide.'); return; } if (!categories[data.categoryName]) { categories[data.categoryName] = {}; } if (!categories[data.categoryName][data.folderName]) { categories[data.categoryName][data.folderName] = {}; } if (categories[data.categoryName][data.folderName][data.listName]) { if (!confirm('La liste "' + data.listName + '" existe déjà dans "' + data.folderName + '". Écraser ?')) { return; } } categories[data.categoryName][data.folderName][data.listName] = data.cards; saveData(); updateCategoryList(); if (currentPage === 'home') { updateHomeStats(); } } catch (err) { alert('Erreur lors de la lecture du fichier.'); } }; reader.readAsText(file); event.target.value = ''; });
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      // Cas 1: format "liste unique"
+      if (data.categoryName && data.folderName && data.listName && Array.isArray(data.cards)) {
+        if (!categories[data.categoryName]) categories[data.categoryName] = {};
+        if (!categories[data.categoryName][data.folderName]) categories[data.categoryName][data.folderName] = {};
+        // Demander si on écrase une liste existante
+        if (categories[data.categoryName][data.folderName][data.listName] &&
+            !confirm('La liste "' + data.listName + '" existe déjà. Écraser ?')) {
+          event.target.value = '';
+          return;
+        }
+        categories[data.categoryName][data.folderName][data.listName] = data.cards;
+
+        saveData();
+        updateCategoryList();
+        if (currentPage === 'home') updateHomeStats();
+        alert('Import de la liste terminé ✓');
+        event.target.value = '';
+        return;
+      }
+
+      // Cas 2: format "export tout"
+      if (data.exportVersion && Array.isArray(data.data)) {
+        // Merge “data”
+        data.data.forEach(cat => {
+          const catName = cat.categoryName;
+          if (!catName) return;
+          if (!categories[catName]) categories[catName] = {};
+          (cat.courses || []).forEach(course => {
+            const folderName = course.folderName;
+            if (!folderName) return;
+            if (!categories[catName][folderName]) categories[catName][folderName] = {};
+            (course.lists || []).forEach(lst => {
+              const listName = lst.listName;
+              const cards = Array.isArray(lst.cards) ? lst.cards : [];
+              if (!listName) return;
+              // Si la liste existe, demander confirmation d’écraser
+              if (categories[catName][folderName][listName] &&
+                  !confirm('La liste "' + listName + '" existe déjà dans "' + folderName + '". Écraser ?')) {
+                return;
+              }
+              categories[catName][folderName][listName] = cards;
+            });
+          });
+        });
+
+        // Merge “results” si fourni
+        if (data.results && typeof data.results === 'object') {
+          // Merge peu intrusif: on garde les valeurs existantes si conflit
+          function deepMergeResults(dst, src) {
+            Object.keys(src).forEach(k => {
+              if (src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])) {
+                if (!dst[k] || typeof dst[k] !== 'object') dst[k] = {};
+                deepMergeResults(dst[k], src[k]);
+              } else {
+                if (dst[k] === undefined) dst[k] = src[k];
+              }
+            });
+          }
+          if (!results || typeof results !== 'object') results = {};
+          deepMergeResults(results, data.results);
+          saveResults();
+        }
+
+        saveData();
+        updateCategoryList();
+        if (currentPage === 'home') updateHomeStats();
+        alert('Import complet terminé ✓');
+        event.target.value = '';
+        return;
+      }
+
+      // Format inconnu
+      alert('Format de fichier invalide. Utilise soit "liste unique", soit "export tout".');
+
+    } catch (err) {
+      console.error(err);
+      alert('Erreur lors de la lecture du fichier (JSON invalide).');
+    }
+  };
+
+  reader.readAsText(file);
+  event.target.value = '';
+});
     function clearCurrentList() { if (!currentCategory || !currentFolder || !currentList) return; if (!confirm('⚠️ Vider la liste ?')) return; categories[currentCategory][currentFolder][currentList] = []; if (results[currentCategory] && results[currentCategory][currentFolder]) { delete results[currentCategory][currentFolder][currentList]; saveResults(); } saveData(); currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; updateCategoryList(); loadManageCardsPage(); }
     document.getElementById('categoryNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createCategory(); });
     document.getElementById('folderNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createFolder(); });
