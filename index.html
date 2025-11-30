@@ -319,18 +319,18 @@
         .btn-filter-del { background: #2a2f39; color: #e8ecf3; border: 0; border-radius: 8px; padding: 8px 10px; font-weight: 700; cursor: pointer; }
         .btn-filter-del.active { background: #ff6b6b; color: #fff; }
         /* GIF de félicitations en fin de session */
-.result-gif {
-	display: none;
-	margin-top: 20px;
-	text-align: center;
-}
-.result-gif img {
-	max-width: 100%;
-	height: auto;
-	border-radius: 12px;
-	box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-}
-.result-gif.show { display: block; }
+        .result-gif {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .result-gif img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        .result-gif.show { display: block; }
     </style>
 </head>
 <body>
@@ -625,8 +625,8 @@
     let categories = {}, results = {}, currentCategory = null, currentFolder = null, currentList = null, currentPage = 'home', currentIndex = 0, isFlipped = false, isReviewMode = false, reviewIndices = [], stats = {known: 0, partial: 0, unknown: 0}, currentEditingSide = null, renameTarget = null, openCategories = {};
     
     // ——— GIF “majorité connu” ———
-// Remplace par l’URL de TON gif (https://…/ton.gif)
-const GIF_KNOWN_URL = 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif';
+    // Remplace par l’URL de TON gif (https://…/ton.gif)
+    const GIF_KNOWN_URL = 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif';
     
     // ====== THEME ======
     const THEME_KEY = 'flashcards_theme_v1';
@@ -1249,16 +1249,16 @@ const GIF_KNOWN_URL = 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif';
             btnNext.textContent = 'Dernière liste ✓'; 
         } 
         // Afficher le GIF si majorité de "Connu"
-const majorityKnown = (stats.known > stats.partial + stats.unknown);
-const gifWrap = document.getElementById('resultGif');
-const gifImg  = document.getElementById('resultGifImg');
-if (majorityKnown && GIF_KNOWN_URL) {
-	gifImg.src = GIF_KNOWN_URL;
-	gifWrap.classList.add('show');
-} else {
-	gifWrap.classList.remove('show');
-	gifImg.src = '';
-}
+        const majorityKnown = (stats.known > stats.partial + stats.unknown);
+        const gifWrap = document.getElementById('resultGif');
+        const gifImg  = document.getElementById('resultGifImg');
+        if (majorityKnown && GIF_KNOWN_URL) {
+            gifImg.src = GIF_KNOWN_URL;
+            gifWrap.classList.add('show');
+        } else {
+            gifWrap.classList.remove('show');
+            gifImg.src = '';
+        }
     }
     function drawPieChart() { 
         const total = stats.known + stats.partial + stats.unknown; 
@@ -1496,165 +1496,124 @@ if (majorityKnown && GIF_KNOWN_URL) {
     }
     function importCards() { document.getElementById('fileInput').click(); }
     document.getElementById('fileInput').addEventListener('change', function(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
 
-  console.log('[IMPORT] name:', file.name, 'type:', file.type, 'size:', file.size);
+        console.log('[IMPORT] name:', file.name, 'type:', file.type, 'size:', file.size);
 
-  const reader = new FileReader();
-  reader.onerror = () => alert('Lecture de fichier impossible (FileReader).');
-  reader.onload = function(e) {
-    try {
-      let raw = e.target.result || '';
-      // 1) Nettoyage basique: supprime BOM et fences markdown éventuels
-      raw = raw.replace(/^\uFEFF/, '').trim();
-      if (raw.startsWith('```')) {
-        // retire fences ```json ... ```
-        raw = raw.replace(/^```[a-zA-Z0-9]*\s*/, '').replace(/```$/, '').trim();
-      }
+        const reader = new FileReader();
+        reader.onerror = () => alert('Lecture de fichier impossible (FileReader).');
+        reader.onload = function(e) {
+            try {
+                let raw = e.target.result || '';
+                // 1) Nettoyage basique: supprime BOM et fences markdown éventuels
+                raw = raw.replace(/^\uFEFF/, '').trim();
+                if (raw.startsWith('```')) {
+                    // retire fences ```json ... ```
+                    raw = raw.replace(/^```[a-zA-Z0-9]*\s*/, '').replace(/```$/, '').trim();
+                }
 
-      // 2) Parse JSON
-      let data;
-      try {
-        data = JSON.parse(raw);
-      } catch (err) {
-        console.error('[IMPORT] JSON.parse error:', err);
-        alert('JSON invalide (échec du parsing). Vérifie qu’il n’y a pas de ``` ou de guillemets simples.');
-        event.target.value = '';
-        return;
-      }
+                // 2) Parse JSON
+                let data;
+                try {
+                    data = JSON.parse(raw);
+                } catch (err) {
+                    console.error('[IMPORT] JSON.parse error:', err);
+                    alert('JSON invalide (échec du parsing). Vérifie qu’il n’y a pas de ``` ou de guillemets simples.');
+                    event.target.value = '';
+                    return;
+                }
 
-      // 3) Détection format + import
-      const isList =
-        data && data.categoryName && data.folderName && data.listName && Array.isArray(data.cards);
-      const isAll =
-        data && data.exportVersion && Array.isArray(data.data);
+                // 3) Détection format + import
+                const isList = data && data.categoryName && data.folderName && data.listName && Array.isArray(data.cards);
+                const isAll = data && data.exportVersion && Array.isArray(data.data);
 
-      if (!isList && !isAll) {
-        console.warn('[IMPORT] Format non reconnu. Aperçu des clés:', Object.keys(data||{}));
-        alert('Format non reconnu. Fichier attendu: "liste unique" ou "export tout".');
-        event.target.value = '';
-        return;
-      }
+                if (!isList && !isAll) {
+                    console.warn('[IMPORT] Format non reconnu. Aperçu des clés:', Object.keys(data||{}));
+                    alert('Format non reconnu. Fichier attendu: "liste unique" ou "export tout".');
+                    event.target.value = '';
+                    return;
+                }
 
-      if (isList) {
-        const { categoryName, folderName, listName, cards } = data;
-        if (!categories[categoryName]) categories[categoryName] = {};
-        if (!categories[categoryName][folderName]) categories[categoryName][folderName] = {};
-        if (categories[categoryName][folderName][listName]) {
-          if (!confirm(`La liste "${listName}" existe déjà. Écraser ?`)) {
+                if (isList) {
+                    const { categoryName, folderName, listName, cards } = data;
+                    if (!categories[categoryName]) categories[categoryName] = {};
+                    if (!categories[categoryName][folderName]) categories[categoryName][folderName] = {};
+                    if (categories[categoryName][folderName][listName]) {
+                        if (!confirm(`La liste "${listName}" existe déjà. Écraser ?`)) {
+                            event.target.value = '';
+                            return;
+                        }
+                    }
+                    categories[categoryName][folderName][listName] = Array.isArray(cards) ? cards : [];
+                    saveData();
+                    updateCategoryList();
+                    if (currentPage === 'home') updateHomeStats();
+                    alert('Import de la liste terminé ✓');
+                    event.target.value = '';
+                    return;
+                }
+
+                if (isAll) {
+                    // Import "export tout"
+                    let catCount=0, courseCount=0, listCount=0, cardCount=0;
+                    (data.data || []).forEach(cat => {
+                        const catName = cat.categoryName;
+                        if (!catName) return;
+                        catCount++;
+                        if (!categories[catName]) categories[catName] = {};
+                        (cat.courses || []).forEach(course => {
+                            const folderName = course.folderName;
+                            if (!folderName) return;
+                            courseCount++;
+                            if (!categories[catName][folderName]) categories[catName][folderName] = {};
+                            (course.lists || []).forEach(lst => {
+                                const listName = lst.listName;
+                                if (!listName) return;
+                                const cards = Array.isArray(lst.cards) ? lst.cards : [];
+                                listCount++;
+                                cardCount += cards.length;
+                                if (categories[catName][folderName][listName]) {
+                                    const ok = confirm(`"${listName}" existe dans "${folderName}". Écraser ?`);
+                                    if (!ok) return;
+                                }
+                                categories[catName][folderName][listName] = cards;
+                            });
+                        });
+                    });
+                    if (data.results && typeof data.results === 'object') {
+                        // merge non destructif des résultats
+                        function deepMerge(dst, src){
+                            Object.keys(src).forEach(k=>{
+                                if (src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])) {
+                                    if (!dst[k] || typeof dst[k] !== 'object') dst[k] = {};
+                                    deepMerge(dst[k], src[k]);
+                                } else {
+                                    if (dst[k] === undefined) dst[k] = src[k];
+                                }
+                            });
+                        }
+                        if (!results || typeof results !== 'object') results = {};
+                        deepMerge(results, data.results);
+                        saveResults();
+                    }
+                    saveData();
+                    updateCategoryList();
+                    if (currentPage === 'home') updateHomeStats();
+                    alert(`Import complet terminé ✓\nCatégories:${catCount} • Cours:${courseCount} • Listes:${listCount} • Cartes:${cardCount}`);
+                    event.target.value = '';
+                    return;
+                }
+
+            } catch (err) {
+                console.error('[IMPORT] Exception:', err);
+                alert('Erreur imprévue pendant l’import. Regarde la console pour le détail.');
+            }
             event.target.value = '';
-            return;
-          }
-        }
-        categories[categoryName][folderName][listName] = Array.isArray(cards) ? cards : [];
-        saveData();
-        updateCategoryList();
-        if (currentPage === 'home') updateHomeStats();
-        alert('Import de la liste terminé ✓');
-        event.target.value = '';
-        return;
-      }
+        };
+        reader.readAsText(file);
+    });
 
-      if (isAll) {
-        // Import "export tout"
-        let catCount=0, courseCount=0, listCount=0, cardCount=0;
-        (data.data || []).forEach(cat => {
-          const catName = cat.categoryName;
-          if (!catName) return;
-          catCount++;
-          if (!categories[catName]) categories[catName] = {};
-          (cat.courses || []).forEach(course => {
-            const folderName = course.folderName;
-            if (!folderName) return;
-            courseCount++;
-            if (!categories[catName][folderName]) categories[catName][folderName] = {};
-            (course.lists || []).forEach(lst => {
-              const listName = lst.listName;
-              if (!listName) return;
-              const cards = Array.isArray(lst.cards) ? lst.cards : [];
-              listCount++;
-              cardCount += cards.length;
-              if (categories[catName][folderName][listName]) {
-                const ok = confirm(`"${listName}" existe dans "${folderName}". Écraser ?`);
-                if (!ok) return;
-              }
-              categories[catName][folderName][listName] = cards;
-            });
-          });
-        });
-        if (data.results && typeof data.results === 'object') {
-          // merge non destructif des résultats
-          function deepMerge(dst, src){
-            Object.keys(src).forEach(k=>{
-              if (src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])) {
-                if (!dst[k] || typeof dst[k] !== 'object') dst[k] = {};
-                deepMerge(dst[k], src[k]);
-              } else {
-                if (dst[k] === undefined) dst[k] = src[k];
-              }
-            });
-          }
-          if (!results || typeof results !== 'object') results = {};
-          deepMerge(results, data.results);
-          saveResults();
-        }
-        saveData();
-        updateCategoryList();
-        if (currentPage === 'home') updateHomeStats();
-        alert(`Import complet terminé ✓\nCatégories:${catCount} • Cours:${courseCount} • Listes:${listCount} • Cartes:${cardCount}`);
-        event.target.value = '';
-        return;
-      }
-
-    } catch (err) {
-      console.error('[IMPORT] Exception:', err);
-      alert('Erreur imprévue pendant l’import. Regarde la console pour le détail.');
-    }
-  };
-  reader.readAsText(file);
-});
-          });
-        });
-
-        // Merge “results” si fourni
-        if (data.results && typeof data.results === 'object') {
-          // Merge peu intrusif: on garde les valeurs existantes si conflit
-          function deepMergeResults(dst, src) {
-            Object.keys(src).forEach(k => {
-              if (src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])) {
-                if (!dst[k] || typeof dst[k] !== 'object') dst[k] = {};
-                deepMergeResults(dst[k], src[k]);
-              } else {
-                if (dst[k] === undefined) dst[k] = src[k];
-              }
-            });
-          }
-          if (!results || typeof results !== 'object') results = {};
-          deepMergeResults(results, data.results);
-          saveResults();
-        }
-
-        saveData();
-        updateCategoryList();
-        if (currentPage === 'home') updateHomeStats();
-        alert('Import complet terminé ✓');
-        event.target.value = '';
-        return;
-      }
-
-      // Format inconnu
-      alert('Format de fichier invalide. Utilise soit "liste unique", soit "export tout".');
-
-    } catch (err) {
-      console.error(err);
-      alert('Erreur lors de la lecture du fichier (JSON invalide).');
-    }
-  };
-
-  reader.readAsText(file);
-  event.target.value = '';
-});
     function clearCurrentList() { if (!currentCategory || !currentFolder || !currentList) return; if (!confirm('⚠️ Vider la liste ?')) return; categories[currentCategory][currentFolder][currentList] = []; if (results[currentCategory] && results[currentCategory][currentFolder]) { delete results[currentCategory][currentFolder][currentList]; saveResults(); } saveData(); currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; updateCategoryList(); loadManageCardsPage(); }
     document.getElementById('categoryNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createCategory(); });
     document.getElementById('folderNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createFolder(); });
