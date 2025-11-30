@@ -3,233 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcards Ultimate</title>
+    <title>Flashcards + Comparateur</title>
     <style>
         :root {
-            --bg-gradient-from: #667eea; --bg-gradient-to: #764ba2;
-            --primary: #667eea; --primary-2: #764ba2;
-            --accent: #11998e; --accent-2: #38ef7d;
-            --danger: #ff6b6b; --text: #333333; --text-soft: #666666;
-            --panel: #ffffff; --panel-muted: #f5f7fa; --border: #e0e0e0;
-            --card-bg: #ffffff;
-            --known: #38ef7d; --partial: #f5a623; --unknown: #ff6b6b;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, var(--bg-gradient-from), var(--bg-gradient-to)); min-height: 100vh; display: flex; color: var(--text); }
-        .sidebar { width: 280px; background: var(--panel); display: flex; flex-direction: column; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100; border-right: 1px solid var(--border); transition: transform 0.3s; }
-        .sidebar.hidden { transform: translateX(-280px); }
-        .sidebar-header { padding: 30px 20px; background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: white; }
-        .sidebar-nav { padding: 20px; border-bottom: 2px solid var(--border); }
-        .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; display: flex; gap: 10px; font-weight: 500; }
-        .nav-item:hover { background: var(--panel-muted); }
-        .folder-section { flex: 1; overflow-y: auto; padding: 20px; }
-        .folder-section-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
-        .btn-new-category, .btn-new-folder { border: none; color: white; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
-        .btn-new-category { background: var(--accent); } .btn-new-folder { background: var(--primary); }
-        .category-header { display: flex; justify-content: space-between; padding: 8px; background: var(--panel-muted); border-radius: 6px; cursor: pointer; margin-top:10px; }
-        .category-folders { padding-left: 15px; display: none; }
-        .category-folders.open { display: block; }
-        .folder-item { padding: 8px; margin: 5px 0; cursor: pointer; display: flex; justify-content: space-between; }
-        .folder-item:hover { background: #eee; border-radius: 6px; }
-        .main-content { margin-left: 280px; flex: 1; padding: 40px; overflow-y: auto; height: 100vh; transition: margin-left 0.3s; }
-        .main-content.sidebar-hidden { margin-left: 0; }
-        .container { background: var(--panel); border-radius: 20px; padding: 40px; max-width: 900px; margin: 0 auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        .page { display: none; } .page.active { display: block; }
-        
-        /* Boutons d'action */
-        .quick-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; justify-content: center; }
-        .btn-action { padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; background: var(--primary); }
-        .btn-action-secondary { background: var(--accent); }
-        .btn-export-all { background: #f5a623; color: #333; }
-        
-        /* Modals */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
-        .modal.show { display: flex; }
-        .modal-content { background: var(--panel); padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; }
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
-        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-        
-        /* Card Styles */
-        .course-card, .list-card { background: var(--panel-muted); padding: 20px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .course-card:hover, .list-card:hover { transform: translateX(5px); transition: 0.2s; background: #eef2ff; }
-        
-        /* Flashcard Study */
-        .card-container { perspective: 1000px; margin: 30px 0; height: 300px; }
-        .card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; cursor: pointer; }
-        .card.flipped { transform: rotateY(180deg); }
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; font-size: 24px; padding: 20px; border-radius: 15px; background: var(--card-bg); border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; overflow: auto; }
-        .card-back { transform: rotateY(180deg); background: #fdfdfd; }
-        .buttons { display: flex; gap: 10px; margin-top: 20px; }
-        .buttons button { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
-        .btn-known { background: var(--known); }
-        .btn-partial { background: var(--partial); }
-        .btn-unknown { background: var(--unknown); }
-
-        /* Manage */
-        .card-edit-item { background: #f8f9fa; padding: 15px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; }
-        .toggle-sidebar-btn { position: fixed; left: 290px; top: 20px; font-size: 24px; background: none; border: none; cursor: pointer; z-index: 101; color: white; }
-    </style>
-</head>
-<body>
-
-<button class="toggle-sidebar-btn" onclick="document.querySelector('.sidebar').classList.toggle('hidden'); document.querySelector('.main-content').classList.toggle('sidebar-hidden');">◀</button>
-
-<div class="sidebar">
-    <div class="sidebar-header"><h1>📚 Flashcards</h1></div>
-    <div class="sidebar-nav"><div class="nav-item" onclick="showPage('home')">🏠 Accueil</div></div>
-    <div class="folder-section">
-        <div class="folder-section-header">
-            <span>Mes cours</span>
-            <div>
-                <button class="btn-new-category" onclick="showNewCategoryModal()">+ Cat</button>
-                <button class="btn-new-folder" onclick="showNewFolderModal()">+ Cours</button>
-            </div>
-        </div>
-        <div id="categoryList"></div>
-    </div>
-</div>
-
-<div class="main-content">
-    <div id="homePage" class="page active">
-        <div class="container" style="text-align: center;">
-            <h1 style="margin-bottom: 10px;">Bienvenue 👋</h1>
-            <p style="color: #666; margin-bottom: 30px;">Gérez vos révisions simplement.</p>
-            
-            <div class="quick-actions">
-                <button class="btn-action" onclick="showNewFolderModal()">➕ Nouveau Cours</button>
-                <button class="btn-action btn-action-secondary" onclick="showImportTextModal()">📋 Importer (Texte/Quizlet)</button>
-                <button class="btn-action" style="background:#555;" onclick="document.getElementById('fileInput').click()">📥 Restaurer (JSON)</button>
-                <button class="btn-export-all" onclick="exportAll()">📦 Exporter Tout</button>
-            </div>
-
-            <div style="margin-top: 40px; text-align: left;">
-                <h2>Mes cours récents</h2>
-                <div id="courseList"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="listsPage" class="page">
-        <div class="container">
-            <h2 id="listsTitle">Listes</h2>
-            <div id="listsGrid" style="margin-top: 20px;"></div>
-            <button class="btn-action" style="width:100%; margin-top:20px;" onclick="showNewListModal()">+ Nouvelle Liste</button>
-        </div>
-    </div>
-
-    <div id="studyPage" class="page">
-        <div class="container">
-            <button onclick="showListsPage(currentCategory, currentFolder)" style="border:none; background:none; color:var(--primary); cursor:pointer;">← Retour</button>
-            <h2 id="studyTitle" style="margin: 10px 0;">Étude</h2>
-            <div style="height: 5px; background: #eee; border-radius: 5px; margin-bottom: 20px;"><div id="progressBar" style="height:100%; width:0%; background:var(--primary); transition:0.3s;"></div></div>
-            
-            <div id="studyContent">
-                <div class="card-container">
-                    <div class="card" id="flashcard" onclick="this.classList.toggle('flipped')">
-                        <div class="card-face card-front" id="question"></div>
-                        <div class="card-face card-back" id="answer"></div>
-                    </div>
-                </div>
-                <div class="buttons">
-                    <button class="btn-known" onclick="answer('known')">Connu</button>
-                    <button class="btn-partial" onclick="answer('partial')">Moyen</button>
-                    <button class="btn-unknown" onclick="answer('unknown')">Pas connu</button>
-                </div>
-            </div>
-            <div id="endScreen" style="display:none; text-align:center; padding: 40px;">
-                <h2>Session terminée ! 🎉</h2>
-                <button class="btn-action" onclick="loadStudy(currentCategory, currentFolder, currentList)">Recommencer</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="managePage" class="page">
-        <div class="container">
-            <button onclick="showListsPage(currentCategory, currentFolder)" style="border:none; background:none; color:var(--primary); cursor:pointer;">← Retour</button>
-            <h2>Gérer les cartes</h2>
-            <div class="input-group">
-                <label>Question</label>
-                <textarea id="newQ" rows="2"></textarea>
-            </div>
-            <div class="input-group">
-                <label>Réponse</label>
-                <textarea id="newA" rows="2"></textarea>
-            </div>
-            <button class="btn-action" onclick="addCard()">Ajouter</button>
-            <div id="cardsList" style="margin-top:30px;"></div>
-        </div>
-    </div>
-</div>
-
-<input type="file" id="fileInput" accept=".json" style="display:none;">
-
-<div class="modal" id="newCategoryModal">
-    <div class="modal-content">
-        <h3>Nouvelle Catégorie</h3>
-        <input type="text" id="catInput" placeholder="Ex: Droit, Médecine...">
-        <div class="modal-buttons"><button class="btn-action" onclick="createCategory()">Créer</button><button onclick="closeModals()">Fermer</button></div>
-    </div>
-</div>
-
-<div class="modal" id="newFolderModal">
-    <div class="modal-content">
-        <h3>Nouveau Cours</h3>
-        <select id="folderCatSelect" style="margin-bottom:10px;"></select>
-        <input type="text" id="folderInput" placeholder="Ex: Droit Civil">
-        <div class="modal-buttons"><button class="btn-action" onclick="createFolder()">Créer</button><button onclick="closeModals()">Fermer</button></div>
-    </div>
-</div>
-
-<div class="modal" id="newListModal">
-    <div class="modal-content">
-        <h3>Nouvelle Liste</h3>
-        <input type="text" id="listInput" placeholder="Ex: Chapitre 1">
-        <div class="modal-buttons"><button class="btn-action" onclick="createList()">Créer</button><button onclick="closeModals()">Fermer</button></div>
-    </div>
-</div>
-
-<div class="modal" id="importTextModal">
-    <div class="modal-content" style="max-width: 600px;">
-        <h3>Importer (Quizlet / Texte)</h3>
-        <div class="input-group">
-            <label>1. Destination :</label>
-            <div style="display:flex; gap:10px;">
-                <select id="importCatSelect" onchange="updateImportFolderSelect()" style="flex:1"></select>
-                <select id="importFolderSelect" style="flex:1"></select>
-            </div>
-            <input type="text" id="importListName" placeholder="Nom de la liste" style="margin-top:5px;">
-        </div>
-        <div class="input-group">
-            <label>2. Séparateur :</label>
-            <select id="importSeparator">
-                <option value="tab">Tabulation (Quizlet défaut)</option>
-                <option value=";">Point-virgule (;)</option>
-                <option value=",">Virgule (,)</option>
-                <option value="-">Tiret (-)</option>
-            </select>
-        </div>
-        <div class="input-group">
-            <label>3. Collez votre texte :</label>
-            <textarea id="importTextContent" style="height:150px; font-family:monospace;" placeholder="Question    Réponse&#10;Question2    Réponse2"></textarea>
-        </div>
-        <div class="modal-buttons">
-            <button class="btn-action" onclick="performTextImport()">Importer</button>
-            <button onclick="closeModals()">Annuler</button>
-        </div>
-    </div>
-</div>
-
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcards Pro + Import</title>
-    <style>
-        :root {
-            /* Couleurs principales du thème par défaut */
+            /* Couleurs principales du thème */
             --bg-gradient-from: #667eea;
             --bg-gradient-to: #764ba2;
             --primary: #667eea;
@@ -243,7 +20,13 @@
             --panel-muted: #f5f7fa;
             --border: #e0e0e0;
             --shadow: rgba(0,0,0,0.08);
+
+            /* Cartes d’étude */
             --card-bg: #ffffff;
+            --card-grad-from: #f5f7fa;
+            --card-grad-to: #c3cfe2;
+
+            /* Stats */
             --known: #38ef7d;
             --partial: #f5a623;
             --unknown: #ff6b6b;
@@ -258,11 +41,30 @@
             color: var(--text);
         }
         
-        /* SIDEBAR */
-        .sidebar { width: 280px; background: var(--panel); box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100; transition: transform 0.3s ease; border-right: 1px solid var(--border); }
+        .sidebar { 
+            width: 280px; 
+            background: var(--panel); 
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); 
+            display: flex; 
+            flex-direction: column; 
+            position: fixed; 
+            height: 100vh; 
+            left: 0; 
+            top: 0; 
+            z-index: 100; 
+            transition: transform 0.3s ease; 
+            border-right: 1px solid var(--border);
+        }
         .sidebar.hidden { transform: translateX(-280px); }
-        .sidebar-header { padding: 30px 20px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); color: white; }
+        
+        .sidebar-header { 
+            padding: 30px 20px; 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); 
+            color: white; 
+        }
         .sidebar-header h1 { font-size: 22px; margin-bottom: 5px; }
+        .sidebar-header p { font-size: 13px; opacity: 0.9; }
+        
         .sidebar-nav { padding: 20px; border-bottom: 2px solid var(--border); }
         .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 10px; font-weight: 500; color: var(--text); }
         .nav-item:hover { background: var(--panel-muted); }
@@ -270,707 +72,591 @@
         
         .folder-section { flex: 1; overflow-y: auto; padding: 20px; background: var(--panel); }
         .folder-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .folder-section-header h3 { font-size: 14px; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px; }
+        
         .btn-new-folder, .btn-new-category { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s; }
+        .btn-new-folder:hover, .btn-new-category:hover { filter: brightness(90%); }
         .btn-new-category { background: var(--accent); }
         
-        /* Tree View */
         .category-item { margin-bottom: 10px; }
         .category-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: var(--panel-muted); border-radius: 6px; cursor: pointer; transition: all 0.3s; color: var(--text); }
         .category-header:hover { background: var(--border); }
+        .category-header.active { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); color: white; }
         .category-left { display: flex; align-items: center; gap: 8px; flex: 1; }
         .category-toggle { font-size: 12px; transition: transform 0.3s; }
         .category-toggle.open { transform: rotate(90deg); }
         .category-name { font-weight: 600; font-size: 14px; }
-        .category-count { background: rgba(0,0,0, 0.1); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-left: 5px; }
+        .category-count { background: rgba(0,0,0, 0.1); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; color: inherit; margin-left: 5px; }
         .category-actions { display: flex; gap: 5px; opacity: 0; transition: all 0.3s; }
         .category-header:hover .category-actions { opacity: 1; }
-        .btn-edit-category, .btn-delete-category { background: none; border: none; color: var(--text-soft); cursor: pointer; font-size: 14px; padding: 0; width: 20px; height: 20px; }
+        
+        .btn-edit-category, .btn-delete-category { background: none; border: none; color: var(--text-soft); cursor: pointer; font-size: 14px; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .category-header.active .btn-edit-category, .category-header.active .btn-delete-category { color: rgba(255, 255, 255, 0.8); }
+        .btn-edit-category:hover { color: var(--primary); }
+        .category-header.active .btn-edit-category:hover { color: white; }
+        .btn-delete-category:hover { color: var(--danger); }
+        
         .category-folders { padding-left: 15px; margin-top: 5px; display: none; }
         .category-folders.open { display: block; }
+        
         .folder-item { padding: 10px 15px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: space-between; color: var(--text); }
         .folder-item:hover { background: var(--panel-muted); }
+        .folder-item.active { background: var(--panel-muted); color: var(--primary); font-weight: 600; border: 1px solid var(--primary); }
+        .folder-info { display: flex; align-items: center; gap: 8px; flex: 1; }
+        .folder-badge { background: rgba(0,0,0, 0.05); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; color: var(--text-soft); }
+        .folder-item.active .folder-badge { background: rgba(102, 126, 234, 0.2); color: var(--primary); }
         .folder-actions { display: flex; gap: 5px; opacity: 0; transition: all 0.3s; }
         .folder-item:hover .folder-actions { opacity: 1; }
-        .btn-edit-folder, .btn-delete-folder { background: none; border: none; color: var(--text-soft); cursor: pointer; font-size: 14px; }
-
-        /* MAIN CONTENT */
+        .btn-edit-folder, .btn-delete-folder { background: none; border: none; color: var(--text-soft); cursor: pointer; font-size: 14px; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .btn-edit-folder:hover { color: var(--primary); }
+        .btn-delete-folder:hover { color: var(--danger); }
+        
         .toggle-sidebar-btn { position: fixed; left: 290px; top: 20px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); border: none; color: white; width: 48px; height: 48px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 101; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .toggle-sidebar-btn.sidebar-hidden { left: 10px; }
+        .toggle-sidebar-btn:hover { transform: translateY(-2px) scale(1.05); }
+        .toggle-sidebar-btn.sidebar-hidden { left: 10px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); }
+        .toggle-icon { transition: transform 0.3s ease; display: inline-block; }
+        .toggle-sidebar-btn.sidebar-hidden .toggle-icon { transform: rotate(180deg); }
+        
         .main-content { margin-left: 280px; flex: 1; padding: 40px; overflow-y: auto; height: 100vh; transition: margin-left 0.3s ease; }
         .main-content.sidebar-hidden { margin-left: 0; }
         
         .container { background: var(--panel); border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); padding: 40px; max-width: 800px; margin: 0 auto; color: var(--text); }
-        .app-header { background: var(--panel); border-radius: 20px 20px 0 0; padding: 20px 40px; max-width: 800px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; }
         
-        .btn-comparator { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); color: white; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 600; cursor: pointer; margin-left: 10px; }
-
-        /* HOME */
-        .home-hero h1 { font-size: 48px; margin-bottom: 20px; }
+        .app-header { background: var(--panel); border-radius: 20px 20px 0 0; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); padding: 20px 40px; max-width: 800px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; }
+        .app-header h1 { margin: 0; font-size: 22px; color: var(--text); }
+        .app-header p { margin: 0; font-size: 13px; color: var(--text-soft); }
+        
+        .btn-comparator { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); color: white; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s; margin-left: 10px; }
+        .btn-comparator:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        
+        .home-page { text-align: center; }
+        .home-hero { padding: 60px 40px; }
+        .home-hero h1 { font-size: 48px; color: var(--text); margin-bottom: 20px; }
+        .home-hero p { font-size: 18px; color: var(--text-soft); line-height: 1.6; margin-bottom: 10px; }
+        
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 40px; }
-        .stat-card { background: var(--panel-muted); padding: 30px; border-radius: 15px; text-align:center; }
-        .stat-card-value { font-size: 36px; font-weight: 700; color: var(--primary); }
+        .stat-card { background: linear-gradient(135deg, var(--panel-muted) 0%, #e0e7ff 100%); padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+        .stat-card-value { font-size: 36px; font-weight: 700; color: var(--primary); margin-bottom: 10px; }
+        .stat-card-label { font-size: 14px; color: var(--text-soft); font-weight: 500; }
         
         .quick-actions { margin-top: 40px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
-        .btn-action { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s; }
-        .btn-action:hover { transform: translateY(-2px); }
+        .btn-action { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .btn-action-secondary { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); }
-        .btn-export-all { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #111; }
+        .btn-export-all { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #111; border: none; border-radius: 10px; padding: 15px 30px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+        .btn-export-all:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         
-        .course-list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .course-card { background: var(--panel-muted); padding: 15px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; border: 1px solid var(--border); }
-        .course-card:hover { background: #e8ebff; }
-
-        /* LISTS */
-        .list-card { background: var(--panel-muted); padding: 20px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); }
-        .btn-list-action { padding: 10px 20px; border: none; border-radius: 6px; color: white; cursor: pointer; font-weight: 600; margin-left: 5px; }
-        .btn-study { background: var(--primary); }
-        .btn-manage { background: var(--partial); }
-
-        /* STUDY */
-        .card-container { perspective: 1000px; margin: 30px 0; min-height: 300px; }
-        .card { background: transparent; width:100%; height:100%; border-radius: 15px; min-height: 300px; cursor: pointer; transition: transform 0.6s; transform-style: preserve-3d; position: relative; }
+        .recent-courses { margin-top: 50px; text-align: left; }
+        .recent-courses h2 { font-size: 24px; color: var(--text); margin-bottom: 20px; }
+        .course-list { display: flex; flex-direction: column; gap: 15px; }
+        .course-card { background: var(--panel-muted); padding: 20px; border-radius: 12px; cursor: pointer; transition: all 0.3s; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); }
+        .course-card:hover { background: #e8ebff; transform: translateX(5px); }
+        .course-card-left { flex: 1; }
+        .course-card-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+        .course-card-info { font-size: 14px; color: var(--text-soft); }
+        .course-card-arrow { font-size: 24px; color: var(--primary); }
+        
+        .lists-page h2 { color: var(--text); margin-bottom: 10px; font-size: 28px; display: inline-block; }
+        .lists-page-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .btn-edit-page-title { background: none; border: none; color: var(--primary); cursor: pointer; font-size: 20px; padding: 5px; transition: all 0.3s; }
+        .lists-page-subtitle { color: var(--text-soft); font-size: 14px; margin-bottom: 30px; }
+        .lists-grid { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+        .list-card { background: linear-gradient(135deg, var(--panel-muted) 0%, #e0e7ff 100%); padding: 25px 30px; border-radius: 15px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); position: relative; display: flex; justify-content: space-between; align-items: center; }
+        .list-card:hover { transform: translateX(5px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); }
+        .list-card-left { flex: 1; }
+        .list-card-title { font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+        .list-card-count { font-size: 14px; color: var(--text-soft); margin-bottom: 5px; }
+        .list-card-progress { font-size: 13px; color: var(--primary); font-weight: 600; }
+        .list-card-actions { display: flex; gap: 12px; }
+        .btn-list-action { padding: 15px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; color: white; min-width: 140px; }
+        .btn-study { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); }
+        .btn-manage { background: linear-gradient(135deg, var(--partial) 0%, #f7b733 100%); }
+        .list-card-buttons { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; opacity: 0; transition: all 0.3s; }
+        .list-card:hover .list-card-buttons { opacity: 1; }
+        .btn-edit-list, .btn-delete-list, .btn-embed { background: rgba(255, 255, 255, 0.9); border: none; color: var(--primary); cursor: pointer; font-size: 11px; padding: 4px 7px; border-radius: 3px; transition: all 0.3s; line-height: 1; }
+        .btn-edit-list:hover, .btn-embed:hover { background: var(--primary); color: white; }
+        .btn-delete-list { color: var(--danger); }
+        .btn-delete-list:hover { background: var(--danger); color: white; }
+        .btn-new-list { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; width: 100%; }
+        
+        .manage-cards-page h2 { color: var(--text); margin-bottom: 10px; font-size: 28px; }
+        .breadcrumb { color: var(--text-soft); font-size: 14px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        .breadcrumb a { color: var(--primary); text-decoration: none; cursor: pointer; }
+        .manage-section { margin-bottom: 40px; }
+        .manage-section h3 { font-size: 20px; color: var(--text); margin-bottom: 15px; }
+        .cards-list { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        .card-edit-item { background: var(--panel-muted); padding: 20px; border-radius: 12px; border: 2px solid transparent; transition: all 0.3s; }
+        .card-edit-item:hover { border-color: var(--primary); }
+        .card-edit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .card-edit-number { font-size: 14px; font-weight: 600; color: var(--primary); }
+        .btn-delete-card { background: var(--danger); color: white; padding: 5px 12px; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-edit-card { background: var(--primary); color: white; padding: 5px 12px; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .card-inline-editor { margin-top: 12px; padding: 14px; border: 2px dashed var(--border); border-radius: 10px; background: var(--panel); }
+        .card-inline-editor .actions { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-save-card { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); color: #fff; border: none; border-radius: 6px; padding: 8px 14px; font-weight: 700; cursor: pointer; }
+        .btn-cancel-card { background: var(--border); color: var(--text); border: none; border-radius: 6px; padding: 8px 14px; font-weight: 700; cursor: pointer; }
+        .btn-edit-current { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 700; cursor: pointer; }
+        
+        .card-edit-content { display: flex; flex-direction: column; gap: 10px; }
+        .card-edit-text { font-size: 14px; color: var(--text); }
+        .card-edit-label { font-weight: 600; color: var(--text-soft); margin-right: 5px; }
+        .editor-toolbar { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; padding: 10px; background: var(--panel-muted); border-radius: 8px; border: 2px solid var(--border); align-items: center; }
+        .editor-btn { background: var(--panel); border: 2px solid var(--primary); color: var(--primary); padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 700; transition: all 0.2s; }
+        .editor-btn:hover { background: var(--primary); color: white; }
+        .editor-content { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; min-height: 120px; resize: vertical; overflow-y: auto; background: var(--panel); color: var(--text); }
+        .editor-content:focus { outline: none; border-color: var(--primary); }
+        .empty-cards-message { text-align: center; padding: 40px; color: var(--text-soft); font-size: 16px; }
+        
+        .study-page h2 { color: var(--text); margin-bottom: 20px; font-size: 28px; }
+        .study-mode-indicator { display: inline-block; background: var(--partial); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-left: 10px; }
+        .study-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .progress-bar { background: var(--border); height: 8px; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, var(--primary), var(--primary-2)); height: 100%; transition: width 0.3s ease; }
+        
+        .card-container { perspective: 1000px; margin-bottom: 30px; }
+        .card { background: transparent; border-radius: 15px; min-height: 300px; max-height: 500px; cursor: pointer; transition: transform 0.6s; transform-style: preserve-3d; position: relative; }
         .card.flipped { transform: rotateY(180deg); }
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 30px; background: var(--card-bg); border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid var(--border); font-size: 22px; text-align: center; overflow: auto; }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 40px; overflow-y: auto; overflow-x: hidden; background: var(--card-bg); border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); border: 1px solid var(--border); color: var(--text); }
         .card-back { transform: rotateY(180deg); }
-        .buttons { display: flex; gap: 10px; }
-        .buttons button { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
-        .btn-known { background: var(--known); }
-        .btn-partial { background: var(--partial); }
-        .btn-unknown { background: var(--unknown); }
-
-        /* MANAGE */
-        .card-edit-item { background: var(--panel-muted); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border); }
-        .editor-content { background: var(--panel); border: 1px solid var(--border); padding: 10px; min-height: 60px; border-radius: 6px; margin-top: 5px; }
-
-        /* MODALS */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
-        .modal.show { display: flex; }
-        .modal-content { background: var(--panel); padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; color: var(--text); }
+        .card-text { font-size: 24px; color: var(--text); font-weight: 500; line-height: 1.5; width: 100%; text-align: center; }
+        .card-text img { max-width: 100%; height: auto; display: inline-block; margin: 5px; border-radius: 8px; vertical-align: middle; }
+        
+        .buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        button { padding: 15px 30px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; color: white; flex: 1; min-width: 150px; }
+        .btn-known { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); }
+        .btn-partial { background: linear-gradient(135deg, var(--partial) 0%, #f7b733 100%); }
+        .btn-unknown { background: linear-gradient(135deg, var(--danger) 0%, #ee5a6f 100%); }
+        .stats { text-align: center; margin-top: 20px; color: var(--text-soft); font-size: 14px; }
+        .flip-hint { text-align: center; color: var(--text-soft); font-size: 14px; margin-bottom: 20px; font-style: italic; }
+        
         .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); }
-        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-        .btn-cancel { background: var(--border); border:none; padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--text); }
-        .btn-add { background: var(--primary); border:none; padding: 8px 16px; border-radius: 6px; cursor: pointer; color: white; }
-
+        .input-group label { display: block; margin-bottom: 5px; color: var(--text); font-weight: 600; }
+        .input-group input[type="text"], .input-group input[type="color"] { width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit; background: var(--panel); color: var(--text); box-sizing: border-box; }
+        .input-group input[type="text"]:focus { outline: none; border-color: var(--primary); }
+        .input-group select { width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit; background: var(--panel); color: var(--text); box-sizing: border-box; cursor: pointer; }
+        
+        .btn-add { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); width: 100%; margin-top: 10px; }
+        
+        .end-message { text-align: center; padding: 40px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
+        .end-message h2 { color: var(--text); margin-bottom: 30px; }
+        
+        .stat-bar-track { width: 100%; height: 30px; background: var(--panel-muted); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+        .stat-bar-fill-known { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); }
+        .stat-bar-fill-partial { background: linear-gradient(135deg, var(--partial) 0%, #f7b733 100%); }
+        .stat-bar-fill-unknown { background: linear-gradient(135deg, var(--danger) 0%, #ee5a6f 100%); }
+        .legend-known { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); }
+        .legend-partial { background: linear-gradient(135deg, var(--partial) 0%, #f7b733 100%); }
+        .legend-unknown { background: linear-gradient(135deg, var(--danger) 0%, #ee5a6f 100%); }
+        
+        .btn-restart { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); }
+        .btn-review { background: linear-gradient(135deg, var(--partial) 0%, #f7b733 100%); }
+        .btn-next-list { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); }
+        .btn-export { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .btn-clear { background: linear-gradient(135deg, var(--danger) 0%, #ee5a6f 100%); }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: var(--panel); padding: 30px; border-radius: 15px; max-width: 400px; width: 90%; position: relative; z-index: 1001; color: var(--text); }
+        .modal-header { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: var(--text); }
+        .btn-cancel { background: var(--border); color: var(--text); }
+        .btn-cancel:hover { filter: brightness(90%); }
+        
         .page { display: none; }
         .page.active { display: block; }
+        #fileInput, #imageInput { display: none; }
         
-        /* THEME MODAL */
-        #themeModal .input-group input[type="color"] { height: 40px; padding: 2px; }
-
-        /* COMPARATEUR */
-        #comparatorModal { z-index: 2000; background: rgba(0,0,0,0.9); }
-        .comparator-container { display: grid; grid-template-columns: 1fr 300px; gap: 20px; height: 90vh; width: 95%; background: #14161a; border-radius: 10px; padding: 20px; color: #fff; }
-        .comp-controls textarea { width: 100%; background: #0e1014; color: #fff; border: 1px solid #333; padding: 10px; min-height: 100px; }
-        #diffOutput { background: #0e1014; padding: 20px; border-radius: 8px; height: 100%; overflow: auto; white-space: pre-wrap; line-height: 1.6; }
-        mark.ins { background: rgba(34,197,94,0.3); color: #fff; text-decoration: none; }
-        mark.del { background: rgba(239,68,68,0.3); color: #fff; text-decoration: line-through; }
+        /* THEME MODAL SPECIFIC */
+        #themeModal { z-index: 3000; }
+        #themeModal .modal-content { max-height: 80vh; overflow: auto; }
+        #themeModal .input-group input[type="color"] {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            width: 48px; height: 36px;
+            padding: 0;
+        }
+        
+        /* COMPARATOR STYLES */
+        #comparatorModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow: auto; }
+        #comparatorModal.show { display: block; }
+        .comparator-container { background: #0b0c0f; color: #e8ecf3; min-height: 100vh; padding: 20px; }
+        .comparator-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #23262d; background: #14161a; margin-bottom: 20px; border-radius: 10px; }
+        .btn-close-comparator { background: #ff6b6b; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .comparator-main { display: grid; grid-template-columns: 1fr 360px; gap: 20px; }
+        .comparator-aside { background: #14161a; border-radius: 12px; padding: 16px; }
+        .comp-panel { background: #14161a; border: 1px solid #23262d; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+        .comp-panel h2 { margin: 0; padding: 12px 14px; border-bottom: 1px solid #23262d; font-size: 16px; }
+        #diffOutput { padding: 14px; white-space: pre-wrap; word-break: break-word; }
+        .comp-controls { display: grid; gap: 12px; padding: 12px; border: 1px solid #23262d; background: #14161a; border-radius: 12px; }
+        .comp-controls textarea { width: 100%; min-height: 120px; resize: vertical; background: #0e1014; border: 1px solid #2a2f39; border-radius: 8px; color: #e8ecf3; padding: 10px; font-family: inherit; }
+        .comp-controls label { font-weight: 600; margin-bottom: 6px; display: block; color: #e8ecf3; }
+        .comp-controls button { background: #5b8cff; color: white; border: 0; border-radius: 8px; padding: 10px 12px; font-weight: 600; cursor: pointer; }
+        .comp-controls button.secondary { background: #2a2f39; }
+        .comp-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        mark.ins, mark.del { background: transparent; border-radius: 4px; color: #fff; padding: 0 2px; border: 1px solid; }
+        mark.ins { box-shadow: inset 0 -0.45em rgba(31,191,71,0.4); border-color: rgba(31,191,71,0.7); }
+        mark.del { box-shadow: inset 0 -0.45em rgba(255,92,92,0.35); border-color: rgba(255,92,92,0.7); text-decoration: line-through; }
+        mark.focused { box-shadow: inset 0 -0.48em rgba(255,209,102,0.9), 0 0 0 2px rgba(255,209,102,0.25) !important; border-color: rgba(255,209,102,0.85) !important; background: rgba(255,209,102,0.2) !important; }
+        .comp-change.selected { border-color: #ffd166 !important; box-shadow: 0 0 0 2px rgba(255,209,102,0.25) !important; background: rgba(255,209,102,0.1); }
+        .comp-summary { padding: 12px; border-bottom: 1px solid #23262d; }
+        .comp-change { display: block; text-align: left; width: 100%; background: transparent; border: 1px solid #2a2f39; border-radius: 10px; color: #e8ecf3; padding: 10px; margin: 8px 0; cursor: pointer; }
+        .comp-change:hover { border-color: #ffd166; }
+        .comp-change.selected { border-color: #ffd166; box-shadow: 0 0 0 2px rgba(255,209,102,0.25); }
+        .comp-change .type { font-weight: 700; margin-bottom: 6px; display: block; }
+        .comp-change .token { display: inline; color: #fff; padding: 0 1px; border-radius: 4px; border: 1px solid; }
+        .comp-change .token { box-shadow: inset 0 -0.35em rgba(31,191,71,0.4); border-color: rgba(31,191,71,0.7); }
+        .comp-change .token.del { box-shadow: inset 0 -0.35em rgba(255,92,92,0.35); border-color: rgba(255,92,92,0.7); text-decoration: none; }
+        .comp-change .ctx { color: #8b93a6; display: block; margin-top: 6px; font-size: 12px; }
+        #backToSelected { position: fixed; right: 390px; bottom: 20px; z-index: 2001; background: #ffd166; color: #111; border: 0; border-radius: 999px; padding: 10px 14px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.35); display: none; }
+        #backToSelected.visible { display: inline-flex; }
+        #backToSelected:hover { filter: brightness(0.95); }
+        .del-ghost { display: inline-block; margin: 0 2px; color: #fff; }
+        .del-ghost mark.del { text-decoration: none; box-shadow: inset 0 -0.45em rgba(255,92,92,0.35); border-color: rgba(255,92,92,0.7); }
+        .focus-ghost { display: inline-block; width: 10px; height: 1.2em; vertical-align: baseline; box-shadow: inset 0 -0.48em rgba(255,209,102,0.9), 0 0 0 2px rgba(255,209,102,0.25); border: 1px dashed rgba(255,209,102,0.85); border-radius: 4px; }
+        .comp-change .token { box-shadow: inset 0 -0.35em rgba(34,197,94,0.7); border-color: rgba(34,197,94,1); background: rgba(34,197,94,0.15); }
+        mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(34,197,94,0.9); }
+        @media (max-width: 1000px) { .comparator-main { grid-template-columns: 1fr; } #backToSelected { right: 12px; bottom: 12px; } }
+        .btn-filter-del { background: #2a2f39; color: #e8ecf3; border: 0; border-radius: 8px; padding: 8px 10px; font-weight: 700; cursor: pointer; }
+        .btn-filter-del.active { background: #ff6b6b; color: #fff; }
+        /* GIF de félicitations en fin de session */
+        .result-gif {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .result-gif img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        .result-gif.show { display: block; }
     </style>
 </head>
 <body>
-
-<button class="toggle-sidebar-btn" id="toggleSidebarBtn" onclick="toggleSidebar()">◀</button>
-
+    <button class="toggle-sidebar-btn" id="toggleSidebarBtn" onclick="toggleSidebar()"><span class="toggle-icon">◀</span></button>
 <div class="sidebar" id="sidebar">
-    <div class="sidebar-header"><h1>📚 Flashcards</h1><p>Pro + Import</p></div>
-    <div class="sidebar-nav"><div class="nav-item active" onclick="showPage('home')">🏠 Accueil</div></div>
+    <div class="sidebar-header"><h1>📚 Flashcards</h1><p>Système d'apprentissage</p></div>
+    <div class="sidebar-nav"><div class="nav-item active" onclick="showPage('home')"><span>🏠</span><span>Accueil</span></div></div>
     <div class="folder-section">
         <div class="folder-section-header">
-            <h3>Mes Cours</h3>
-            <div>
-                <button class="btn-new-category" onclick="showNewCategoryModal()">+ Cat</button>
-                <button class="btn-new-folder" onclick="showNewFolderModal()">+ Cours</button>
+            <h3>Organisation</h3>
+            <div class="folder-section-buttons">
+                <button class="btn-new-category" onclick="showNewCategoryModal()" title="Nouvelle catégorie">📁</button>
+                <button class="btn-new-folder" onclick="showNewFolderModal()" title="Nouveau cours">+</button>
             </div>
         </div>
         <div id="categoryList"></div>
     </div>
 </div>
-
 <div class="main-content" id="mainContent">
-    <div class="app-header">
-        <button class="btn-comparator" onclick="openComparator()">🔍 Comparateur</button>
+    <div class="app-header" style="padding:10px 40px;">
+        <button class="btn-comparator" onclick="openComparator()">
+            🔍 Comparateur de texte
+        </button>
         <button class="btn-comparator" onclick="openThemeModal()">🎨 Thème</button>
     </div>
-
     <div id="homePage" class="page active">
-        <div class="container home-page" style="text-align: center;">
-            <div class="home-hero"><h1>Bienvenue ! 👋</h1><p>Le système complet pour tes révisions.</p></div>
-            
+        <div class="container home-page">
+            <div class="home-hero"><h1>Bienvenue ! 👋</h1><p>Apprends efficacement avec ton système de flashcards.</p></div>
             <div class="stats-grid">
-                <div class="stat-card"><div class="stat-card-value" id="totalCourses">0</div><div>Cours</div></div>
-                <div class="stat-card"><div class="stat-card-value" id="totalCards">0</div><div>Cartes</div></div>
+                <div class="stat-card"><div class="stat-card-value" id="totalCourses">0</div><div class="stat-card-label">Cours créés</div></div>
+                <div class="stat-card"><div class="stat-card-value" id="totalCards">0</div><div class="stat-card-label">Cartes totales</div></div>
             </div>
-
             <div class="quick-actions">
                 <button class="btn-action" onclick="showNewFolderModal()">➕ Créer un cours</button>
-                <button class="btn-action btn-action-secondary" onclick="showImportTextModal()">📋 Importer (Texte/Quizlet)</button>
-                <button class="btn-action" style="background:#555;" onclick="importCards()">📥 Restaurer (JSON)</button>
-                <button class="btn-export-all" onclick="exportAll()">📦 Sauvegarder</button>
+                <button class="btn-action btn-action-secondary" onclick="importCards()">📥 Importer</button>
+                <button class="btn-export-all" onclick="exportAll()">📦 Exporter tout</button>
             </div>
-
-            <div class="recent-courses" style="text-align: left; margin-top:40px;">
-                <h2>Mes cours</h2>
-                <div class="course-list" id="courseList"></div>
-            </div>
+            <div class="recent-courses"><h2>Mes cours</h2><div class="course-list" id="courseList"></div></div>
         </div>
     </div>
-
     <div id="listsPage" class="page">
-        <div class="container">
-            <h2 id="listsTitle">Cours</h2>
-            <p style="margin-bottom:20px; color:var(--text-soft);">Sélectionne une liste :</p>
+        <div class="container lists-page">
+            <div class="lists-page-header"><h2 id="listsTitle">Cours</h2><button class="btn-edit-page-title" onclick="showRenameFolderModal()">✏️</button><button class="btn-edit-page-title" title="Intégrer ce cours" onclick="copyFolderEmbed()">🔗</button></div>
+            <p class="lists-page-subtitle">Sélectionne une liste à réviser</p>
             <div class="lists-grid" id="listsGrid"></div>
-            <button class="btn-action" style="width:100%; margin-top:20px;" onclick="showNewListModal()">+ Nouvelle Liste</button>
+            <button class="btn-new-list" onclick="showNewListModal()">➕ Créer une nouvelle liste</button>
         </div>
     </div>
-
     <div id="manageCardsPage" class="page">
-        <div class="container">
-            <button style="background:none; border:none; color:var(--primary); cursor:pointer; margin-bottom:10px;" onclick="showListsPage(currentCategory, currentFolder)">← Retour</button>
-            <h2 id="manageTitle">Gérer</h2>
-            
-            <div style="background:var(--panel-muted); padding:20px; border-radius:10px; margin-bottom:20px;">
+        <div class="container manage-cards-page">
+            <div class="breadcrumb"><a id="backToLists">← Retour aux listes</a></div>
+            <h2 id="manageTitle">Gérer les cartes</h2>
+            <div class="manage-section">
+                <h3>➕ Ajouter une nouvelle carte</h3>
                 <div class="input-group">
-                    <label>Question</label>
+                    <label>Question / Recto :</label>
+                    <div class="editor-toolbar">
+                        <button class="editor-btn" onclick="formatText('bold', 'Q')"><b>G</b></button>
+                        <button class="editor-btn" onclick="formatText('italic', 'Q')"><i>I</i></button>
+                        <button class="editor-btn" onclick="formatText('underline', 'Q')"><u>S</u></button>
+                        <input type="color" class="color-picker" id="textColorQ" value="#000000" title="Couleur">
+                        <input type="color" class="color-picker" id="bgColorQ" value="#ffff00" title="Surlignage">
+                        <button class="editor-btn" onclick="insertImage('Q')">🖼️</button>
+                        <button class="editor-btn" onclick="clearFormat('Q')">✖</button>
+                    </div>
                     <div class="editor-content" id="newQuestion" contenteditable="true"></div>
                 </div>
                 <div class="input-group">
-                    <label>Réponse</label>
+                    <label>Réponse / Verso :</label>
+                    <div class="editor-toolbar">
+                        <button class="editor-btn" onclick="formatText('bold', 'A')"><b>G</b></button>
+                        <button class="editor-btn" onclick="formatText('italic', 'A')"><i>I</i></button>
+                        <button class="editor-btn" onclick="formatText('underline', 'A')"><u>S</u></button>
+                        <input type="color" class="color-picker" id="textColorA" value="#000000" title="Couleur">
+                        <input type="color" class="color-picker" id="bgColorA" value="#ffff00" title="Surlignage">
+                        <button class="editor-btn" onclick="insertImage('A')">🖼️</button>
+                        <button class="editor-btn" onclick="clearFormat('A')">✖</button>
+                    </div>
                     <div class="editor-content" id="newAnswer" contenteditable="true"></div>
                 </div>
                 <button class="btn-add" onclick="addCard()">Ajouter la carte</button>
             </div>
-
-            <div id="cardsList"></div>
+            <div class="manage-section">
+                <h3>📝 Cartes existantes (<span id="cardCount">0</span>)</h3>
+                <div class="cards-list" id="cardsList"></div>
+            </div>
+            <div class="save-section">
+                <h2 style="margin-bottom:20px;color:#333">💾 Gestion des cartes</h2>
+                <div class="save-buttons">
+                    <button class="btn-export" onclick="exportCards()">📥 Exporter</button>
+                    <button class="btn-clear" onclick="clearCurrentList()">🗑️ Vider</button>
+                </div>
+            </div>
         </div>
     </div>
-
     <div id="studyPage" class="page">
-        <div class="container" style="text-align:center;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <button style="background:none; border:none; color:var(--primary); cursor:pointer;" onclick="showListsPage(currentCategory, currentFolder)">← Quitter</button>
-                <span id="studyCounter">0/0</span>
-            </div>
-            
-            <div style="height:6px; background:#eee; border-radius:10px; margin-bottom:20px; overflow:hidden;">
-                <div id="progressBar" style="height:100%; width:0%; background:var(--primary); transition:0.3s;"></div>
-            </div>
-
+        <div class="container study-page">
+            <div class="breadcrumb"><a id="backToListsStudy">← Retour aux listes</a></div>
+            <div class="study-controls">	<div>		<h2 id="studyTitle" style="display:inline">Liste</h2>		<span id="studyModeIndicator" class="study-mode-indicator" style="display:none">🔄 Mode révision</span>	</div>	<button class="btn-edit-current" id="btnEditCurrent" onclick="editCurrentCard()">✏️ Éditer cette carte</button></div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
             <div id="cardSection">
+                <div class="flip-hint">👆 Clique pour retourner (molette pour scroller)</div>
                 <div class="card-container">
                     <div class="card" id="flashcard" onclick="flipCard()">
-                        <div class="card-face card-front" id="question"></div>
-                        <div class="card-face card-back" id="answer"></div>
+                        <div class="card-face card-front"><div class="card-text" id="question"></div></div>
+                        <div class="card-face card-back"><div class="card-text" id="answer"></div></div>
                     </div>
                 </div>
-                <p style="color:#999; font-size:12px; margin-bottom:20px;">Clique pour retourner</p>
                 <div class="buttons">
-                    <button class="btn-known" onclick="answer('known')">Connu</button>
-                    <button class="btn-partial" onclick="answer('partial')">Moyen</button>
-                    <button class="btn-unknown" onclick="answer('unknown')">Pas connu</button>
+                    <button class="btn-known" onclick="answer('known')">✓ Connu</button>
+                    <button class="btn-partial" onclick="answer('partial')">~ Partiellement</button>
+                    <button class="btn-unknown" onclick="answer('unknown')">✗ Pas connu</button>
                 </div>
+                <div class="stats" id="stats"></div>
             </div>
-            
-            <div id="endSection" style="display:none; padding:40px;">
-                <h2>Terminé ! 🎉</h2>
-                <button class="btn-action" onclick="showListsPage(currentCategory, currentFolder)">Retour aux listes</button>
+            <div id="emptyState" class="empty-state" style="display:none"><div class="empty-state-icon">📝</div><h3>Aucune carte</h3></div>
+            <div id="endSection" style="display:none">
+                <div class="end-message">
+                    <h2>🎉 Session terminée !</h2>
+                    <div class="chart-container">
+                        <div class="stat-bar-container">
+                            <div class="stat-bar-item">
+                                <div class="stat-bar-label"><div class="stat-bar-label-left"><div class="stat-bar-icon legend-known"></div><span id="legendKnown">Connu: 0 (0%)</span></div></div>
+                                <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill-known" id="barKnown" style="width:0%">0</div></div>
+                            </div>
+                            <div class="stat-bar-item">
+                                <div class="stat-bar-label"><div class="stat-bar-label-left"><div class="stat-bar-icon legend-partial"></div><span id="legendPartial">Partiel: 0 (0%)</span></div></div>
+                                <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill-partial" id="barPartial" style="width:0%">0</div></div>
+                            </div>
+                            <div class="stat-bar-item">
+                                <div class="stat-bar-label"><div class="stat-bar-label-left"><div class="stat-bar-icon legend-unknown"></div><span id="legendUnknown">Pas connu: 0 (0%)</span></div></div>
+                                <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill-unknown" id="barUnknown" style="width:0%">0</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quick-actions">
+    <button class="btn-action" onclick="showNewFolderModal()">➕ Créer un cours</button>
+    <button class="btn-action btn-action-secondary" onclick="showImportTextModal()">📋 Importer (Texte/CSV)</button>
+    <button class="btn-action btn-action-secondary" onclick="importCards()">📥 Restaurer (JSON)</button>
+    <button class="btn-export-all" onclick="exportAll()">📦 Exporter tout</button>
+</div>
+                    <div id="resultGif" class="result-gif"><img id="resultGifImg" src="" alt="Bravo !"></div>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-<input type="file" id="fileInput" accept=".json" style="display:none;">
-
-<div class="modal" id="newCategoryModal">
+<input type="file" id="fileInput" accept=".json">
+<input type="file" id="imageInput" accept="image/*">
+<div class="modal" id="newCategoryModal"><div class="modal-content"><div class="modal-header">Nouvelle catégorie</div><div class="input-group"><label for="categoryNameInput">Nom de la catégorie :</label><input type="text" id="categoryNameInput" placeholder="Ex: Droit S3"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeNewCategoryModal()">Annuler</button><button class="btn-add" onclick="createCategory()">Créer</button></div></div></div>
+<div class="modal" id="newFolderModal"><div class="modal-content"><div class="modal-header">Nouveau cours</div><div class="input-group"><label for="folderCategorySelect">Catégorie :</label><select id="folderCategorySelect"></select></div><div class="input-group"><label for="folderNameInput">Nom du cours :</label><input type="text" id="folderNameInput" placeholder="Ex: Droit Administratif"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeNewFolderModal()">Annuler</button><button class="btn-add" onclick="createFolder()">Créer</button></div></div></div>
+<div class="modal" id="newListModal"><div class="modal-content"><div class="modal-header">Nouvelle liste</div><div class="input-group"><label for="listNameInput">Nom de la liste :</label><input type="text" id="listNameInput" placeholder="Ex: Chapitre 1"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeNewListModal()">Annuler</button><button class="btn-add" onclick="createList()">Créer</button></div></div></div>
+<div class="modal" id="renameCategoryModal"><div class="modal-content"><div class="modal-header">Renommer la catégorie</div><div class="input-group"><label for="renameCategoryInput">Nouveau nom :</label><input type="text" id="renameCategoryInput" placeholder="Nouveau nom"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeRenameCategoryModal()">Annuler</button><button class="btn-add" onclick="renameCategory()">Renommer</button></div></div></div>
+<div class="modal" id="renameFolderModal"><div class="modal-content"><div class="modal-header">Renommer le cours</div><div class="input-group"><label for="renameFolderInput">Nouveau nom :</label><input type="text" id="renameFolderInput" placeholder="Nouveau nom du cours"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeRenameFolderModal()">Annuler</button><button class="btn-add" onclick="renameFolder()">Renommer</button></div></div></div>
+<div class="modal" id="renameListModal"><div class="modal-content"><div class="modal-header">Renommer la liste</div><div class="input-group"><label for="renameListInput">Nouveau nom :</label><input type="text" id="renameListInput" placeholder="Nouveau nom de la liste"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeRenameListModal()">Annuler</button><button class="btn-add" onclick="renameList()">Renommer</button></div></div></div>
+<div class="modal" id="themeModal">
     <div class="modal-content">
-        <h3>Nouvelle Catégorie</h3>
-        <div class="input-group"><input type="text" id="categoryNameInput" placeholder="Ex: Droit, Anglais..."></div>
-        <div class="modal-buttons"><button class="btn-cancel" onclick="closeModals()">Annuler</button><button class="btn-add" onclick="createCategory()">Créer</button></div>
+        <div class="modal-header">Thème</div>
+
+        <div class="input-group">
+            <label>Dégradé de fond — départ</label>
+            <input type="color" id="th_bg_from">
+        </div>
+        <div class="input-group">
+            <label>Dégradé de fond — fin</label>
+            <input type="color" id="th_bg_to">
+        </div>
+
+        <div class="input-group">
+            <label>Couleur primaire</label>
+            <input type="color" id="th_primary">
+        </div>
+        <div class="input-group">
+            <label>Couleur primaire 2</label>
+            <input type="color" id="th_primary2">
+        </div>
+
+        <div class="input-group">
+            <label>Accent</label>
+            <input type="color" id="th_accent">
+        </div>
+        <div class="input-group">
+            <label>Accent 2</label>
+            <input type="color" id="th_accent2">
+        </div>
+
+        <div class="input-group">
+            <label>Texte principal</label>
+            <input type="color" id="th_text">
+        </div>
+        <div class="input-group">
+            <label>Texte secondaire</label>
+            <input type="color" id="th_text_soft">
+        </div>
+
+        <div class="input-group">
+            <label>Fond des panneaux</label>
+            <input type="color" id="th_panel">
+        </div>
+        <div class="input-group">
+            <label>Fond atténué</label>
+            <input type="color" id="th_panel_muted">
+        </div>
+        <div class="input-group">
+            <label>Bordures</label>
+            <input type="color" id="th_border">
+        </div>
+
+        <div class="input-group">
+            <label>Fond des cartes d’étude</label>
+            <input type="color" id="th_card_bg">
+        </div>
+
+        <div class="input-group">
+            <label>Couleur “Connu”</label>
+            <input type="color" id="th_known">
+        </div>
+        <div class="input-group">
+            <label>Couleur “Partiel”</label>
+            <input type="color" id="th_partial">
+        </div>
+        <div class="input-group">
+            <label>Couleur “Pas connu”</label>
+            <input type="color" id="th_unknown">
+        </div>
+
+        <div class="modal-buttons" style="flex-wrap:wrap">
+            <button class="btn-add" onclick="saveTheme()">Enregistrer</button>
+            <button class="btn-cancel" onclick="closeThemeModal()">Fermer</button>
+            <button class="btn-clear" onclick="resetTheme()">Réinitialiser</button>
+            <button class="btn-export" onclick="exportTheme()">Exporter</button>
+            <label class="btn-action btn-action-secondary" style="cursor:pointer">
+                Importer
+                <input type="file" id="themeImportInput" accept="application/json" style="display:none">
+            </label>
+        </div>
+        <div class="input-group" style="display:flex; gap:8px; flex-wrap:wrap">
+            <button class="btn-action btn-action-secondary" type="button" onclick="applyPreset('Clair')">Clair</button>
+            <button class="btn-action btn-action-secondary" type="button" onclick="applyPreset('Sombre')">Sombre</button>
+        </div>
     </div>
 </div>
-
-<div class="modal" id="newFolderModal">
-    <div class="modal-content">
-        <h3>Nouveau Cours</h3>
-        <div class="input-group"><select id="folderCategorySelect"></select></div>
-        <div class="input-group"><input type="text" id="folderNameInput" placeholder="Ex: Chapitre 1..."></div>
-        <div class="modal-buttons"><button class="btn-cancel" onclick="closeModals()">Annuler</button><button class="btn-add" onclick="createFolder()">Créer</button></div>
+<div id="comparatorModal">
+    <div class="comparator-container">
+        <div class="comparator-header" style="padding:10px 20px;">
+            <button class="btn-close-comparator" onclick="closeComparator()">✕ Fermer</button>
+        </div>
+        <div class="comparator-main">
+            <div class="comparator-section">
+                <div class="comp-panel">
+                    <h2>Texte récent annoté</h2>
+                    <div id="diffOutput"></div>
+                </div>
+            </div>
+            <button id="backToSelected" title="Aller à la carte sélectionnée">⬅ Aller à la sélection</button>
+        </div>
+        <div class="comp-controls">
+            <div>
+                <label for="oldText">Texte ancien</label>
+                <textarea id="oldText" placeholder="Colle ici l'ancienne version…"></textarea>
+            </div>
+            <div>
+                <label for="newText">Texte récent</label>
+                <textarea id="newText" placeholder="Colle ici la nouvelle version…"></textarea>
+            </div>
+            <div class="comp-split">
+                <button id="compareBtn">Comparer</button>
+                <button id="copyBtn" class="secondary">Copier le résultat</button>
+            </div>
+        </div>
+        <div class="comparator-aside">
+            <div class="comp-summary">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                    <code class="badge">Insertions: <span id="insCount">0</span></code>
+                    <code class="badge">Suppressions: <span id="delCount">0</span></code>
+                    <code class="badge">Remplacements: <span id="repCount">0</span></code>
+                </div>
+                <small id="hint">Colle tes textes puis clique sur « Comparer ».</small>
+            </div>
+            <div class="comp-toolbar">
+                <strong>Changements</strong>
+                <span style="flex:1"></span>
+                <button id="toggleOnlyDeletions" class="btn-filter-del">➖ Suppressions uniquement</button>
+                <button id="toggleContext" class="secondary">± Contexte</button>
+            </div>
+            <div id="changesList" class="comp-changes"></div>
+        </div>
     </div>
 </div>
-
-<div class="modal" id="newListModal">
-    <div class="modal-content">
-        <h3>Nouvelle Liste</h3>
-        <div class="input-group"><input type="text" id="listNameInput" placeholder="Ex: Vocabulaire..."></div>
-        <div class="modal-buttons"><button class="btn-cancel" onclick="closeModals()">Annuler</button><button class="btn-add" onclick="createList()">Créer</button></div>
-    </div>
-</div>
-
-<div class="modal" id="importTextModal">
+<script src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js"></script>
+    <div class="modal" id="importTextModal">
     <div class="modal-content" style="max-width: 600px;">
-        <h3>Importer (Quizlet / Texte)</h3>
+        <div class="modal-header">Importer depuis Texte / Quizlet</div>
+        
         <div class="input-group">
             <label>1. Destination :</label>
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
                 <select id="importCatSelect" onchange="updateImportFolderSelect()" style="flex:1"></select>
                 <select id="importFolderSelect" style="flex:1"></select>
             </div>
-            <input type="text" id="importListName" placeholder="Nom de la liste à créer" style="margin-top:5px;">
+            <input type="text" id="importListName" placeholder="Nom de la liste (ex: Chapitre 1)">
         </div>
+
         <div class="input-group">
-            <label>2. Séparateur :</label>
+            <label>2. Séparateur entre Question et Réponse :</label>
             <select id="importSeparator">
                 <option value="tab">Tabulation (Quizlet par défaut)</option>
-                <option value=";">Point-virgule (;)</option>
                 <option value=",">Virgule (,)</option>
+                <option value=";">Point-virgule (;)</option>
+                <option value=":">Deux-points (:)</option>
                 <option value="-">Tiret (-)</option>
+                <option value="|">Barre verticale (|)</option>
             </select>
         </div>
+
         <div class="input-group">
             <label>3. Collez votre texte ici :</label>
-            <textarea id="importTextContent" style="width:100%; height:150px; font-family:monospace; resize:vertical;" placeholder="Terme    Définition&#10;Terme 2    Définition 2"></textarea>
+            <textarea id="importTextContent" style="width:100%; height:200px; padding:10px; border:2px solid var(--border); border-radius:8px; font-family:monospace; resize:vertical;" placeholder="Terme 1    Définition 1&#10;Terme 2    Définition 2"></textarea>
         </div>
+
         <div class="modal-buttons">
-            <button class="btn-cancel" onclick="closeModals()">Annuler</button>
-            <button class="btn-add" onclick="performTextImport()">Importer</button>
+            <button class="btn-cancel" onclick="closeImportTextModal()">Annuler</button>
+            <button class="btn-add" onclick="performTextImport()">Importer les cartes</button>
         </div>
     </div>
 </div>
-
-<div class="modal" id="themeModal">
-    <div class="modal-content" style="max-height:80vh; overflow:auto;">
-        <h3>Personnaliser le Thème</h3>
-        <div class="input-group"><label>Fond Départ</label><input type="color" id="th_bg_from" onchange="setVar('--bg-gradient-from', this.value)"></div>
-        <div class="input-group"><label>Fond Arrivée</label><input type="color" id="th_bg_to" onchange="setVar('--bg-gradient-to', this.value)"></div>
-        <div class="input-group"><label>Primaire</label><input type="color" id="th_primary" onchange="setVar('--primary', this.value)"></div>
-        <div class="input-group"><label>Panneau</label><input type="color" id="th_panel" onchange="setVar('--panel', this.value)"></div>
-        <div class="input-group"><label>Texte</label><input type="color" id="th_text" onchange="setVar('--text', this.value)"></div>
-        <div class="modal-buttons">
-            <button class="btn-cancel" onclick="closeModals()">Fermer</button>
-            <button class="btn-add" onclick="saveTheme()">Sauvegarder</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal" id="comparatorModal">
-    <div class="comparator-container">
-        <div class="comp-controls">
-            <h3 style="margin-bottom:10px;">Comparateur de texte</h3>
-            <label>Ancien texte</label>
-            <textarea id="oldText" placeholder="Collez l'ancienne version..."></textarea>
-            <label style="margin-top:10px;">Nouveau texte</label>
-            <textarea id="newText" placeholder="Collez la nouvelle version..."></textarea>
-            <button class="btn-add" style="margin-top:20px; width:100%; padding:15px;" onclick="runComparison()">COMPARER</button>
-            <button class="btn-cancel" style="margin-top:10px; width:100%;" onclick="document.getElementById('comparatorModal').classList.remove('show')">Fermer</button>
-        </div>
-        <div class="comp-result">
-            <h3>Résultat</h3>
-            <div id="diffOutput">Le résultat s'affichera ici...</div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js"></script>
-<script>
-    // --- ETAT GLOBAL ---
-    let categories = {};
-    let currentCategory = null; 
-    let currentFolder = null; 
-    let currentList = null; 
-    let currentIndex = 0;
-    let studyList = [];
-
-    // --- CHARGEMENT ---
-    function loadData() {
-        const data = localStorage.getItem('flashcards_categories_v3');
-        if(data) {
-            categories = JSON.parse(data);
-        } else {
-            // Données de démo si vide
-            categories = {"Droit": {"Constitutionnel": {"Démo": [{question:"Qu'est-ce que l'État ?", answer:"Une personne morale de droit public."}]}}};
-        }
-        updateCategoryList();
-        updateHomeStats();
-        loadTheme();
-    }
-    
-    function saveData() {
-        localStorage.setItem('flashcards_categories_v3', JSON.stringify(categories));
-        updateCategoryList();
-        updateHomeStats();
-    }
-
-    // --- NAVIGATION ---
-    function showPage(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(pageId + 'Page').classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        if(pageId === 'home') document.querySelector('.nav-item').classList.add('active');
-    }
-
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('hidden');
-        document.getElementById('mainContent').classList.toggle('sidebar-hidden');
-    }
-
-    function closeModals() {
-        document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
-    }
-
-    // --- AFFICHAGE SIDEBAR ---
-    function updateCategoryList() {
-        const container = document.getElementById('categoryList');
-        container.innerHTML = '';
-        
-        Object.keys(categories).forEach(cat => {
-            const catDiv = document.createElement('div');
-            catDiv.className = 'category-item';
-            
-            // Header Catégorie
-            const header = document.createElement('div');
-            header.className = 'category-header';
-            header.innerHTML = `<div class="category-left"><span class="category-name">${cat}</span></div>`;
-            header.onclick = () => { folders.classList.toggle('open'); };
-            
-            const folders = document.createElement('div');
-            folders.className = 'category-folders';
-            
-            Object.keys(categories[cat]).forEach(folder => {
-                const fDiv = document.createElement('div');
-                fDiv.className = 'folder-item';
-                fDiv.innerHTML = `<span>📖 ${folder}</span>`;
-                fDiv.onclick = (e) => { e.stopPropagation(); showListsPage(cat, folder); };
-                folders.appendChild(fDiv);
-            });
-            
-            catDiv.appendChild(header);
-            catDiv.appendChild(folders);
-            container.appendChild(catDiv);
-        });
-    }
-
-    function updateHomeStats() {
-        let courses = 0;
-        let cards = 0;
-        const listDiv = document.getElementById('courseList');
-        listDiv.innerHTML = '';
-
-        Object.keys(categories).forEach(cat => {
-            Object.keys(categories[cat]).forEach(folder => {
-                courses++;
-                let folderCards = 0;
-                Object.values(categories[cat][folder]).forEach(l => folderCards += l.length);
-                cards += folderCards;
-
-                const cCard = document.createElement('div');
-                cCard.className = 'course-card';
-                cCard.innerHTML = `<div><strong>${folder}</strong><br><small>${cat}</small></div><div>${folderCards} cartes</div>`;
-                cCard.onclick = () => showListsPage(cat, folder);
-                listDiv.appendChild(cCard);
-            });
-        });
-
-        document.getElementById('totalCourses').textContent = courses;
-        document.getElementById('totalCards').textContent = cards;
-    }
-
-    // --- PAGES ---
-    function showListsPage(cat, folder) {
-        currentCategory = cat; currentFolder = folder;
-        document.getElementById('listsTitle').textContent = folder;
-        
-        const grid = document.getElementById('listsGrid');
-        grid.innerHTML = '';
-        
-        const lists = categories[cat][folder];
-        Object.keys(lists).forEach(listName => {
-            const count = lists[listName].length;
-            const el = document.createElement('div');
-            el.className = 'list-card';
-            el.innerHTML = `
-                <div><strong>${listName}</strong><br><small>${count} cartes</small></div>
-                <div>
-                    <button class="btn-list-action btn-study" onclick="startStudy('${listName}')">Étudier</button>
-                    <button class="btn-list-action btn-manage" onclick="startManage('${listName}')">Gérer</button>
-                    <button style="background:none; border:none; color:red; cursor:pointer; margin-left:10px;" onclick="deleteList('${listName}')">🗑️</button>
-                </div>
-            `;
-            grid.appendChild(el);
-        });
-        showPage('lists');
-    }
-
-    // --- CREATION (Modals) ---
-    function showNewCategoryModal() { document.getElementById('newCategoryModal').classList.add('show'); }
-    function createCategory() {
-        const name = document.getElementById('categoryNameInput').value;
-        if(name && !categories[name]) { categories[name] = {}; saveData(); closeModals(); }
-    }
-
-    function showNewFolderModal() {
-        const sel = document.getElementById('folderCategorySelect');
-        sel.innerHTML = '';
-        Object.keys(categories).forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c; opt.innerText = c;
-            sel.appendChild(opt);
-        });
-        document.getElementById('newFolderModal').classList.add('show');
-    }
-    function createFolder() {
-        const cat = document.getElementById('folderCategorySelect').value;
-        const name = document.getElementById('folderNameInput').value;
-        if(cat && name && !categories[cat][name]) {
-            categories[cat][name] = {}; saveData(); closeModals(); updateCategoryList();
-        }
-    }
-
-    function showNewListModal() { document.getElementById('newListModal').classList.add('show'); }
-    function createList() {
-        const name = document.getElementById('listNameInput').value;
-        if(name && !categories[currentCategory][currentFolder][name]) {
-            categories[currentCategory][currentFolder][name] = [];
-            saveData(); closeModals(); showListsPage(currentCategory, currentFolder);
-        }
-    }
-
-    function deleteList(name) {
-        if(confirm('Supprimer cette liste ?')) {
-            delete categories[currentCategory][currentFolder][name];
-            saveData(); showListsPage(currentCategory, currentFolder);
-        }
-    }
-
-    // --- GESTION DES CARTES ---
-    function startManage(listName) {
-        currentList = listName;
-        document.getElementById('manageTitle').textContent = 'Gérer : ' + listName;
-        renderManageList();
-        showPage('manageCards');
-    }
-
-    function addCard() {
-        const q = document.getElementById('newQuestion').innerText;
-        const a = document.getElementById('newAnswer').innerText;
-        if(q && a) {
-            categories[currentCategory][currentFolder][currentList].push({question: q, answer: a});
-            document.getElementById('newQuestion').innerText = '';
-            document.getElementById('newAnswer').innerText = '';
-            saveData();
-            renderManageList();
-        }
-    }
-
-    function renderManageList() {
-        const container = document.getElementById('cardsList');
-        container.innerHTML = '';
-        const list = categories[currentCategory][currentFolder][currentList];
-        
-        list.forEach((card, idx) => {
-            const div = document.createElement('div');
-            div.className = 'card-edit-item';
-            div.innerHTML = `
-                <b>Q:</b> ${card.question}<br>
-                <b>R:</b> ${card.answer}
-                <button style="float:right; color:red; border:none; background:none; cursor:pointer;" onclick="deleteCard(${idx})">Supprimer</button>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    function deleteCard(idx) {
-        categories[currentCategory][currentFolder][currentList].splice(idx, 1);
-        saveData();
-        renderManageList();
-    }
-
-    // --- ETUDE ---
-    function startStudy(listName) {
-        currentList = listName;
-        studyList = categories[currentCategory][currentFolder][currentList];
-        currentIndex = 0;
-        if(studyList.length === 0) { alert('Liste vide !'); return; }
-        
-        document.getElementById('endSection').style.display = 'none';
-        document.getElementById('cardSection').style.display = 'block';
-        showPage('study');
-        loadStudyCard();
-    }
-
-    function loadStudyCard() {
-        if(currentIndex >= studyList.length) {
-            document.getElementById('cardSection').style.display = 'none';
-            document.getElementById('endSection').style.display = 'block';
-            return;
-        }
-        
-        const card = studyList[currentIndex];
-        document.getElementById('question').innerHTML = card.question;
-        document.getElementById('answer').innerHTML = card.answer;
-        document.getElementById('flashcard').classList.remove('flipped');
-        
-        document.getElementById('studyCounter').textContent = (currentIndex + 1) + '/' + studyList.length;
-        document.getElementById('progressBar').style.width = ((currentIndex / studyList.length) * 100) + '%';
-    }
-
-    function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
-    function answer(type) { currentIndex++; loadStudyCard(); }
-
-    // --- NOUVEAU : IMPORT TEXTE / QUIZLET ---
-    function showImportTextModal() {
-        const sel = document.getElementById('importCatSelect');
-        sel.innerHTML = '';
-        
-        const catKeys = Object.keys(categories);
-        if(catKeys.length === 0) { alert("Créez d'abord une catégorie !"); return; }
-        
-        catKeys.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c; opt.innerText = c;
-            sel.appendChild(opt);
-        });
-        
-        // Pré-sélection
-        if(currentCategory) sel.value = currentCategory;
-        
-        updateImportFolderSelect();
-        document.getElementById('importTextModal').classList.add('show');
-    }
-
-    function updateImportFolderSelect() {
-        const cat = document.getElementById('importCatSelect').value;
-        const sel = document.getElementById('importFolderSelect');
-        sel.innerHTML = '';
-        if(categories[cat]) {
-            Object.keys(categories[cat]).forEach(f => {
-                const opt = document.createElement('option');
-                opt.value = f; opt.innerText = f;
-                sel.appendChild(opt);
-            });
-        }
-    }
-
-    function performTextImport() {
-        const cat = document.getElementById('importCatSelect').value;
-        const folder = document.getElementById('importFolderSelect').value;
-        const listName = document.getElementById('importListName').value.trim();
-        const rawText = document.getElementById('importTextContent').value;
-        const sepVal = document.getElementById('importSeparator').value;
-
-        if(!cat || !folder || !listName || !rawText) { alert("Tout remplir svp"); return; }
-        
-        let separator = sepVal;
-        if(sepVal === 'tab') separator = '\t';
-
-        const lines = rawText.split('\n');
-        const newCards = [];
-
-        lines.forEach(line => {
-            if(!line.trim()) return;
-            const parts = line.split(separator);
-            if(parts.length >= 2) {
-                const q = parts[0].trim();
-                const a = parts.slice(1).join(separator).trim(); // Rejoindre le reste si le séparateur est dans la réponse
-                if(q && a) newCards.push({question: q, answer: a});
-            }
-        });
-
-        if(newCards.length === 0) {
-            alert("Aucune carte détectée. Vérifiez le séparateur (Tabulation vs Virgule etc).");
-            return;
-        }
-
-        if(!categories[cat][folder][listName]) {
-            categories[cat][folder][listName] = [];
-        }
-
-        // Ajout
-        newCards.forEach(c => categories[cat][folder][listName].push(c));
-        
-        saveData();
-        closeModals();
-        alert(newCards.length + " cartes importées avec succès !");
-        
-        // Redirection
-        showListsPage(cat, folder);
-    }
-
-    // --- IMPORT / EXPORT JSON ---
-    function exportAll() {
-        const str = JSON.stringify(categories, null, 2);
-        const blob = new Blob([str], {type: "application/json"});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = "backup_flashcards.json";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }
-
-    function importCards() { document.getElementById('fileInput').click(); }
-    
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            try {
-                const data = JSON.parse(evt.target.result);
-                // Support ancien format vs nouveau
-                if(data.data && Array.isArray(data.data)) {
-                     // Si format "Snapshot", c'est trop complexe pour ce script simple,
-                     // mais on peut essayer de voir si l'utilisateur a uploadé categories direct
-                     alert("Format complexe détecté. Veuillez utiliser un export brut.");
-                } else {
-                    categories = data;
-                }
-                saveData();
-                alert("Sauvegarde restaurée !");
-                location.reload();
-            } catch(err) {
-                alert("Fichier invalide");
-            }
-        };
-        reader.readAsText(file);
-    });
-
-    // --- THEME & COMPARATEUR (Fonctions simplifiées pour intégration) ---
-    function openThemeModal() { document.getElementById('themeModal').classList.add('show'); }
-    function setVar(name, val) { document.documentElement.style.setProperty(name, val); saveTheme(); }
-    
-    function saveTheme() {
-        const theme = {
-            '--bg-gradient-from': getComputedStyle(document.documentElement).getPropertyValue('--bg-gradient-from'),
-            '--primary': getComputedStyle(document.documentElement).getPropertyValue('--primary'),
-            // ... autres vars
-        };
-        localStorage.setItem('fc_theme', JSON.stringify(theme));
-    }
-    
-    function loadTheme() {
-        // Chargement basique si existe
-    }
-
-    function openComparator() { document.getElementById('comparatorModal').classList.add('show'); }
-    function runComparison() {
-        const oldT = document.getElementById('oldText').value;
-        const newT = document.getElementById('newText').value;
-        const diff = Diff.diffWords(oldT, newT);
-        const display = document.getElementById('diffOutput');
-        display.innerHTML = '';
-        diff.forEach(part => {
-            const span = document.createElement('span');
-            if(part.added) { span.innerHTML = `<mark class="ins">${part.value}</mark>`; }
-            else if(part.removed) { span.innerHTML = `<mark class="del">${part.value}</mark>`; }
-            else { span.textContent = part.value; }
-            display.appendChild(span);
-        });
-    }
-
-    // INIT APP
-    loadData();
 <script>
     // VARIABLES GLOBALES FLASHCARDS
     let categories = {}, results = {}, currentCategory = null, currentFolder = null, currentList = null, currentPage = 'home', currentIndex = 0, isFlipped = false, isReviewMode = false, reviewIndices = [], stats = {known: 0, partial: 0, unknown: 0}, currentEditingSide = null, renameTarget = null, openCategories = {};
