@@ -1446,13 +1446,13 @@
     async function copyText(text) {
         try {
             await navigator.clipboard.writeText(text);
-            alert('Code d'intégration copié ✓');
+            alert('Code d\'intégration copié ✓');
         } catch (e) {
             const ta = document.createElement('textarea');
             ta.value = text;
             document.body.appendChild(ta);
             ta.select();
-            try { document.execCommand('copy'); alert('Code d'intégration copié ✓'); }
+            try { document.execCommand('copy'); alert('Code d\'intégration copié ✓'); }
             catch { alert('Impossible de copier automatiquement. Sélectionne et copie manuellement.'); }
             document.body.removeChild(ta);
         }
@@ -1530,7 +1530,7 @@
                     data = JSON.parse(raw);
                 } catch (err) {
                     console.error('[IMPORT] JSON.parse error:', err);
-                    alert('JSON invalide (échec du parsing). Vérifie qu'il n'y a pas de ``` ou de guillemets simples.');
+                    alert('JSON invalide (échec du parsing). Vérifie qu\'il n\'y a pas de ``` ou de guillemets simples.');
                     event.target.value = '';
                     return;
                 }
@@ -1613,7 +1613,7 @@
                 }
             } catch (err) {
                 console.error('[IMPORT] Exception:', err);
-                alert('Erreur imprévue pendant l'import. Regarde la console pour le détail.');
+                alert('Erreur imprévue pendant l\'import. Regarde la console pour le détail.');
             }
             event.target.value = '';
         };
