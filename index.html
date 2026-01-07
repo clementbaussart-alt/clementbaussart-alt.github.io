@@ -20,7 +20,7 @@
             --panel-muted: #f5f7fa;
             --border: #e0e0e0;
             --shadow: rgba(0,0,0,0.08);
-            /* Cartes d’étude */
+            /* Cartes d'étude */
             --card-bg: #ffffff;
             --card-grad-from: #f5f7fa;
             --card-grad-to: #c3cfe2;
@@ -332,55 +332,154 @@
 </head>
 <body>
     <button class="toggle-sidebar-btn" id="toggleSidebarBtn" onclick="toggleSidebar()"><span class="toggle-icon">◀</span></button>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header"><h1>📚 Flashcards</h1><p>Système d'apprentissage</p></div>
-        <div class="sidebar-nav"><div class="nav-item active" onclick="showPage('home')"><span>🏠</span><span>Accueil</span></div></div>
-        <div class="folder-section">
-            <div class="folder-section-header">
-                <h3>Organisation</h3>
-                <div class="folder-section-buttons">
-                    <button class="btn-new-category" onclick="showNewCategoryModal()" title="Nouvelle catégorie">📁</button>
-                    <button class="btn-new-folder" onclick="showNewFolderModal()" title="Nouveau cours">+</button>
-                </div>
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header"><h1>📚 Flashcards</h1><p>Système d'apprentissage</p></div>
+    <div class="sidebar-nav"><div class="nav-item active" onclick="showPage('home')"><span>🏠</span><span>Accueil</span></div></div>
+    <div class="folder-section">
+        <div class="folder-section-header">
+            <h3>Organisation</h3>
+            <div class="folder-section-buttons">
+                <button class="btn-new-category" onclick="showNewCategoryModal()" title="Nouvelle catégorie">📁</button>
+                <button class="btn-new-folder" onclick="showNewFolderModal()" title="Nouveau cours">+</button>
             </div>
-            <div id="categoryList"></div>
+        </div>
+        <div id="categoryList"></div>
+    </div>
+</div>
+<div class="main-content" id="mainContent">
+    <div class="app-header" style="padding:10px 40px;">
+        <button class="btn-comparator" onclick="openComparator()">
+            🔍 Comparateur de texte
+        </button>
+        <button class="btn-comparator" onclick="openThemeModal()">🎨 Thème</button>
+    </div>
+    <div id="homePage" class="page active">
+        <div class="container home-page">
+            <div class="home-hero"><h1>Bienvenue ! 👋</h1><p>Apprends efficacement avec ton système de flashcards.</p></div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-card-value" id="totalCourses">0</div><div class="stat-card-label">Cours créés</div></div>
+                <div class="stat-card"><div class="stat-card-value" id="totalCards">0</div><div class="stat-card-label">Cartes totales</div></div>
+            </div>
+            <div class="quick-actions">
+                <button class="btn-action" onclick="showNewFolderModal()">➕ Créer un cours</button>
+                <button class="btn-action btn-action-secondary" onclick="importCards()">📥 Importer</button>
+                <button class="btn-export-all" onclick="exportAll()">📦 Exporter tout</button>
+            </div>
+            <div class="recent-courses"><h2>Mes cours</h2><div class="course-list" id="courseList"></div></div>
         </div>
     </div>
-    <div class="main-content" id="mainContent">
-        <div class="app-header" style="padding:10px 40px;">
-            <button class="btn-comparator" onclick="openComparator()">
-                🔍 Comparateur de texte
-            </button>
-            <button class="btn-comparator" onclick="openThemeModal()">🎨 Thème</button>
+    <div id="listsPage" class="page">
+        <div class="container lists-page">
+            <div class="lists-page-header"><h2 id="listsTitle">Cours</h2><button class="btn-edit-page-title" onclick="showRenameFolderModal()">✏️</button><button class="btn-edit-page-title" title="Intégrer ce cours" onclick="copyFolderEmbed()">🔗</button></div>
+            <p class="lists-page-subtitle">Sélectionne une liste à réviser</p>
+            <div class="lists-grid" id="listsGrid"></div>
+            <button class="btn-new-list" onclick="showNewListModal()">➕ Créer une nouvelle liste</button>
         </div>
-        <!-- Toutes les pages restent identiques jusqu'à l'écran de fin -->
-        <!-- ... (le reste du HTML est inchangé, je le garde tel quel pour ne pas alourdir) ... -->
-
-        <div id="endSection" style="display:none">
-            <div class="end-message">
-                <h2>🎉 Session terminée !</h2>
-                <div class="chart-container">
-                    <div class="stat-bar-container">
-                        <div class="stat-bar-item">
-                            <div class="stat-bar-label"><div class="stat-bar-label-left"><div class="stat-bar-icon legend-known"></div><span id="legendKnown">Connu: 0 (0%)</span></div></div>
-                            <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill-known" id="barKnown" style="width:0%">0</div></div>
-                        </div>
-                        <div class="stat-bar-item">
-                            <div class="stat-bar-label"><div class="stat-bar-label-left"><div class="stat-bar-icon legend-partial"></div><span id="legendPartial">Partiel: 0 (0%)</span></div></div>
-                            <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill-partial" id="barPartial" style="width:0%">0</div></div>
-                        </div>
-                        <div class="stat-bar-item">
-                            <div class="stat-bar-label"><div class="stat-bar-label-left"><div class="stat-bar-icon legend-unknown"></div><span id="legendUnknown">Pas connu: 0 (0%)</span></div></div>
-                            <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill-unknown" id="barUnknown" style="width:0%">0</div></div>
-                        </div>
+    </div>
+    <div id="manageCardsPage" class="page">
+        <div class="container manage-cards-page">
+            <div class="breadcrumb"><a id="backToLists">← Retour aux listes</a></div>
+            <h2 id="manageTitle">Gérer les cartes</h2>
+            <div class="manage-section">
+                <div class="input-group"><br>
+<label>Niveau :</label><br>
+<select id="importanceSelect"><br>
+<option value="important">Important</option><br>
+<option value="normal" selected>Normal</option><br>
+<option value="pas important">Pas important</option><br>
+<option value="explication">Explication</option><br>
+</select><br>
+</div><br>
+                <h3>➕ Ajouter une nouvelle carte</h3>
+                <div class="input-group">
+                    <label>Question / Recto :</label>
+                    <div class="editor-toolbar">
+                        <button class="editor-btn" onclick="formatText('bold', 'Q')"><b>G</b></button>
+                        <button class="editor-btn" onclick="formatText('italic', 'Q')"><i>I</i></button>
+                        <button class="editor-btn" onclick="formatText('underline', 'Q')"><u>S</u></button>
+                        <input type="color" class="color-picker" id="textColorQ" value="#000000" title="Couleur">
+                        <input type="color" class="color-picker" id="bgColorQ" value="#ffff00" title="Surlignage">
+                        <button class="editor-btn" onclick="insertImage('Q')">🖼️</button>
+                        <button class="editor-btn" onclick="clearFormat('Q')">✖</button>
+                    </div>
+                    <div class="editor-content" id="newQuestion" contenteditable="true"></div>
+                </div>
+                <div class="input-group">
+                    <label>Réponse / Verso :</label>
+                    <div class="editor-toolbar">
+                        <button class="editor-btn" onclick="formatText('bold', 'A')"><b>G</b></button>
+                        <button class="editor-btn" onclick="formatText('italic', 'A')"><i>I</i></button>
+                        <button class="editor-btn" onclick="formatText('underline', 'A')"><u>S</u></button>
+                        <input type="color" class="color-picker" id="textColorA" value="#000000" title="Couleur">
+                        <input type="color" class="color-picker" id="bgColorA" value="#ffff00" title="Surlignage">
+                        <button class="editor-btn" onclick="insertImage('A')">🖼️</button>
+                        <button class="editor-btn" onclick="clearFormat('A')">✖</button>
+                    </div>
+                    <div class="editor-content" id="newAnswer" contenteditable="true"></div>
+                </div>
+                <button class="btn-add" onclick="addCard()">Ajouter la carte</button>
+            </div>
+            <div class="manage-section">
+                <h3>📝 Cartes existantes (<span id="cardCount">0</span>)</h3>
+                <div class="cards-list" id="cardsList"></div>
+            </div>
+            <div class="save-section">
+                <h2 style="margin-bottom:20px;color:#333">💾 Gestion des cartes</h2>
+                <div class="save-buttons">
+                    <button class="btn-export" onclick="exportCards()">📥 Exporter</button>
+                    <button class="btn-clear" onclick="clearCurrentList()">🗑️ Vider</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="studyPage" class="page">
+        <div class="container study-page">
+            <div class="breadcrumb"><a id="backToListsStudy">← Retour aux listes</a></div>
+            <div class="study-controls"> <div> <h2 id="studyTitle" style="display:inline">Liste</h2> <span id="studyModeIndicator" class="study-mode-indicator" style="display:none">🔄 Mode révision</span> </div> <button class="btn-edit-current" id="btnEditCurrent" onclick="editCurrentCard()">✏️ Éditer cette carte</button></div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+            <div id="cardSection">
+                <div class="flip-hint">👆 Clique pour retourner (molette pour scroller)</div>
+                <div class="card-container">
+                    <div class="card" id="flashcard" onclick="flipCard()">
+                        <div class="card-face card-front"><div class="card-text" id="question"></div></div>
+                        <div class="card-face card-back"><div class="card-text" id="answer"></div></div>
                     </div>
                 </div>
-                <div class="quick-actions" style="margin-top:30px;">
-                    <button class="btn-action btn-restart" onclick="restartSession()">🔄 Recommencer</button>
-                    <button class="btn-action btn-review" id="btnReviewWrong" onclick="reviewWrongCards()">🔄 Réviser les mauvais</button>
-                    <button class="btn-action btn-next-list" id="btnNextList" onclick="goToNextList()">Liste suivante →</button>
+                <div class="buttons">
+                    <button class="btn-known" onclick="answer('known')">✓ Connu</button>
+                    <button class="btn-partial" onclick="answer('partial')">~ Partiellement</button>
+                    <button class="btn-unknown" onclick="answer('unknown')">✗ Pas connu</button>
                 </div>
-                <div id="resultGif" class="result-gif"><img id="resultGifImg" src="" alt="Bravo !"></div>
+                <div class="stats" id="stats"></div>
+            </div>
+            <div id="emptyState" class="empty-state" style="display:none"><div class="empty-state-icon">📝</div><h3>Aucune carte</h3></div>
+            <div id="endSection" style="display:none">
+                <div class="end-message">
+                    <h2>🎉 Session terminée !</h2>
+                    <div class="chart-container">
+                        <div class="stat-bar-container">
+                            <div class="stat-bar-item">
+                                <div class="stat-bar-label"><div class="stat-bar-label-left"><div class="stat-bar-icon legend-known"></div><span id="legendKnown">Connu: 0 (0%)</span></div></div>
+                                <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill-known" id="barKnown" style="width:0%">0</div></div>
+                            </div>
+                            <div class="stat-bar-item">
+                                <div class="stat-bar-label"><div class="stat-bar-label-left"><div class="stat-bar-icon legend-partial"></div><span id="legendPartial">Partiel: 0 (0%)</span></div></div>
+                                <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill-partial" id="barPartial" style="width:0%">0</div></div>
+                            </div>
+                            <div class="stat-bar-item">
+                                <div class="stat-bar-label"><div class="stat-bar-label-left"><div class="stat-bar-icon legend-unknown"></div><span id="legendUnknown">Pas connu: 0 (0%)</span></div></div>
+                                <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill-unknown" id="barUnknown" style="width:0%">0</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quick-actions">
+    <button class="btn-action" onclick="showNewFolderModal()">➕ Créer un cours</button>
+    <button class="btn-action btn-action-secondary" onclick="showImportTextModal()">📋 Importer (Texte/CSV)</button>
+    <button class="btn-action btn-action-secondary" onclick="importCards()">📥 Restaurer (JSON)</button>
+    <button class="btn-export-all" onclick="exportAll()">📦 Exporter tout</button>
+</div>
+                    <div id="resultGif" class="result-gif"><img id="resultGifImg" src="" alt="Bravo !"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -396,7 +495,6 @@
 <div class="modal" id="themeModal">
     <div class="modal-content">
         <div class="modal-header">Thème</div>
-
         <div class="input-group">
             <label>Dégradé de fond — départ</label>
             <input type="color" id="th_bg_from">
@@ -405,7 +503,6 @@
             <label>Dégradé de fond — fin</label>
             <input type="color" id="th_bg_to">
         </div>
-
         <div class="input-group">
             <label>Couleur primaire</label>
             <input type="color" id="th_primary">
@@ -414,7 +511,6 @@
             <label>Couleur primaire 2</label>
             <input type="color" id="th_primary2">
         </div>
-
         <div class="input-group">
             <label>Accent</label>
             <input type="color" id="th_accent">
@@ -423,7 +519,6 @@
             <label>Accent 2</label>
             <input type="color" id="th_accent2">
         </div>
-
         <div class="input-group">
             <label>Texte principal</label>
             <input type="color" id="th_text">
@@ -432,7 +527,6 @@
             <label>Texte secondaire</label>
             <input type="color" id="th_text_soft">
         </div>
-
         <div class="input-group">
             <label>Fond des panneaux</label>
             <input type="color" id="th_panel">
@@ -445,25 +539,22 @@
             <label>Bordures</label>
             <input type="color" id="th_border">
         </div>
-
         <div class="input-group">
-            <label>Fond des cartes d’étude</label>
+            <label>Fond des cartes d'étude</label>
             <input type="color" id="th_card_bg">
         </div>
-
         <div class="input-group">
-            <label>Couleur “Connu”</label>
+            <label>Couleur "Connu"</label>
             <input type="color" id="th_known">
         </div>
         <div class="input-group">
-            <label>Couleur “Partiel”</label>
+            <label>Couleur "Partiel"</label>
             <input type="color" id="th_partial">
         </div>
         <div class="input-group">
-            <label>Couleur “Pas connu”</label>
+            <label>Couleur "Pas connu"</label>
             <input type="color" id="th_unknown">
         </div>
-
         <div class="modal-buttons" style="flex-wrap:wrap">
             <button class="btn-add" onclick="saveTheme()">Enregistrer</button>
             <button class="btn-cancel" onclick="closeThemeModal()">Fermer</button>
@@ -531,7 +622,7 @@
     <div class="modal" id="importTextModal">
     <div class="modal-content" style="max-width: 600px;">
         <div class="modal-header">Importer depuis Texte / Quizlet</div>
-        
+       
         <div class="input-group">
             <label>1. Destination :</label>
             <div style="display:flex; gap:10px; margin-bottom:10px;">
@@ -540,7 +631,6 @@
             </div>
             <input type="text" id="importListName" placeholder="Nom de la liste (ex: Chapitre 1)">
         </div>
-
         <div class="input-group">
             <label>2. Séparateur entre Question et Réponse :</label>
             <select id="importSeparator">
@@ -552,12 +642,10 @@
                 <option value="|">Barre verticale (|)</option>
             </select>
         </div>
-
         <div class="input-group">
             <label>3. Collez votre texte ici :</label>
-            <textarea id="importTextContent" style="width:100%; height:200px; padding:10px; border:2px solid var(--border); border-radius:8px; font-family:monospace; resize:vertical;" placeholder="Terme 1    Définition 1&#10;Terme 2    Définition 2"></textarea>
+            <textarea id="importTextContent" style="width:100%; height:200px; padding:10px; border:2px solid var(--border); border-radius:8px; font-family:monospace; resize:vertical;" placeholder="Terme 1 Définition 1&#10;Terme 2 Définition 2"></textarea>
         </div>
-
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="closeImportTextModal()">Annuler</button>
             <button class="btn-add" onclick="performTextImport()">Importer les cartes</button>
@@ -567,11 +655,11 @@
 <script>
     // VARIABLES GLOBALES FLASHCARDS
     let categories = {}, results = {}, currentCategory = null, currentFolder = null, currentList = null, currentPage = 'home', currentIndex = 0, isFlipped = false, isReviewMode = false, reviewIndices = [], stats = {known: 0, partial: 0, unknown: 0}, currentEditingSide = null, renameTarget = null, openCategories = {};
-    
-    // ——— GIF “majorité connu” ———
-    // Remplace par l’URL de TON gif (https://…/ton.gif)
+    let currentEditingExisting = { idx: null, side: null };
+   
+    // ——— GIF "majorité connu" ———
     const GIF_KNOWN_URL = 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif';
-    
+   
     // ====== THEME ======
     const THEME_KEY = 'flashcards_theme_v1';
     const themeVars = [
@@ -611,7 +699,6 @@
             '--known':'#22c55e','--partial':'#f59e0b','--unknown':'#ef4444'
         }
     };
-
     function applyPreset(name){
         const preset = THEME_PRESETS[name];
         if (!preset) return;
@@ -624,14 +711,12 @@
         // Sauvegarde
         localStorage.setItem(THEME_KEY, JSON.stringify(preset));
     }
-
     function getComputedVar(name){
         return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     }
     function setVar(name, value){
         document.documentElement.style.setProperty(name, value);
     }
-
     function openThemeModal(){
         // 1) Pré-remplir + live preview
         for (const [cssVar, inputId] of themeVars) {
@@ -646,17 +731,14 @@
                 }
             };
         }
-
         // 2) Branche l'auto‑save
         bindThemeAutoSave();
-
         // 3) Ouvre le modal
         document.getElementById('themeModal').classList.add('show');
     }
     function closeThemeModal(){
         document.getElementById('themeModal').classList.remove('show');
     }
-
     // Convertit rgb(...) ou vide -> #rrggbb si possible
     function toColor(v){
         if(!v) return null;
@@ -671,7 +753,6 @@
         }
         return null;
     }
-
     function saveTheme(){
         const theme = {};
         for (const [cssVar, inputId] of themeVars) {
@@ -683,7 +764,6 @@
         localStorage.setItem(THEME_KEY, JSON.stringify(theme));
         alert('Thème enregistré ✓');
     }
-
     function loadTheme(){
         try{
             const raw = localStorage.getItem(THEME_KEY);
@@ -692,7 +772,6 @@
             Object.entries(theme).forEach(([cssVar, value]) => setVar(cssVar, value));
         }catch(e){ console.warn('Theme load error', e); }
     }
-
     function resetTheme(){
         localStorage.removeItem(THEME_KEY);
         // Supprime les overrides inline, retombe sur les valeurs par défaut du :root
@@ -713,7 +792,6 @@
             localStorage.setItem(THEME_KEY, JSON.stringify(theme));
         }, 400);
     }
-
     function bindThemeAutoSave(){
         for (const [, inputId] of themeVars) {
             const el = document.getElementById(inputId);
@@ -721,7 +799,6 @@
             el.addEventListener('input', autoSaveThemeSoon);
         }
     }
-
     function exportTheme(){
         try{
             const raw = localStorage.getItem(THEME_KEY) || '{}';
@@ -733,7 +810,6 @@
             document.body.removeChild(a); URL.revokeObjectURL(url);
         }catch(e){ alert('Export impossible'); }
     }
-
     document.getElementById('themeImportInput')?.addEventListener('change', e=>{
         const file = e.target.files?.[0];
         if(!file) return;
@@ -749,7 +825,6 @@
         };
         reader.readAsText(file);
     });
-
     // --- MODE INTÉGRÉ (iframe) ---
     function getQueryParams() {
         const p = new URLSearchParams(window.location.search);
@@ -761,7 +836,6 @@
             view: p.get('view') || null // "manage" | "study" | "lists" (optionnel)
         };
     }
-
     function bootstrapEmbedIfAny() {
         try {
             const qp = getQueryParams();
@@ -786,19 +860,16 @@
             console.error('Erreur embed:', e);
         }
     }
-
     // FONCTIONS FLASHCARDS
     function toggleSidebar() { const sidebar = document.getElementById('sidebar'); const mainContent = document.getElementById('mainContent'); const toggleBtn = document.getElementById('toggleSidebarBtn'); sidebar.classList.toggle('hidden'); mainContent.classList.toggle('sidebar-hidden'); toggleBtn.classList.toggle('sidebar-hidden'); }
     function formatText(command, side) { document.execCommand(command, false, null); document.getElementById('new' + (side === 'Q' ? 'Question' : 'Answer')).focus(); }
     function clearFormat(side) { const editor = document.getElementById('new' + (side === 'Q' ? 'Question' : 'Answer')); editor.innerHTML = editor.innerText; }
     function insertImage(side) { currentEditingSide = side; document.getElementById('imageInput').click(); }
-
-    document.getElementById('imageInput').addEventListener('change', function(e) { 
+    document.getElementById('imageInput').addEventListener('change', function(e) {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
-        reader.onload = function(event) { 
+        reader.onload = function(event) {
             const img = document.createElement('img');
             img.src = event.target.result;
             img.style.maxWidth = '100%';
@@ -806,7 +877,7 @@
             img.style.display = 'inline-block';
             img.style.margin = '5px';
             img.style.borderRadius = '8px';
-            
+           
             let editor, targetId;
             if (currentEditingExisting.idx !== null) {
                 targetId = (currentEditingExisting.side === 'Q' ? 'editQ-' : 'editA-') + currentEditingExisting.idx;
@@ -814,12 +885,10 @@
             } else {
                 editor = document.getElementById('new' + (currentEditingSide === 'Q' ? 'Question' : 'Answer'));
             }
-
             if (!editor) {
                 console.error("Éditeur introuvable.");
                 return;
             }
-
             const selection = window.getSelection();
             if (selection.rangeCount > 0 && editor.contains(selection.anchorNode)) {
                 const range = selection.getRangeAt(0);
@@ -832,225 +901,223 @@
                 range.collapse(true);
                 selection.removeAllRanges();
                 selection.addRange(range);
-            } else { 
+            } else {
                 editor.appendChild(img);
             }
-            
-            editor.focus(); 
-            currentEditingExisting = { idx: null, side: null }; 
-        }; 
-        reader.readAsDataURL(file); 
-        e.target.value = ''; 
+           
+            editor.focus();
+            currentEditingExisting = { idx: null, side: null };
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
     });
-
     document.getElementById('textColorQ').addEventListener('change', function(e) { document.execCommand('foreColor', false, e.target.value); document.getElementById('newQuestion').focus(); });
     document.getElementById('bgColorQ').addEventListener('change', function(e) { document.execCommand('backColor', false, e.target.value); document.getElementById('newQuestion').focus(); });
     document.getElementById('textColorA').addEventListener('change', function(e) { document.execCommand('foreColor', false, e.target.value); document.getElementById('newAnswer').focus(); });
     document.getElementById('bgColorA').addEventListener('change', function(e) { document.execCommand('backColor', false, e.target.value); document.getElementById('newAnswer').focus(); });
-
     function showPage(e) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); if (e === 'home') { document.getElementById('homePage').classList.add('active'); document.querySelector('.nav-item').classList.add('active'); currentPage = 'home'; currentCategory = null; currentFolder = null; currentList = null; updateHomeStats(); } }
     function showListsPage(category, folder) { currentCategory = category; currentFolder = folder; currentList = null; currentPage = 'lists'; document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); document.getElementById('listsPage').classList.add('active'); document.getElementById('listsTitle').textContent = folder; updateCategoryList(); loadListsPage(); }
     function showManageCardsPage(category, folderName, listName) { currentCategory = category; currentFolder = folderName; currentList = listName; currentPage = 'manage'; document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); document.getElementById('manageCardsPage').classList.add('active'); document.getElementById('manageTitle').textContent = 'Gérer : ' + listName; document.getElementById('backToLists').onclick = function() { showListsPage(currentCategory, currentFolder); }; updateCategoryList(); loadManageCardsPage(); }
-    function showStudyPage(category, folderName, listName, reviewMode) { 
-        if (reviewMode === undefined) reviewMode = false; 
-        currentCategory = category; 
-        currentFolder = folderName; 
-        currentList = listName; 
-        currentIndex = 0; 
-        stats = {known: 0, partial: 0, unknown: 0}; 
-        isReviewMode = reviewMode; 
-        
-        if (isReviewMode) { 
-            reviewIndices = getCardsToReview(); 
-            if (reviewIndices.length === 0) { 
-                alert('Aucune carte à revoir !'); 
-                return; 
-            } 
-        } else { 
-            reviewIndices = []; 
-        } 
-        
-        document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); 
-        document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); 
-        document.getElementById('studyPage').classList.add('active'); 
-        document.getElementById('studyTitle').textContent = listName; 
-        document.getElementById('studyModeIndicator').style.display = isReviewMode ? 'inline-block' : 'none'; 
-        document.getElementById('backToListsStudy').onclick = function() { showListsPage(currentCategory, currentFolder); }; 
-        currentPage = 'study'; 
-        updateCategoryList(); 
-        loadCurrentList(); 
+    function showStudyPage(category, folderName, listName, reviewMode) {
+        if (reviewMode === undefined) reviewMode = false;
+        currentCategory = category;
+        currentFolder = folderName;
+        currentList = listName;
+        currentIndex = 0;
+        stats = {known: 0, partial: 0, unknown: 0};
+        isReviewMode = reviewMode;
+       
+        if (isReviewMode) {
+            reviewIndices = getCardsToReview();
+            if (reviewIndices.length === 0) {
+                alert('Aucune carte à revoir !');
+                return;
+            }
+        } else {
+            reviewIndices = [];
+        }
+       
+        document.querySelectorAll('.page').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+        document.getElementById('studyPage').classList.add('active');
+        document.getElementById('studyTitle').textContent = listName;
+        document.getElementById('studyModeIndicator').style.display = isReviewMode ? 'inline-block' : 'none';
+        document.getElementById('backToListsStudy').onclick = function() { showListsPage(currentCategory, currentFolder); };
+        currentPage = 'study';
+        updateCategoryList();
+        loadCurrentList();
     }
     function getCardsToReview() { if (!currentCategory || !currentFolder || !currentList || !results[currentCategory] || !results[currentCategory][currentFolder] || !results[currentCategory][currentFolder][currentList]) return []; const e = results[currentCategory][currentFolder][currentList], t = []; Object.keys(e).forEach(r => { const o = e[r]; if (o === 'partial' || o === 'unknown') t.push(parseInt(r)); }); return t; }
     function getNextList() { if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) return null; const lists = Object.keys(categories[currentCategory][currentFolder]); const currentIndex = lists.indexOf(currentList); if (currentIndex === -1 || currentIndex === lists.length - 1) return null; return lists[currentIndex + 1]; }
     function goToNextList() { const nextList = getNextList(); if (nextList) { showStudyPage(currentCategory, currentFolder, nextList, false); } }
-    function loadData() { 
-        const catData = localStorage.getItem('flashcards_categories_v3'); 
-        if (catData) { 
-            try { 
-                categories = JSON.parse(catData); 
-            } catch (e) { 
-                console.error('Erreur:', e); categories = {}; 
-            } 
-        } else { 
-            categories = {}; 
-        } 
-        
-        const openData = localStorage.getItem('flashcards_open_categories'); 
-        if (openData) { 
-            try { 
-                openCategories = JSON.parse(openData); 
-            } catch (e) { 
-                openCategories = {}; 
-            } 
-        } 
-        
-        const resData = localStorage.getItem('flashcards_results_v3'); 
-        if (resData) { 
-            try { 
-                results = JSON.parse(resData); 
-            } catch (e) { 
-                results = {}; 
-            } 
-        } 
-        
-        if (Object.keys(categories).length === 0) { 
-            categories = {'📚 Mes cours': {'Droit Administratif': {'Chapitre 1': [{question: "Qu'est-ce que le principe de légalité ?", answer: "Le principe selon lequel l'administration doit agir conformément aux règles de droit."}]}}}; 
-            openCategories['📚 Mes cours'] = true; 
-        } 
-        updateCategoryList(); 
-        updateHomeStats(); 
+    function loadData() {
+        const catData = localStorage.getItem('flashcards_categories_v3');
+        if (catData) {
+            try {
+                categories = JSON.parse(catData);
+            } catch (e) {
+                console.error('Erreur:', e); categories = {};
+            }
+        } else {
+            categories = {};
+        }
+       
+        const openData = localStorage.getItem('flashcards_open_categories');
+        if (openData) {
+            try {
+                openCategories = JSON.parse(openData);
+            } catch (e) {
+                openCategories = {};
+            }
+        }
+       
+        const resData = localStorage.getItem('flashcards_results_v3');
+        if (resData) {
+            try {
+                results = JSON.parse(resData);
+            } catch (e) {
+                results = {};
+            }
+        }
+       
+        if (Object.keys(categories).length === 0) {
+            categories = {'📚 Mes cours': {'Droit Administratif': {'Chapitre 1': [{question: "Qu'est-ce que le principe de légalité ?", answer: "Le principe selon lequel l'administration doit agir conformément aux règles de droit."}]}}};
+            openCategories['📚 Mes cours'] = true;
+        }
+        updateCategoryList();
+        updateHomeStats();
     }
     function saveData() { localStorage.setItem('flashcards_categories_v3', JSON.stringify(categories)); localStorage.setItem('flashcards_open_categories', JSON.stringify(openCategories)); updateHomeStats(); }
     function saveResults() { localStorage.setItem('flashcards_results_v3', JSON.stringify(results)); }
     function toggleCategory(catName) { openCategories[catName] = !openCategories[catName]; localStorage.setItem('flashcards_open_categories', JSON.stringify(openCategories)); updateCategoryList(); }
-    function updateCategoryList() { 
-        const container = document.getElementById('categoryList'); 
-        container.innerHTML = ''; 
-        Object.keys(categories).forEach(catName => { 
-            const catDiv = document.createElement('div'); 
-            catDiv.className = 'category-item'; 
-            const catHeader = document.createElement('div'); 
-            catHeader.className = 'category-header'; 
-            if (catName === currentCategory && (currentPage === 'lists' || currentPage === 'study' || currentPage === 'manage')) { 
-                catHeader.classList.add('active'); 
-            } 
-            
-            let totalCards = 0; 
-            Object.values(categories[catName]).forEach(folder => { 
-                Object.values(folder).forEach(lists => { 
-                    totalCards += lists.length; 
-                }); 
-            }); 
-            
-            const leftDiv = document.createElement('div'); 
-            leftDiv.className = 'category-left'; 
-            const isOpen = openCategories[catName]; 
-            const toggleSpan = document.createElement('span'); 
-            toggleSpan.className = 'category-toggle' + (isOpen ? ' open' : ''); 
-            toggleSpan.innerHTML = '▶'; 
-            toggleSpan.onclick = function(e) { e.stopPropagation(); toggleCategory(catName); }; 
-            const nameSpan = document.createElement('span'); 
-            nameSpan.className = 'category-name'; 
-            nameSpan.textContent = catName; 
-            const countSpan = document.createElement('span'); 
-            countSpan.className = 'category-count'; 
-            countSpan.textContent = totalCards; 
-            leftDiv.appendChild(toggleSpan); 
-            leftDiv.appendChild(nameSpan); 
-            leftDiv.appendChild(countSpan); 
-            
-            const actionsDiv = document.createElement('div'); 
-            actionsDiv.className = 'category-actions'; 
-            const editBtn = document.createElement('button'); 
-            editBtn.className = 'btn-edit-category'; 
-            editBtn.innerHTML = '✏️'; 
-            editBtn.onclick = function(e) { e.stopPropagation(); showEditCategoryModal(catName); }; 
-            const deleteBtn = document.createElement('button'); 
-            deleteBtn.className = 'btn-delete-category'; 
-            deleteBtn.innerHTML = '✕'; 
-            deleteBtn.onclick = function(e) { e.stopPropagation(); deleteCategory(catName); }; 
-            actionsDiv.appendChild(editBtn); 
-            actionsDiv.appendChild(deleteBtn); 
-            
-            catHeader.appendChild(leftDiv); 
-            catHeader.appendChild(actionsDiv); 
-            catDiv.appendChild(catHeader); 
-            
-            const foldersDiv = document.createElement('div'); 
-            foldersDiv.className = 'category-folders' + (isOpen ? ' open' : ''); 
-            
-            Object.keys(categories[catName]).forEach(folderName => { 
-                let cardCount = 0; 
-                Object.values(categories[catName][folderName]).forEach(lists => { 
-                    cardCount += lists.length; 
-                }); 
-                
-                const folderDiv = document.createElement('div'); 
-                folderDiv.className = 'folder-item'; 
-                if (catName === currentCategory && folderName === currentFolder && (currentPage === 'lists' || currentPage === 'study' || currentPage === 'manage')) { 
-                    folderDiv.classList.add('active'); 
-                } 
-                
-                const folderInfo = document.createElement('div'); 
-                folderInfo.className = 'folder-info'; 
-                folderInfo.onclick = function() { showListsPage(catName, folderName); }; 
-                folderInfo.innerHTML = '<span>📖</span><span style="flex:1">' + escapeHtml(folderName) + '</span><span class="folder-badge">' + cardCount + '</span>'; 
-                
-                const folderActions = document.createElement('div'); 
-                folderActions.className = 'folder-actions'; 
-                const folderEditBtn = document.createElement('button'); 
-                folderEditBtn.className = 'btn-edit-folder'; 
-                folderEditBtn.innerHTML = '✏️'; 
-                folderEditBtn.onclick = function(e) { e.stopPropagation(); showEditFolderModal(catName, folderName); }; 
-                const folderDeleteBtn = document.createElement('button'); 
-                folderDeleteBtn.className = 'btn-delete-folder'; 
-                folderDeleteBtn.innerHTML = '✕'; 
-                folderDeleteBtn.onclick = function(e) { e.stopPropagation(); deleteFolder(catName, folderName); }; 
-                folderActions.appendChild(folderEditBtn); 
-                folderActions.appendChild(folderDeleteBtn); 
-                
-                folderDiv.appendChild(folderInfo); 
-                folderDiv.appendChild(folderActions); 
-                foldersDiv.appendChild(folderDiv); 
-            }); 
-            
-            catDiv.appendChild(foldersDiv); 
-            container.appendChild(catDiv); 
-        }); 
+    function updateCategoryList() {
+        const container = document.getElementById('categoryList');
+        container.innerHTML = '';
+        Object.keys(categories).forEach(catName => {
+            const catDiv = document.createElement('div');
+            catDiv.className = 'category-item';
+            const catHeader = document.createElement('div');
+            catHeader.className = 'category-header';
+            if (catName === currentCategory && (currentPage === 'lists' || currentPage === 'study' || currentPage === 'manage')) {
+                catHeader.classList.add('active');
+            }
+           
+            let totalCards = 0;
+            Object.values(categories[catName]).forEach(folder => {
+                Object.values(folder).forEach(lists => {
+                    totalCards += lists.length;
+                });
+            });
+           
+            const leftDiv = document.createElement('div');
+            leftDiv.className = 'category-left';
+            const isOpen = openCategories[catName];
+            const toggleSpan = document.createElement('span');
+            toggleSpan.className = 'category-toggle' + (isOpen ? ' open' : '');
+            toggleSpan.innerHTML = '▶';
+            toggleSpan.onclick = function(e) { e.stopPropagation(); toggleCategory(catName); };
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'category-name';
+            nameSpan.textContent = catName;
+            const countSpan = document.createElement('span');
+            countSpan.className = 'category-count';
+            countSpan.textContent = totalCards;
+            leftDiv.appendChild(toggleSpan);
+            leftDiv.appendChild(nameSpan);
+            leftDiv.appendChild(countSpan);
+           
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'category-actions';
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn-edit-category';
+            editBtn.innerHTML = '✏️';
+            editBtn.onclick = function(e) { e.stopPropagation(); showEditCategoryModal(catName); };
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-delete-category';
+            deleteBtn.innerHTML = '✕';
+            deleteBtn.onclick = function(e) { e.stopPropagation(); deleteCategory(catName); };
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(deleteBtn);
+           
+            catHeader.appendChild(leftDiv);
+            catHeader.appendChild(actionsDiv);
+            catDiv.appendChild(catHeader);
+           
+            const foldersDiv = document.createElement('div');
+            foldersDiv.className = 'category-folders' + (isOpen ? ' open' : '');
+           
+            Object.keys(categories[catName]).forEach(folderName => {
+                let cardCount = 0;
+                Object.values(categories[catName][folderName]).forEach(lists => {
+                    cardCount += lists.length;
+                });
+               
+                const folderDiv = document.createElement('div');
+                folderDiv.className = 'folder-item';
+                if (catName === currentCategory && folderName === currentFolder && (currentPage === 'lists' || currentPage === 'study' || currentPage === 'manage')) {
+                    folderDiv.classList.add('active');
+                }
+               
+                const folderInfo = document.createElement('div');
+                folderInfo.className = 'folder-info';
+                folderInfo.onclick = function() { showListsPage(catName, folderName); };
+                folderInfo.innerHTML = '<span>📖</span><span style="flex:1">' + escapeHtml(folderName) + '</span><span class="folder-badge">' + cardCount + '</span>';
+               
+                const folderActions = document.createElement('div');
+                folderActions.className = 'folder-actions';
+                const folderEditBtn = document.createElement('button');
+                folderEditBtn.className = 'btn-edit-folder';
+                folderEditBtn.innerHTML = '✏️';
+                folderEditBtn.onclick = function(e) { e.stopPropagation(); showEditFolderModal(catName, folderName); };
+                const folderDeleteBtn = document.createElement('button');
+                folderDeleteBtn.className = 'btn-delete-folder';
+                folderDeleteBtn.innerHTML = '✕';
+                folderDeleteBtn.onclick = function(e) { e.stopPropagation(); deleteFolder(catName, folderName); };
+                folderActions.appendChild(folderEditBtn);
+                folderActions.appendChild(folderDeleteBtn);
+               
+                folderDiv.appendChild(folderInfo);
+                folderDiv.appendChild(folderActions);
+                foldersDiv.appendChild(folderDiv);
+            });
+           
+            catDiv.appendChild(foldersDiv);
+            container.appendChild(catDiv);
+        });
     }
     function escapeHtml(text) { const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }; return text.replace(/[&<>"']/g, m => map[m]); }
-    function loadListsPage() { 
-        const container = document.getElementById('listsGrid'); 
-        container.innerHTML = ''; 
-        if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) return; 
-        const lists = categories[currentCategory][currentFolder]; 
-        Object.keys(lists).forEach(listName => { 
-            const cards = lists[listName]; 
-            const cardCount = cards.length; 
-            let toReviewCount = 0; 
-            if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][listName]) { 
-                const listResults = results[currentCategory][currentFolder][listName]; 
-                Object.values(listResults).forEach(result => { 
-                    if (result === 'partial' || result === 'unknown') toReviewCount++; 
-                }); 
-            } 
-            
-            const card = document.createElement('div'); 
-            card.className = 'list-card'; 
-            
-            const buttonsDiv = document.createElement('div'); 
-            buttonsDiv.className = 'list-card-buttons'; 
-            const editBtn = document.createElement('button'); 
-            editBtn.className = 'btn-edit-list'; 
-            editBtn.innerHTML = '✏️'; 
-            editBtn.onclick = function(e) { e.stopPropagation(); showEditListModal(listName); }; 
-            const deleteBtn = document.createElement('button'); 
-            deleteBtn.className = 'btn-delete-list'; 
-            deleteBtn.innerHTML = '✕'; 
-            deleteBtn.onclick = function(e) { e.stopPropagation(); deleteList(listName); }; 
-            buttonsDiv.appendChild(editBtn); 
-            buttonsDiv.appendChild(deleteBtn); 
-            
+    function loadListsPage() {
+        const container = document.getElementById('listsGrid');
+        container.innerHTML = '';
+        if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) return;
+        const lists = categories[currentCategory][currentFolder];
+        Object.keys(lists).forEach(listName => {
+            const cards = lists[listName];
+            const cardCount = cards.length;
+            let toReviewCount = 0;
+            if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][listName]) {
+                const listResults = results[currentCategory][currentFolder][listName];
+                Object.values(listResults).forEach(result => {
+                    if (result === 'partial' || result === 'unknown') toReviewCount++;
+                });
+            }
+           
+            const card = document.createElement('div');
+            card.className = 'list-card';
+           
+            const buttonsDiv = document.createElement('div');
+            buttonsDiv.className = 'list-card-buttons';
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn-edit-list';
+            editBtn.innerHTML = '✏️';
+            editBtn.onclick = function(e) { e.stopPropagation(); showEditListModal(listName); };
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-delete-list';
+            deleteBtn.innerHTML = '✕';
+            deleteBtn.onclick = function(e) { e.stopPropagation(); deleteList(listName); };
+            buttonsDiv.appendChild(editBtn);
+            buttonsDiv.appendChild(deleteBtn);
+           
             const integrateBtn = document.createElement('button');
             integrateBtn.className = 'btn-edit-list';
             integrateBtn.title = 'Intégrer cette liste';
@@ -1060,36 +1127,36 @@
                 copyListEmbed(listName);
             };
             buttonsDiv.appendChild(integrateBtn);
-            
-            let progressHTML = ''; 
-            if (toReviewCount > 0) { 
-                progressHTML = '<div class="list-card-progress">🔄 ' + toReviewCount + ' à revoir</div>'; 
-            } 
-            
-            card.innerHTML = '<div class="list-card-left"><div class="list-card-title">' + escapeHtml(listName) + '</div><div class="list-card-count">' + cardCount + ' carte' + (cardCount > 1 ? 's' : '') + '</div>' + progressHTML + '</div><div class="list-card-actions"><button class="btn-list-action btn-study" onclick="showStudyPage(\'' + escapeHtml(currentCategory).replace(/'/g, "\\'") + '\',\'' + escapeHtml(currentFolder).replace(/'/g, "\\'") + '\',\'' + escapeHtml(listName).replace(/'/g, "\\'") + '\')">📖 Réviser</button><button class="btn-list-action btn-manage" onclick="showManageCardsPage(\'' + escapeHtml(currentCategory).replace(/'/g, "\\'") + '\',\'' + escapeHtml(currentFolder).replace(/'/g, "\\'") + '\',\'' + escapeHtml(listName).replace(/'/g, "\\'") + '\')">✏️ Gérer</button></div>'; 
-            card.appendChild(buttonsDiv); 
-            container.appendChild(card); 
-        }); 
+           
+            let progressHTML = '';
+            if (toReviewCount > 0) {
+                progressHTML = '<div class="list-card-progress">🔄 ' + toReviewCount + ' à revoir</div>';
+            }
+           
+            card.innerHTML = '<div class="list-card-left"><div class="list-card-title">' + escapeHtml(listName) + '</div><div class="list-card-count">' + cardCount + ' carte' + (cardCount > 1 ? 's' : '') + '</div>' + progressHTML + '</div><div class="list-card-actions"><button class="btn-list-action btn-study" onclick="showStudyPage(\'' + escapeHtml(currentCategory).replace(/'/g, "\\'") + '\',\'' + escapeHtml(currentFolder).replace(/'/g, "\\'") + '\',\'' + escapeHtml(listName).replace(/'/g, "\\'") + '\')">📖 Réviser</button><button class="btn-list-action btn-manage" onclick="showManageCardsPage(\'' + escapeHtml(currentCategory).replace(/'/g, "\\'") + '\',\'' + escapeHtml(currentFolder).replace(/'/g, "\\'") + '\',\'' + escapeHtml(listName).replace(/'/g, "\\'") + '\')">✏️ Gérer</button></div>';
+            card.appendChild(buttonsDiv);
+            container.appendChild(card);
+        });
     }
     function loadManageCardsPage() {
         if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) return;
         const cards = categories[currentCategory][currentFolder][currentList];
         const container = document.getElementById('cardsList');
         document.getElementById('cardCount').textContent = cards.length;
-        
+       
         if (cards.length === 0) {
             container.innerHTML = '<div class="empty-cards-message">Aucune carte. Ajoute-en une ci-dessus !</div>';
             return;
         }
-        
+       
         container.innerHTML = '';
         cards.forEach((card, idx) => {
             const div = document.createElement('div');
             div.className = 'card-edit-item';
-            
+           
             const questionPreview = (card.question || '').replace(/<[^>]*>/g, '').substring(0, 100);
-            const answerPreview   = (card.answer   || '').replace(/<[^>]*>/g, '').substring(0, 100);
-            
+            const answerPreview = (card.answer || '').replace(/<[^>]*>/g, '').substring(0, 100);
+           
             div.innerHTML =
               '<div class="card-edit-header">' +
                 '<div class="card-edit-number">Carte #' + (idx + 1) + '</div>' +
@@ -1147,7 +1214,7 @@
         if (!currentCategory || !currentFolder || !currentList) { alert("Aucune liste sélectionnée."); return; }
         const cards = categories[currentCategory][currentFolder][currentList] || [];
         if (cards.length === 0) { alert("Aucune carte dans cette liste."); return; }
-        
+       
         let idx;
         if (isReviewMode) {
             if (reviewIndices.length === 0) { alert("Aucune carte en mode révision."); return; }
@@ -1156,51 +1223,38 @@
         } else {
             idx = Math.min(currentIndex, Math.max(0, cards.length - 1));
         }
-        
+       
         showManageCardsPage(currentCategory, currentFolder, currentList);
         setTimeout(() => startEditCard(idx), 0);
     }
     function answer(type) { if (!results[currentCategory]) results[currentCategory] = {}; if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {}; if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {}; const idx = isReviewMode ? reviewIndices[currentIndex] : currentIndex; results[currentCategory][currentFolder][currentList][idx] = type; saveResults(); stats[type]++; currentIndex++; loadCard(); }
     function updateProgress() { const cards = categories[currentCategory][currentFolder][currentList]; const total = isReviewMode ? reviewIndices.length : cards.length; const current = currentIndex; const percent = current / total * 100; document.getElementById('progressBar').style.width = percent + '%'; }
-    function updateStats() { const cards = categories[currentCategory][currentFolder][currentList]; const total = isReviewMode ? reviewIndices.length : cards.length; document.getElementById('stats').textContent =
-	'Carte ' + (currentIndex + 1) + '/' + total +
-	' | Niveau: ' + (window.currentImportance || 'normal') +
-	' | Connu: ' + stats.known +
-	' | Partiel: ' + stats.partial +
-	' | Pas connu: ' + stats.unknown;
-    function showEndScreen() { 
-        document.getElementById('cardSection').style.display = 'none'; 
-        document.getElementById('endSection').style.display = 'block'; 
-        const total = stats.known + stats.partial + stats.unknown; 
-        const knownPercent = total > 0 ? Math.round(stats.known / total * 100) : 0; 
-        const partialPercent = total > 0 ? Math.round(stats.partial / total * 100) : 0; 
-        const unknownPercent = total > 0 ? Math.round(stats.unknown / total * 100) : 0; 
-        document.getElementById('legendKnown').textContent = 'Connu: ' + stats.known + ' (' + knownPercent + '%)'; 
-        document.getElementById('legendPartial').textContent = 'Partiel: ' + stats.partial + ' (' + partialPercent + '%)'; 
-        document.getElementById('legendUnknown').textContent = 'Pas connu: ' + stats.unknown + ' (' + unknownPercent + '%)'; 
-        drawPieChart(); 
-        const toReview = getCardsToReview().length; 
-        const btnReview = document.getElementById('btnReviewWrong'); 
-        if (toReview > 0) { 
-            btnReview.disabled = false; 
-            btnReview.textContent = '🔄 Réviser (' + toReview + ')'; 
-        } else { 
-            btnReview.disabled = true; 
-            btnReview.textContent = '🔄 Aucune'; 
-        } 
-        const nextList = getNextList(); 
-        const btnNext = document.getElementById('btnNextList'); 
-        if (nextList) { 
-            btnNext.disabled = false; 
-            btnNext.textContent = 'Liste suivante : ' + nextList + ' →'; 
-        } else { 
-            btnNext.disabled = true; 
-            btnNext.textContent = 'Dernière liste ✓'; 
-        } 
+    function updateStats() { 
+        const cards = categories[currentCategory][currentFolder][currentList]; 
+        const total = isReviewMode ? reviewIndices.length : cards.length; 
+        document.getElementById('stats').textContent =
+            'Carte ' + (currentIndex + 1) + '/' + total +
+            ' | Niveau: ' + (window.currentImportance || 'normal') +
+            ' | Connu: ' + stats.known +
+            ' | Partiel: ' + stats.partial +
+            ' | Pas connu: ' + stats.unknown;
+    }
+    function showEndScreen() {
+        document.getElementById('cardSection').style.display = 'none';
+        document.getElementById('endSection').style.display = 'block';
+        const total = stats.known + stats.partial + stats.unknown;
+        const knownPercent = total > 0 ? Math.round(stats.known / total * 100) : 0;
+        const partialPercent = total > 0 ? Math.round(stats.partial / total * 100) : 0;
+        const unknownPercent = total > 0 ? Math.round(stats.unknown / total * 100) : 0;
+        document.getElementById('legendKnown').textContent = 'Connu: ' + stats.known + ' (' + knownPercent + '%)';
+        document.getElementById('legendPartial').textContent = 'Partiel: ' + stats.partial + ' (' + partialPercent + '%)';
+        document.getElementById('legendUnknown').textContent = 'Pas connu: ' + stats.unknown + ' (' + unknownPercent + '%)';
+        drawPieChart();
+        
         // Afficher le GIF si majorité de "Connu"
         const majorityKnown = (stats.known > stats.partial + stats.unknown);
         const gifWrap = document.getElementById('resultGif');
-        const gifImg  = document.getElementById('resultGifImg');
+        const gifImg = document.getElementById('resultGifImg');
         if (majorityKnown && GIF_KNOWN_URL) {
             gifImg.src = GIF_KNOWN_URL;
             gifWrap.classList.add('show');
@@ -1209,86 +1263,77 @@
             gifImg.src = '';
         }
     }
-    function drawPieChart() { 
-        const total = stats.known + stats.partial + stats.unknown; 
-        if (total === 0) { 
-            document.getElementById('barKnown').style.width = '0%'; 
-            document.getElementById('barKnown').textContent = '0'; 
-            document.getElementById('barPartial').style.width = '0%'; 
-            document.getElementById('barPartial').textContent = '0'; 
-            document.getElementById('barUnknown').style.width = '0%'; 
-            document.getElementById('barUnknown').textContent = '0'; 
-            return; 
-        } 
-        const knownPercent = Math.round(stats.known / total * 100); 
-        const partialPercent = Math.round(stats.partial / total * 100); 
-        const unknownPercent = Math.round(stats.unknown / total * 100); 
-        document.getElementById('barKnown').style.width = knownPercent + '%'; 
-        document.getElementById('barKnown').textContent = stats.known; 
-        document.getElementById('barPartial').style.width = partialPercent + '%'; 
-        document.getElementById('barPartial').textContent = stats.partial; 
-        document.getElementById('barUnknown').style.width = unknownPercent + '%'; 
-        document.getElementById('barUnknown').textContent = stats.unknown; 
+    function drawPieChart() {
+        const total = stats.known + stats.partial + stats.unknown;
+        if (total === 0) {
+            document.getElementById('barKnown').style.width = '0%';
+            document.getElementById('barKnown').textContent = '0';
+            document.getElementById('barPartial').style.width = '0%';
+            document.getElementById('barPartial').textContent = '0';
+            document.getElementById('barUnknown').style.width = '0%';
+            document.getElementById('barUnknown').textContent = '0';
+            return;
+        }
+        const knownPercent = Math.round(stats.known / total * 100);
+        const partialPercent = Math.round(stats.partial / total * 100);
+        const unknownPercent = Math.round(stats.unknown / total * 100);
+        document.getElementById('barKnown').style.width = knownPercent + '%';
+        document.getElementById('barKnown').textContent = stats.known;
+        document.getElementById('barPartial').style.width = partialPercent + '%';
+        document.getElementById('barPartial').textContent = stats.partial;
+        document.getElementById('barUnknown').style.width = unknownPercent + '%';
+        document.getElementById('barUnknown').textContent = stats.unknown;
     }
     function restartSession() { currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; isReviewMode = false; reviewIndices = []; document.getElementById('studyModeIndicator').style.display = 'none'; document.getElementById('endSection').style.display = 'none'; document.getElementById('cardSection').style.display = 'block'; loadCard(); }
     function reviewWrongCards() { showStudyPage(currentCategory, currentFolder, currentList, true); }
     function addCard() {
-	const q = document.getElementById('newQuestion').innerHTML.trim();
-	const a = document.getElementById('newAnswer').innerHTML.trim();
-
-	const impEl = document.getElementById('importanceSelect');
-	const importance = impEl ? (impEl.value || 'normal') : 'normal';
-
-	if (!q || !a || q === '<br>' || a === '<br>') {
-		alert('Veuillez remplir la question et la réponse.');
-		return;
-	}
-	if (!currentCategory || !currentFolder || !currentList) {
-		alert("Sélectionne d'abord une liste.");
-		return;
-	}
-
-	categories[currentCategory][currentFolder][currentList].push({
-		question: q,
-		answer: a,
-		importance: importance
-	});
-
-	saveData();
-	document.getElementById('newQuestion').innerHTML = '';
-	document.getElementById('newAnswer').innerHTML = '';
-	if (impEl) impEl.value = 'normal';
-
-	updateCategoryList();
-	if (currentPage === 'manage') loadManageCardsPage();
-}
+        const q = document.getElementById('newQuestion').innerHTML.trim();
+        const a = document.getElementById('newAnswer').innerHTML.trim();
+        const impEl = document.getElementById('importanceSelect');
+        const importance = impEl ? (impEl.value || 'normal') : 'normal';
+        if (!q || !a || q === '<br>' || a === '<br>') {
+            alert('Veuillez remplir la question et la réponse.');
+            return;
+        }
+        if (!currentCategory || !currentFolder || !currentList) {
+            alert("Sélectionne d'abord une liste.");
+            return;
+        }
+        categories[currentCategory][currentFolder][currentList].push({
+            question: q,
+            answer: a,
+            importance: importance
+        });
+        saveData();
+        document.getElementById('newQuestion').innerHTML = '';
+        document.getElementById('newAnswer').innerHTML = '';
+        if (impEl) impEl.value = 'normal';
+        updateCategoryList();
+        if (currentPage === 'manage') loadManageCardsPage();
+    }
     function deleteCard(idx) { if (!confirm('Supprimer cette carte ?')) return; categories[currentCategory][currentFolder][currentList].splice(idx, 1); if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][currentList]) { delete results[currentCategory][currentFolder][currentList][idx]; const newResults = {}; Object.keys(results[currentCategory][currentFolder][currentList]).forEach(key => { const i = parseInt(key); if (i > idx) newResults[i - 1] = results[currentCategory][currentFolder][currentList][key]; else if (i < idx) newResults[i] = results[currentCategory][currentFolder][currentList][key]; }); results[currentCategory][currentFolder][currentList] = newResults; saveResults(); } saveData(); updateCategoryList(); if (currentPage === 'manage') loadManageCardsPage(); }
-
     // --- ÉDITION DE CARTES EXISTANTES ---
-    let currentEditingExisting = { idx: null, side: null };
-
     function startEditCard(idx) {
         if (!currentCategory || !currentFolder || !currentList) return;
         const card = categories[currentCategory][currentFolder][currentList][idx];
         const q = document.getElementById('editQ-' + idx);
         const a = document.getElementById('editA-' + idx);
-        
+       
         document.querySelectorAll('.card-inline-editor').forEach(panel => {
             if (panel.id !== 'editor-' + idx) {
                 panel.style.display = 'none';
             }
         });
-
         if (!q || !a) return;
-        
+       
         q.innerHTML = card.question || '';
         a.innerHTML = card.answer || '';
-        
+       
         const panel = document.getElementById('editor-' + idx);
         if (panel) {
             panel.style.display = 'block';
             panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            q.focus(); 
+            q.focus();
         }
     }
     function cancelEditCard(idx) {
@@ -1300,15 +1345,15 @@
         const qEl = document.getElementById('editQ-' + idx);
         const aEl = document.getElementById('editA-' + idx);
         if (!qEl || !aEl) return;
-        
+       
         const newQ = (qEl.innerHTML || '').trim();
         const newA = (aEl.innerHTML || '').trim();
-        
+       
         if (!newQ || !newA || newQ === '<br>' || newA === '<br>') {
             alert('Veuillez remplir la question et la réponse.');
             return;
         }
-        
+       
         categories[currentCategory][currentFolder][currentList][idx] = { question: newQ, answer: newA };
         saveData();
         updateCategoryList();
@@ -1337,7 +1382,6 @@
         currentEditingExisting = { idx, side };
         document.getElementById('imageInput').click();
     }
-
     // MODALS FLASHCARDS
     function showNewCategoryModal() { document.getElementById('newCategoryModal').classList.add('show'); const input = document.getElementById('categoryNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
     function closeNewCategoryModal() { document.getElementById('newCategoryModal').classList.remove('show'); document.getElementById('categoryNameInput').value = ''; }
@@ -1363,38 +1407,33 @@
     function closeRenameListModal() { document.getElementById('renameListModal').classList.remove('show'); document.getElementById('renameListInput').value = ''; renameTarget = null; }
     function renameList() { const input = document.getElementById('renameListInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) { alert('Erreur.'); return; } if (categories[currentCategory][currentFolder][newName] && newName !== renameTarget) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (renameTarget && categories[currentCategory][currentFolder][renameTarget]) { categories[currentCategory][currentFolder][newName] = categories[currentCategory][currentFolder][renameTarget]; delete categories[currentCategory][currentFolder][renameTarget]; if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][renameTarget]) { results[currentCategory][currentFolder][newName] = results[currentCategory][currentFolder][renameTarget]; delete results[currentCategory][currentFolder][renameTarget]; saveResults(); } if (currentList === renameTarget) currentList = newName; saveData(); updateCategoryList(); loadListsPage(); closeRenameListModal(); } }
     function exportCards() { if (!currentCategory || !currentFolder || !currentList) { alert('Sélectionne une liste.'); return; } const data = {categoryName: currentCategory, folderName: currentFolder, listName: currentList, cards: categories[currentCategory][currentFolder][currentList]}; const json = JSON.stringify(data, null, 2); const blob = new Blob([json], {type: 'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = currentCategory.replace(/[^a-z0-9]/gi, '_') + '_' + currentFolder.replace(/[^a-z0-9]/gi, '_') + '_' + currentList.replace(/[^a-z0-9]/gi, '_') + '_' + new Date().toISOString().split('T')[0] + '.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
-
     function baseAppUrl() {
         const u = new URL(window.location.href);
         u.search = '';
         u.hash = '';
         return u.toString();
     }
-
     function buildEmbedUrl({cat, folder, list, view}) {
         const u = new URL(baseAppUrl());
         u.searchParams.set('embed', '1');
-        if (cat)    u.searchParams.set('cat', cat);
+        if (cat) u.searchParams.set('cat', cat);
         if (folder) u.searchParams.set('folder', folder);
-        if (list)   u.searchParams.set('list', list);
-        if (view)   u.searchParams.set('view', view);
+        if (list) u.searchParams.set('list', list);
+        if (view) u.searchParams.set('view', view);
         return u.toString();
     }
-
     function buildIframeCode(src, opts) {
         const width = (opts && opts.width) || '100%';
         const height = (opts && opts.height) || '600';
         const style = (opts && opts.style) || 'border:1px solid #e5e7eb;border-radius:12px;';
         return `<iframe src="${src}" width="${width}" height="${height}" style="${style}" allowfullscreen loading="lazy"></iframe>`;
     }
-
     function copyFolderEmbed() {
         if (!currentCategory || !currentFolder) { alert('Aucun cours sélectionné.'); return; }
         const src = buildEmbedUrl({ cat: currentCategory, folder: currentFolder, view: 'lists' });
         const code = buildIframeCode(src, { height: '700' });
         copyText(code);
     }
-
     function copyListEmbed(listName) {
         const cat = currentCategory;
         const folder = currentFolder;
@@ -1404,28 +1443,25 @@
         const code = buildIframeCode(src, { height: '700' });
         copyText(code);
     }
-
     async function copyText(text) {
         try {
             await navigator.clipboard.writeText(text);
-            alert('Code d’intégration copié ✓');
+            alert('Code d'intégration copié ✓');
         } catch (e) {
             const ta = document.createElement('textarea');
             ta.value = text;
             document.body.appendChild(ta);
             ta.select();
-            try { document.execCommand('copy'); alert('Code d’intégration copié ✓'); }
+            try { document.execCommand('copy'); alert('Code d'intégration copié ✓'); }
             catch { alert('Impossible de copier automatiquement. Sélectionne et copie manuellement.'); }
             document.body.removeChild(ta);
         }
     }
-
     function exportAll() {
         if (!categories || typeof categories !== 'object') {
             alert("Aucune donnée à exporter.");
             return;
         }
-
         const snapshot = {
             exportVersion: "1.0",
             exportedAt: new Date().toISOString(),
@@ -1438,7 +1474,7 @@
             data: [],
             results: results || {}
         };
-        
+       
         Object.keys(categories).forEach(catName => {
             const cat = categories[catName] || {};
             const catOut = { categoryName: catName, courses: [] };
@@ -1458,7 +1494,7 @@
             });
             snapshot.data.push(catOut);
         });
-        
+       
         const json = JSON.stringify(snapshot, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -1476,9 +1512,7 @@
     document.getElementById('fileInput').addEventListener('change', function(event) {
         const file = event.target.files && event.target.files[0];
         if (!file) return;
-
         console.log('[IMPORT] name:', file.name, 'type:', file.type, 'size:', file.size);
-
         const reader = new FileReader();
         reader.onerror = () => alert('Lecture de fichier impossible (FileReader).');
         reader.onload = function(e) {
@@ -1490,29 +1524,25 @@
                     // retire fences ```json ... ```
                     raw = raw.replace(/^```[a-zA-Z0-9]*\s*/, '').replace(/```$/, '').trim();
                 }
-
                 // 2) Parse JSON
                 let data;
                 try {
                     data = JSON.parse(raw);
                 } catch (err) {
                     console.error('[IMPORT] JSON.parse error:', err);
-                    alert('JSON invalide (échec du parsing). Vérifie qu’il n’y a pas de ``` ou de guillemets simples.');
+                    alert('JSON invalide (échec du parsing). Vérifie qu'il n'y a pas de ``` ou de guillemets simples.');
                     event.target.value = '';
                     return;
                 }
-
                 // 3) Détection format + import
                 const isList = data && data.categoryName && data.folderName && data.listName && Array.isArray(data.cards);
                 const isAll = data && data.exportVersion && Array.isArray(data.data);
-
                 if (!isList && !isAll) {
                     console.warn('[IMPORT] Format non reconnu. Aperçu des clés:', Object.keys(data||{}));
                     alert('Format non reconnu. Fichier attendu: "liste unique" ou "export tout".');
                     event.target.value = '';
                     return;
                 }
-
                 if (isList) {
                     const { categoryName, folderName, listName, cards } = data;
                     if (!categories[categoryName]) categories[categoryName] = {};
@@ -1531,7 +1561,6 @@
                     event.target.value = '';
                     return;
                 }
-
                 if (isAll) {
                     // Import "export tout"
                     let catCount=0, courseCount=0, listCount=0, cardCount=0;
@@ -1582,16 +1611,14 @@
                     event.target.value = '';
                     return;
                 }
-
             } catch (err) {
                 console.error('[IMPORT] Exception:', err);
-                alert('Erreur imprévue pendant l’import. Regarde la console pour le détail.');
+                alert('Erreur imprévue pendant l'import. Regarde la console pour le détail.');
             }
             event.target.value = '';
         };
         reader.readAsText(file);
     });
-
     function clearCurrentList() { if (!currentCategory || !currentFolder || !currentList) return; if (!confirm('⚠️ Vider la liste ?')) return; categories[currentCategory][currentFolder][currentList] = []; if (results[currentCategory] && results[currentCategory][currentFolder]) { delete results[currentCategory][currentFolder][currentList]; saveResults(); } saveData(); currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; updateCategoryList(); loadManageCardsPage(); }
     document.getElementById('categoryNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createCategory(); });
     document.getElementById('folderNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createFolder(); });
@@ -1605,7 +1632,6 @@
     document.getElementById('renameCategoryModal').addEventListener('click', function(e) { if (e.target === this) closeRenameCategoryModal(); });
     document.getElementById('renameFolderModal').addEventListener('click', function(e) { if (e.target === this) closeRenameFolderModal(); });
     document.getElementById('renameListModal').addEventListener('click', function(e) { if (e.target === this) closeRenameListModal(); });
-
     // ====== COMPARATEUR DE TEXTE ======
     function openComparator() {
         document.getElementById('comparatorModal').classList.add('show');
@@ -1615,14 +1641,12 @@
         document.getElementById('comparatorModal').classList.remove('show');
         document.body.style.overflow = 'auto';
     }
-
     // Variables comparateur
     let showContext = false;
     let lastFocusedId = null;
     let showOnlyDeletions = false;
     let lastFocusedType = null;
     let lastSelectedBtn = null;
-
     const $ = sel => document.querySelector(sel);
     const oldTA = $("#oldText");
     const newTA = $("#newText");
@@ -1636,10 +1660,9 @@
     const toggleContextBtnComp = $("#toggleContext");
     const backBtn = $("#backToSelected");
     const onlyDelBtn = document.getElementById("toggleOnlyDeletions");
-
     function escapeHtmlComp(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-    function normalizeSpaces(s) { 
-        return s.replace(/\r\n|\r/g, '\n').replace(/([^\n])\n/g, '$1 ').replace(/\t/g, ' '); 
+    function normalizeSpaces(s) {
+        return s.replace(/\r\n|\r/g, '\n').replace(/([^\n])\n/g, '$1 ').replace(/\t/g, ' ');
     }
     function emojiFor(t) { return t==='insertion' ? '➕' : t==='suppression' ? '➖' : '♻️'; }
     function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
@@ -1649,7 +1672,6 @@
         const a = (added||"").replace(/\s+/g,'');
         return r === a && (removed!==added);
     }
-
     function updateBackButton() {
         if (lastSelectedBtn) {
             backBtn.classList.add('visible');
@@ -1685,7 +1707,7 @@
         clearFocusComp();
         const el = document.getElementById(id);
         if (!el) return;
-            
+           
         if (el.tagName === 'MARK') {
             el.classList.add('focused');
             lastFocusedId = id;
@@ -1693,7 +1715,7 @@
         } else {
             lastFocusedId = id;
             lastFocusedType = type || 'suppression';
-                    
+                   
             if ((type === 'suppression') && options && options.removedText) {
                 showDeletionGhostAfter(el, id, options.removedText);
             } else {
@@ -1706,42 +1728,41 @@
                 }
             }
         }
-            
+           
         (el.tagName === 'MARK' ? el : document.getElementById(id)).scrollIntoView({behavior:'smooth', block:'center'});
     }
     function computeComp() {
         const oldTxt = oldTA.value || "";
         const newTxt = newTA.value || "";
         const parts = (window.Diff && Diff.diffWordsWithSpace) ? Diff.diffWordsWithSpace(oldTxt, newTxt) : [{removed:true,value:oldTxt},{added:true,value:newTxt}];
-        
+       
         let html = "";
         let changes = [];
         let ins=0, del=0, rep=0, idxChange=0;
-        
+       
         for (let i=0; i<parts.length; i++) {
             const p = parts[i];
-            
+           
             if (p.removed && !p.added) {
                 const next = parts[i+1];
-                
+               
                 if (next && next.added && !next.removed) {
                     const isWhitespaceOnly = isWhitespaceOnlyChange(p.value, next.value);
-                    
+                   
                     if (!isOnlySpaces(next.value) && !isOnlySpaces(p.value) && !isWhitespaceOnly) {
                         const anchorId = `chg-${++idxChange}`;
-                        
+                       
                         const removedHtml = `<mark class="del" id="${anchorId}-del">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
                         const addedHtml = `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(next.value))}</mark>`;
-                        
+                       
                         html += removedHtml + addedHtml;
-
                         rep++;
                         changes.push({id: anchorId, type: 'remplacement', added: next.value, removed: p.value, isWhitespaceOnly: false});
                         i++;
                         continue;
                     } else {
                         if (isWhitespaceOnly) {
-                            html += escapeHtmlComp(normalizeSpaces(next.value)); 
+                            html += escapeHtmlComp(normalizeSpaces(next.value));
                             rep++;
                             changes.push({id: `chg-${++idxChange}`, type: 'remplacement', added: next.value, removed: p.value, isWhitespaceOnly: true});
                             i++;
@@ -1749,16 +1770,15 @@
                         }
                     }
                 }
-                
+               
                 if (isOnlySpaces(p.value)) continue;
-                
+               
                 const anchorId = `chg-${++idxChange}`;
                 html += `<mark class="del" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
                 del++;
                 changes.push({id: anchorId, type: 'suppression', added: '', removed: p.value, isWhitespaceOnly: false});
                 continue;
             }
-
             if (p.added && !p.removed) {
                 if (isOnlySpaces(p.value)) continue;
                 const anchorId = `chg-${++idxChange}`;
@@ -1767,66 +1787,61 @@
                 changes.push({id: anchorId, type: 'insertion', added: p.value, removed: '', isWhitespaceOnly: false});
                 continue;
             }
-            
+           
             html += escapeHtmlComp(normalizeSpaces(p.value));
         }
-        
+       
         outComp.innerHTML = html.replace(/\n/g, '<br>');
-
         const finalChanges = changes.filter(c => !c.isWhitespaceOnly);
-        
+       
         renderChangesListComp(finalChanges);
-        
+       
         insCountComp.textContent = finalChanges.filter(c => c.type === 'insertion').length;
         delCountComp.textContent = finalChanges.filter(c => c.type === 'suppression').length;
         repCountComp.textContent = finalChanges.filter(c => c.type === 'remplacement').length;
-        
+       
         hintComp.textContent = `${finalChanges.length} modifications détectées${rep? " • remplacements: "+rep : ""}.`;
     }
     // --- LOGIQUE IMPORT TEXTE / CSV ---
-
     function showImportTextModal() {
         const modal = document.getElementById('importTextModal');
         const catSelect = document.getElementById('importCatSelect');
         const listInput = document.getElementById('importListName');
         const txtArea = document.getElementById('importTextContent');
-        
+       
         // Reset des champs
         listInput.value = '';
         txtArea.value = '';
         catSelect.innerHTML = '';
-        
+       
         // Remplir les catégories
         const catNames = Object.keys(categories);
         if (catNames.length === 0) {
             alert("Créez d'abord une catégorie et un cours via le bouton 'Créer un cours'.");
             return;
         }
-        
+       
         catNames.forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
             opt.textContent = cat;
             catSelect.appendChild(opt);
         });
-
         // Sélectionner la catégorie courante si elle existe
         if (currentCategory && categories[currentCategory]) {
             catSelect.value = currentCategory;
         }
-
         updateImportFolderSelect();
         modal.classList.add('show');
         setTimeout(() => listInput.focus(), 100);
     }
-
     function updateImportFolderSelect() {
         const catSelect = document.getElementById('importCatSelect');
         const folderSelect = document.getElementById('importFolderSelect');
         const catName = catSelect.value;
-        
+       
         folderSelect.innerHTML = '';
-        
+       
         if (catName && categories[catName]) {
             const folders = Object.keys(categories[catName]);
             if (folders.length === 0) {
@@ -1847,18 +1862,15 @@
             }
         }
     }
-
     function closeImportTextModal() {
         document.getElementById('importTextModal').classList.remove('show');
     }
-
     function performTextImport() {
         const catName = document.getElementById('importCatSelect').value;
         const folderName = document.getElementById('importFolderSelect').value;
         const listName = document.getElementById('importListName').value.trim();
         const rawText = document.getElementById('importTextContent').value;
         const sepType = document.getElementById('importSeparator').value;
-
         // Validations
         if (!catName || !folderName || folderName === "(Aucun cours)") {
             alert("Veuillez sélectionner une catégorie et un cours valides.");
@@ -1872,40 +1884,35 @@
             alert("Le texte à importer est vide.");
             return;
         }
-
         // Détermination du séparateur réel
         let separator = sepType;
         if (sepType === 'tab') separator = '\t';
-
         // Analyse du texte ligne par ligne
         const lines = rawText.split(/\r?\n/);
         let importedCount = 0;
         const newCards = [];
-
         lines.forEach(line => {
             if (!line.trim()) return; // Ignorer lignes vides
-            
+           
             // On sépare la ligne en 2 parties maximum (Question / Reste)
             // Si la réponse contient le séparateur, on ne veut pas couper encore
             const parts = line.split(separator);
-            
+           
             if (parts.length >= 2) {
                 const q = parts[0].trim();
                 // On rejoint le reste au cas où le séparateur serait dans la réponse
                 const a = parts.slice(1).join(separator).trim();
-                
+               
                 if (q && a) {
                     newCards.push({ question: q, answer: a });
                     importedCount++;
                 }
             }
         });
-
         if (importedCount === 0) {
             alert("Aucune carte détectée. Vérifiez le séparateur (ex: Tabulation vs Virgule).");
             return;
         }
-
         // Sauvegarde dans la structure de données
         if (!categories[catName][folderName][listName]) {
             // Création nouvelle liste
@@ -1916,24 +1923,22 @@
                 return;
             }
         }
-
         // Ajout des cartes
         categories[catName][folderName][listName].push(...newCards);
-        
+       
         saveData();
         updateCategoryList(); // Met à jour la barre latérale
-        
+       
         // Si on est sur l'accueil, mettre à jour les stats
         if (currentPage === 'home') updateHomeStats();
-        
+       
         // Feedback et fermeture
         alert(`${importedCount} cartes importées avec succès dans "${listName}" !`);
         closeImportTextModal();
-        
+       
         // Redirection immédiate vers la liste créée
         showListsPage(catName, folderName);
     }
-
     function flashSidebarCard(btn) {
         const prevShadow = btn.style.boxShadow;
         btn.style.boxShadow = '0 0 0 3px rgba(255,209,102,0.45)';
@@ -1941,22 +1946,19 @@
     }
     function renderChangesListComp(changes) {
         changesListComp.innerHTML = "";
-        
+       
         let filtered = changes;
         if (showOnlyDeletions) {
             filtered = changes.filter(c => c.type === 'suppression' || c.type === 'remplacement');
         }
-
         if (!filtered.length) {
             changesListComp.innerHTML = '<div style="color:#8b93a6;padding:8px">Aucun changement.</div>';
             updateBackButton();
             return;
         }
-
         const ctxSpan = showContext ? 24 : 0;
         let toRestoreId = (lastSelectedBtn && lastSelectedBtn.dataset.id) ? lastSelectedBtn.dataset.id : null;
         lastSelectedBtn = null;
-
         for (const c of filtered) {
             const btn = document.createElement('button');
             btn.className = 'comp-change';
@@ -1966,7 +1968,6 @@
             if (c.type === 'suppression' || c.type === 'remplacement') {
                 btn.dataset.removed = c.removed;
             }
-
             let tokenHtml = '';
             if (c.type === 'insertion') {
                 tokenHtml = `<mark class="token">${escapeHtmlComp(c.added.replace(/\n/g, '↵'))}</mark>`;
@@ -1975,52 +1976,44 @@
             } else {
                 tokenHtml = `<mark class="token del">${escapeHtmlComp(c.removed.replace(/\n/g, '↵'))}</mark> <span style="display:inline-block;width:6px"></span> <mark class="token">${escapeHtmlComp(c.added.replace(/\n/g, '↵'))}</mark>`;
             }
-
             let ctx = '';
             if (ctxSpan > 0) {
                 const src = c.type==='suppression' ? (oldTA.value||"") : (newTA.value||"");
                 const needle = (c.type==='suppression' ? c.removed : c.added) || "";
-                
+               
                 const pos = needle.length > 0 ? src.indexOf(needle) : -1;
-                
+               
                 if (pos>=0) {
                     const start = Math.max(0,pos-ctxSpan);
                     const end = Math.min(src.length, pos+needle.length+ctxSpan);
                     ctx = (start>0?'…':'') + src.slice(start,end).replace(/\r\n|\r/g, '\n').replace(/\n/g, '↵').replace(/\s+/g,' ') + (end<src.length?'…':'');
                 }
             }
-            
+           
             btn.innerHTML = `<span class="type">${emojiFor(c.type)} ${cap(c.type)}</span> ${tokenHtml} ${ctx ? `<span class="ctx">${escapeHtmlComp(ctx)}</span>` : ``}`;
-
             btn.addEventListener('click', () => {
                 const prev = document.querySelector('.comp-change.selected');
                 if (prev) prev.classList.remove('selected');
                 btn.classList.add('selected');
                 lastSelectedBtn = btn;
-
                 let focusId = btn.dataset.id;
                 let focusType = btn.dataset.type;
                 const isReplacement = focusType === 'remplacement';
-                
-                if (isReplacement) focusType = 'insertion'; 
-
+               
+                if (isReplacement) focusType = 'insertion';
                 const opts = (btn.dataset.type === 'suppression') ? { removedText: btn.dataset.removed || '' } : undefined;
-                
+               
                 focusChangeComp(isReplacement ? focusId : focusId, focusType, opts);
                 updateBackButton();
             });
-
             changesListComp.appendChild(btn);
-
             if (toRestoreId && c.id === toRestoreId) {
                 btn.classList.add('selected');
                 lastSelectedBtn = btn;
             }
         }
-
         updateBackButton();
     }
-
     document.getElementById("compareBtn").addEventListener('click', () => {
         if (lastSelectedBtn) { lastSelectedBtn.classList.remove('selected'); lastSelectedBtn = null; }
         clearFocusComp();
@@ -2075,7 +2068,7 @@
         const prevSelectedId = lastSelectedBtn ? lastSelectedBtn.dataset.id : null;
         const prevFocused = lastFocusedId;
         computeComp();
-        
+       
         if (prevSelectedId) {
             const cand = Array.from(document.querySelectorAll('.comp-change')).find(b => b.dataset.id === prevSelectedId);
             if (cand) {
@@ -2097,10 +2090,8 @@
         }
         updateBackButton();
     });
-
     oldTA.value = "Le contrat entre en vigueur le 1er janvier 2024.\nLe prix est de 100€.\nLe client accepte les conditions.";
     newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 €.\nLe client accepte pleinement les conditions générales.";
-
     loadTheme();
     loadData();
     bootstrapEmbedIfAny();
