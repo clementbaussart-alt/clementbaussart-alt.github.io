@@ -377,61 +377,117 @@
         </div>
     </div>
     <div id="manageCardsPage" class="page">
-        <div class="container manage-cards-page">
-            <div class="breadcrumb"><a id="backToLists">← Retour aux listes</a></div>
-            <h2 id="manageTitle">Gérer les cartes</h2>
-            <div class="manage-section">
-                <div class="input-group"><br>
-<label>Niveau :</label><br>
-<select id="importanceSelect"><br>
-<option value="important">Important</option><br>
-<option value="normal" selected>Normal</option><br>
-<option value="pas important">Pas important</option><br>
-<option value="explication">Explication</option><br>
-</select><br>
-</div><br>
-                <h3>➕ Ajouter une nouvelle carte</h3>
-                <div class="input-group">
-                    <label>Question / Recto :</label>
-                    <div class="editor-toolbar">
-                        <button class="editor-btn" onclick="formatText('bold', 'Q')"><b>G</b></button>
-                        <button class="editor-btn" onclick="formatText('italic', 'Q')"><i>I</i></button>
-                        <button class="editor-btn" onclick="formatText('underline', 'Q')"><u>S</u></button>
-                        <input type="color" class="color-picker" id="textColorQ" value="#000000" title="Couleur">
-                        <input type="color" class="color-picker" id="bgColorQ" value="#ffff00" title="Surlignage">
-                        <button class="editor-btn" onclick="insertImage('Q')">🖼️</button>
-                        <button class="editor-btn" onclick="clearFormat('Q')">✖</button>
+    <div class="container manage-cards-page">
+        <div class="breadcrumb"><a id="backToLists">← Retour aux listes</a></div>
+        <h2 id="manageTitle">Gérer les cartes</h2>
+        
+        <div class="manage-section">
+            <!-- Nouvelle structure avec options de modification à droite -->
+            <div style="display: grid; grid-template-columns: 1fr 300px; gap: 30px; margin-bottom: 30px;">
+                <!-- Colonne gauche : Éditeur principal -->
+                <div>
+                    <h3>📝 Modifier la carte</h3>
+                    <div class="input-group">
+                        <label>Question / Recto :</label>
+                        <div class="editor-toolbar">
+                            <button class="editor-btn" onclick="formatText('bold', 'Q')"><b>G</b></button>
+                            <button class="editor-btn" onclick="formatText('italic', 'Q')"><i>I</i></button>
+                            <button class="editor-btn" onclick="formatText('underline', 'Q')"><u>S</u></button>
+                            <input type="color" class="color-picker" id="textColorQ" value="#000000" title="Couleur">
+                            <input type="color" class="color-picker" id="bgColorQ" value="#ffff00" title="Surlignage">
+                            <button class="editor-btn" onclick="insertImage('Q')">🖼️</button>
+                            <button class="editor-btn" onclick="clearFormat('Q')">✖</button>
+                        </div>
+                        <div class="editor-content" id="newQuestion" contenteditable="true"></div>
                     </div>
-                    <div class="editor-content" id="newQuestion" contenteditable="true"></div>
-                </div>
-                <div class="input-group">
-                    <label>Réponse / Verso :</label>
-                    <div class="editor-toolbar">
-                        <button class="editor-btn" onclick="formatText('bold', 'A')"><b>G</b></button>
-                        <button class="editor-btn" onclick="formatText('italic', 'A')"><i>I</i></button>
-                        <button class="editor-btn" onclick="formatText('underline', 'A')"><u>S</u></button>
-                        <input type="color" class="color-picker" id="textColorA" value="#000000" title="Couleur">
-                        <input type="color" class="color-picker" id="bgColorA" value="#ffff00" title="Surlignage">
-                        <button class="editor-btn" onclick="insertImage('A')">🖼️</button>
-                        <button class="editor-btn" onclick="clearFormat('A')">✖</button>
+                    
+                    <div class="input-group">
+                        <label>Réponse / Verso :</label>
+                        <div class="editor-toolbar">
+                            <button class="editor-btn" onclick="formatText('bold', 'A')"><b>G</b></button>
+                            <button class="editor-btn" onclick="formatText('italic', 'A')"><i>I</i></button>
+                            <button class="editor-btn" onclick="formatText('underline', 'A')"><u>S</u></button>
+                            <input type="color" class="color-picker" id="textColorA" value="#000000" title="Couleur">
+                            <input type="color" class="color-picker" id="bgColorA" value="#ffff00" title="Surlignage">
+                            <button class="editor-btn" onclick="insertImage('A')">🖼️</button>
+                            <button class="editor-btn" onclick="clearFormat('A')">✖</button>
+                        </div>
+                        <div class="editor-content" id="newAnswer" contenteditable="true"></div>
                     </div>
-                    <div class="editor-content" id="newAnswer" contenteditable="true"></div>
+                    
+                    <!-- Option pour choisir l'importance en dessous -->
+                    <div class="input-group" style="margin-top: 20px;">
+                        <label>Niveau d'importance :</label>
+                        <select id="importanceSelect" style="width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 16px;">
+                            <option value="important">Important</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="pas important">Pas important</option>
+                            <option value="explication">Explication</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn-add" onclick="addCard()" style="margin-top: 20px; width: 100%;">Ajouter la carte</button>
                 </div>
-                <button class="btn-add" onclick="addCard()">Ajouter la carte</button>
-            </div>
-            <div class="manage-section">
-                <h3>📝 Cartes existantes (<span id="cardCount">0</span>)</h3>
-                <div class="cards-list" id="cardsList"></div>
-            </div>
-            <div class="save-section">
-                <h2 style="margin-bottom:20px;color:#333">💾 Gestion des cartes</h2>
-                <div class="save-buttons">
-                    <button class="btn-export" onclick="exportCards()">📥 Exporter</button>
-                    <button class="btn-clear" onclick="clearCurrentList()">🗑️ Vider</button>
+                
+                <!-- Colonne droite : Options de modification -->
+                <div>
+                    <h3>🛠️ Options de mise en forme</h3>
+                    <div style="background: var(--panel-muted); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label style="font-weight: 600; margin-bottom: 8px; display: block;">Format rapide :</label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <button class="editor-btn" onclick="applyPresetFormat('highlight')" style="flex: 1; min-width: 120px;">🌟 Mettre en évidence</button>
+                                <button class="editor-btn" onclick="applyPresetFormat('code')" style="flex: 1; min-width: 120px;">📝 Format code</button>
+                                <button class="editor-btn" onclick="applyPresetFormat('quote')" style="flex: 1; min-width: 120px;">💬 Citation</button>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label style="font-weight: 600; margin-bottom: 8px; display: block;">Insertion rapide :</label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <button class="editor-btn" onclick="insertSpecialChar('bullet')" style="flex: 1; min-width: 100px;">• Liste à puces</button>
+                                <button class="editor-btn" onclick="insertSpecialChar('number')" style="flex: 1; min-width: 100px;">1. Liste numérotée</button>
+                                <button class="editor-btn" onclick="insertSpecialChar('divider')" style="flex: 1; min-width: 100px;">--- Séparateur</button>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label style="font-weight: 600; margin-bottom: 8px; display: block;">Actions rapides :</label>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button class="editor-btn" onclick="duplicateCurrentCard()" style="width: 100%;">📋 Dupliquer la carte précédente</button>
+                                <button class="editor-btn" onclick="clearAllFormats()" style="width: 100%;">🗑️ Tout effacer</button>
+                                <button class="editor-btn" onclick="previewCard()" style="width: 100%; background: var(--accent); color: white;">👁️ Aperçu</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; background: var(--panel); padding: 15px; border-radius: 12px; border: 1px dashed var(--border);">
+                        <h4 style="margin-bottom: 10px; font-size: 14px; color: var(--text-soft);">💡 Astuce</h4>
+                        <p style="font-size: 13px; color: var(--text-soft); line-height: 1.4;">
+                            Utilisez <code>Ctrl+B</code> pour gras, <code>Ctrl+I</code> pour italique. 
+                            Cliquez sur 🖼️ pour insérer une image.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
+        
+        <div class="manage-section">
+            <h3>📋 Cartes existantes (<span id="cardCount">0</span>)</h3>
+            <div class="cards-list" id="cardsList"></div>
+        </div>
+        
+        <div class="save-section" style="margin-top: 40px;">
+            <h2 style="margin-bottom:20px;color:#333">💾 Gestion des cartes</h2>
+            <div class="save-buttons" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <button class="btn-export" onclick="exportCards()">📥 Exporter</button>
+                <button class="btn-clear" onclick="clearCurrentList()">🗑️ Vider</button>
+                <button class="btn-action" onclick="importCards()" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);">📥 Importer JSON</button>
+                <button class="btn-action btn-action-secondary" onclick="showImportTextModal()">📋 Importer Texte/CSV</button>
+            </div>
+        </div>
     </div>
+</div>
     <div id="studyPage" class="page">
         <div class="container study-page">
             <div class="breadcrumb"><a id="backToListsStudy">← Retour aux listes</a></div>
@@ -1311,6 +1367,127 @@
         updateCategoryList();
         if (currentPage === 'manage') loadManageCardsPage();
     }
+    // Fonctions pour les nouvelles options de mise en forme
+function applyPresetFormat(type) {
+    const activeEditor = document.activeElement;
+    if (!activeEditor || !activeEditor.classList.contains('editor-content')) return;
+    
+    switch(type) {
+        case 'highlight':
+            document.execCommand('backColor', false, '#fff3cd');
+            document.execCommand('foreColor', false, '#856404');
+            break;
+        case 'code':
+            document.execCommand('formatBlock', false, '<pre>');
+            document.execCommand('backColor', false, '#f8f9fa');
+            document.execCommand('foreColor', false, '#e83e8c');
+            break;
+        case 'quote':
+            document.execCommand('formatBlock', false, '<blockquote>');
+            document.execCommand('styleWithCSS', false, true);
+            document.execCommand('foreColor', false, '#6c757d');
+            break;
+    }
+    activeEditor.focus();
+}
+
+function insertSpecialChar(type) {
+    const activeEditor = document.activeElement;
+    if (!activeEditor || !activeEditor.classList.contains('editor-content')) return;
+    
+    let text = '';
+    switch(type) {
+        case 'bullet':
+            text = '• ';
+            break;
+        case 'number':
+            text = '1. ';
+            break;
+        case 'divider':
+            text = '\n---\n';
+            break;
+    }
+    
+    document.execCommand('insertText', false, text);
+    activeEditor.focus();
+}
+
+function duplicateCurrentCard() {
+    if (!currentCategory || !currentFolder || !currentList) return;
+    const cards = categories[currentCategory][currentFolder][currentList];
+    if (cards.length === 0) {
+        alert("Aucune carte à dupliquer.");
+        return;
+    }
+    
+    const lastCard = cards[cards.length - 1];
+    document.getElementById('newQuestion').innerHTML = lastCard.question;
+    document.getElementById('newAnswer').innerHTML = lastCard.answer;
+    
+    // Copier aussi l'importance si elle existe
+    if (lastCard.importance) {
+        const impSelect = document.getElementById('importanceSelect');
+        if (impSelect) impSelect.value = lastCard.importance;
+    }
+    
+    alert("Dernière carte dupliquée dans les champs d'édition !");
+}
+
+function clearAllFormats() {
+    const qEditor = document.getElementById('newQuestion');
+    const aEditor = document.getElementById('newAnswer');
+    
+    if (qEditor) qEditor.innerHTML = qEditor.innerText;
+    if (aEditor) aEditor.innerHTML = aEditor.innerText;
+    
+    // Réinitialiser aussi l'importance
+    const impSelect = document.getElementById('importanceSelect');
+    if (impSelect) impSelect.value = 'normal';
+    
+    alert("Tous les formats ont été effacés.");
+}
+
+function previewCard() {
+    const question = document.getElementById('newQuestion').innerHTML.trim();
+    const answer = document.getElementById('newAnswer').innerHTML.trim();
+    
+    if (!question && !answer) {
+        alert("Aucun contenu à prévisualiser.");
+        return;
+    }
+    
+    const previewWindow = window.open('', '_blank', 'width=600,height=400');
+    previewWindow.document.write(`
+        <html>
+        <head>
+            <title>Aperçu de la carte</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                .card { border: 2px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+                .front { background: #f8f9fa; }
+                .back { background: #e8ebff; }
+                .label { font-weight: bold; color: #667eea; margin-bottom: 10px; }
+                .content { margin-bottom: 10px; }
+            </style>
+        </head>
+        <body>
+            <h2>👁️ Aperçu de la carte</h2>
+            <div class="card front">
+                <div class="label">Question / Recto :</div>
+                <div class="content">${question || '(vide)'}</div>
+            </div>
+            <div class="card back">
+                <div class="label">Réponse / Verso :</div>
+                <div class="content">${answer || '(vide)'}</div>
+            </div>
+            <button onclick="window.close()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                Fermer
+            </button>
+        </body>
+        </html>
+    `);
+    previewWindow.document.close();
+}
     function deleteCard(idx) { if (!confirm('Supprimer cette carte ?')) return; categories[currentCategory][currentFolder][currentList].splice(idx, 1); if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][currentList]) { delete results[currentCategory][currentFolder][currentList][idx]; const newResults = {}; Object.keys(results[currentCategory][currentFolder][currentList]).forEach(key => { const i = parseInt(key); if (i > idx) newResults[i - 1] = results[currentCategory][currentFolder][currentList][key]; else if (i < idx) newResults[i] = results[currentCategory][currentFolder][currentList][key]; }); results[currentCategory][currentFolder][currentList] = newResults; saveResults(); } saveData(); updateCategoryList(); if (currentPage === 'manage') loadManageCardsPage(); }
     // --- ÉDITION DE CARTES EXISTANTES ---
     function startEditCard(idx) {
