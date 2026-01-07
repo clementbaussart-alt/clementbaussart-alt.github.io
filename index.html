@@ -905,8 +905,21 @@
     }
     // FONCTIONS FLASHCARDS
     function toggleSidebar() { const sidebar = document.getElementById('sidebar'); const mainContent = document.getElementById('mainContent'); const toggleBtn = document.getElementById('toggleSidebarBtn'); sidebar.classList.toggle('hidden'); mainContent.classList.toggle('sidebar-hidden'); toggleBtn.classList.toggle('sidebar-hidden'); }
-    function formatText(command, side) { document.execCommand(command, false, null); document.getElementById('new' + (side === 'Q' ? 'Question' : 'Answer')).focus(); }
-    function clearFormat(side) { const editor = document.getElementById('new' + (side === 'Q' ? 'Question' : 'Answer')); editor.innerHTML = editor.innerText; }
+    function formatText(command) { 
+    const activeEditor = document.activeElement;
+    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+        document.execCommand(command, false, null);
+        activeEditor.focus();
+    }
+}
+
+function clearFormat() { 
+    const activeEditor = document.activeElement;
+    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+        activeEditor.innerHTML = activeEditor.innerText;
+        activeEditor.focus();
+    }
+}
     function insertImage(side) { currentEditingSide = side; document.getElementById('imageInput').click(); }
     document.getElementById('imageInput').addEventListener('change', function(e) {
         const file = e.target.files && e.target.files[0];
@@ -954,10 +967,22 @@
         reader.readAsDataURL(file);
         e.target.value = '';
     });
-    document.getElementById('textColorQ').addEventListener('change', function(e) { document.execCommand('foreColor', false, e.target.value); document.getElementById('newQuestion').focus(); });
-    document.getElementById('bgColorQ').addEventListener('change', function(e) { document.execCommand('backColor', false, e.target.value); document.getElementById('newQuestion').focus(); });
-    document.getElementById('textColorA').addEventListener('change', function(e) { document.execCommand('foreColor', false, e.target.value); document.getElementById('newAnswer').focus(); });
-    document.getElementById('bgColorA').addEventListener('change', function(e) { document.execCommand('backColor', false, e.target.value); document.getElementById('newAnswer').focus(); });
+    // Gestionnaires pour les couleurs
+document.getElementById('textColorQ').addEventListener('change', function(e) { 
+    applyColorToSelection('foreColor', e.target.value); 
+});
+document.getElementById('bgColorQ').addEventListener('change', function(e) { 
+    applyColorToSelection('backColor', e.target.value); 
+});
+
+// Fonction pour appliquer la couleur à la sélection active
+function applyColorToSelection(command, color) {
+    const activeEditor = document.activeElement;
+    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+        document.execCommand(command, false, color);
+        activeEditor.focus();
+    }
+}
     function showPage(e) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); if (e === 'home') { document.getElementById('homePage').classList.add('active'); document.querySelector('.nav-item').classList.add('active'); currentPage = 'home'; currentCategory = null; currentFolder = null; currentList = null; updateHomeStats(); } }
     function showListsPage(category, folder) { currentCategory = category; currentFolder = folder; currentList = null; currentPage = 'lists'; document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); document.getElementById('listsPage').classList.add('active'); document.getElementById('listsTitle').textContent = folder; updateCategoryList(); loadListsPage(); }
     function showManageCardsPage(category, folderName, listName) { currentCategory = category; currentFolder = folderName; currentList = listName; currentPage = 'manage'; document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); document.getElementById('manageCardsPage').classList.add('active'); document.getElementById('manageTitle').textContent = 'Gérer : ' + listName; document.getElementById('backToLists').onclick = function() { showListsPage(currentCategory, currentFolder); }; updateCategoryList(); loadManageCardsPage(); }
