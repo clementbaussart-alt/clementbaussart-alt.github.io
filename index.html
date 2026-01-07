@@ -384,6 +384,15 @@
             <div class="breadcrumb"><a id="backToLists">← Retour aux listes</a></div>
             <h2 id="manageTitle">Gérer les cartes</h2>
             <div class="manage-section">
+                <div class="input-group"><br>
+	<label>Niveau :</label><br>
+	<select id="importanceSelect"><br>
+		<option value="important">Important</option><br>
+		<option value="normal" selected>Normal</option><br>
+		<option value="pas important">Pas important</option><br>
+		<option value="explication">Explication</option><br>
+	</select><br>
+</div><br>
                 <h3>➕ Ajouter une nouvelle carte</h3>
                 <div class="input-group">
                     <label>Question / Recto :</label>
@@ -1234,7 +1243,7 @@
     function loadCurrentList() { if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) { showEmptyState(); return; } const cards = categories[currentCategory][currentFolder][currentList]; if (isReviewMode && reviewIndices.length === 0) { showEmptyState(); return; } if (cards.length === 0) { showEmptyState(); } else { hideEmptyState(); loadCard(); } }
     function showEmptyState() { document.getElementById('cardSection').style.display = 'none'; document.getElementById('endSection').style.display = 'none'; document.getElementById('emptyState').style.display = 'block'; document.getElementById('progressBar').style.width = '0%'; }
     function hideEmptyState() { document.getElementById('cardSection').style.display = 'block'; document.getElementById('endSection').style.display = 'none'; document.getElementById('emptyState').style.display = 'none'; }
-    function loadCard() { if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) return; const cards = categories[currentCategory][currentFolder][currentList]; if (isReviewMode) { if (currentIndex >= reviewIndices.length) { showEndScreen(); return; } const idx = reviewIndices[currentIndex]; const card = cards[idx]; document.getElementById('question').innerHTML = card.question; document.getElementById('answer').innerHTML = card.answer; } else { if (currentIndex >= cards.length) { showEndScreen(); return; } const card = cards[currentIndex]; document.getElementById('question').innerHTML = card.question; document.getElementById('answer').innerHTML = card.answer; } document.getElementById('flashcard').classList.remove('flipped'); isFlipped = false; updateProgress(); updateStats(); }
+    function loadCard() { if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) return; const cards = categories[currentCategory][currentFolder][currentList]; if (isReviewMode) { if (currentIndex >= reviewIndices.length) { showEndScreen(); return; } const idx = reviewIndices[currentIndex]; const card = cards[idx]; document.getElementById('question').innerHTML = card.question; document.getElementById('answer').innerHTML = card.answer; } else { if (currentIndex >= cards.length) { showEndScreen(); return; } const card = cards[currentIndex]; document.getElementById('question').innerHTML = card.question; document.getElementById('answer').innerHTML = card.answer; } window.currentImportance = card.importance || 'normal'; document.getElementById('flashcard').classList.remove('flipped'); isFlipped = false; updateProgress(); updateStats(); }
     function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); isFlipped = !isFlipped; }
     function editCurrentCard() {
         if (!currentCategory || !currentFolder || !currentList) { alert("Aucune liste sélectionnée."); return; }
@@ -1255,7 +1264,12 @@
     }
     function answer(type) { if (!results[currentCategory]) results[currentCategory] = {}; if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {}; if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {}; const idx = isReviewMode ? reviewIndices[currentIndex] : currentIndex; results[currentCategory][currentFolder][currentList][idx] = type; saveResults(); stats[type]++; currentIndex++; loadCard(); }
     function updateProgress() { const cards = categories[currentCategory][currentFolder][currentList]; const total = isReviewMode ? reviewIndices.length : cards.length; const current = currentIndex; const percent = current / total * 100; document.getElementById('progressBar').style.width = percent + '%'; }
-    function updateStats() { const cards = categories[currentCategory][currentFolder][currentList]; const total = isReviewMode ? reviewIndices.length : cards.length; document.getElementById('stats').textContent = 'Carte ' + (currentIndex + 1) + '/' + total + ' | Connu: ' + stats.known + ' | Partiel: ' + stats.partial + ' | Pas connu: ' + stats.unknown; }
+    function updateStats() { const cards = categories[currentCategory][currentFolder][currentList]; const total = isReviewMode ? reviewIndices.length : cards.length; document.getElementById('stats').textContent =
+	'Carte ' + (currentIndex + 1) + '/' + total +
+	' | Niveau: ' + (window.currentImportance || 'normal') +
+	' | Connu: ' + stats.known +
+	' | Partiel: ' + stats.partial +
+	' | Pas connu: ' + stats.unknown;
     function showEndScreen() { 
         document.getElementById('cardSection').style.display = 'none'; 
         document.getElementById('endSection').style.display = 'block'; 
@@ -1320,7 +1334,36 @@
     }
     function restartSession() { currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; isReviewMode = false; reviewIndices = []; document.getElementById('studyModeIndicator').style.display = 'none'; document.getElementById('endSection').style.display = 'none'; document.getElementById('cardSection').style.display = 'block'; loadCard(); }
     function reviewWrongCards() { showStudyPage(currentCategory, currentFolder, currentList, true); }
-    function addCard() { const q = document.getElementById('newQuestion').innerHTML.trim(); const a = document.getElementById('newAnswer').innerHTML.trim(); if (!q || !a || q === '<br>' || a === '<br>') { alert('Veuillez remplir la question et la réponse.'); return; } if (!currentCategory || !currentFolder || !currentList) { alert("Sélectionne d'abord une liste."); return; } categories[currentCategory][currentFolder][currentList].push({question: q, answer: a}); saveData(); document.getElementById('newQuestion').innerHTML = ''; document.getElementById('newAnswer').innerHTML = ''; updateCategoryList(); if (currentPage === 'manage') loadManageCardsPage(); }
+    function addCard() {
+	const q = document.getElementById('newQuestion').innerHTML.trim();
+	const a = document.getElementById('newAnswer').innerHTML.trim();
+
+	const impEl = document.getElementById('importanceSelect');
+	const importance = impEl ? (impEl.value || 'normal') : 'normal';
+
+	if (!q || !a || q === '<br>' || a === '<br>') {
+		alert('Veuillez remplir la question et la réponse.');
+		return;
+	}
+	if (!currentCategory || !currentFolder || !currentList) {
+		alert("Sélectionne d'abord une liste.");
+		return;
+	}
+
+	categories[currentCategory][currentFolder][currentList].push({
+		question: q,
+		answer: a,
+		importance: importance
+	});
+
+	saveData();
+	document.getElementById('newQuestion').innerHTML = '';
+	document.getElementById('newAnswer').innerHTML = '';
+	if (impEl) impEl.value = 'normal';
+
+	updateCategoryList();
+	if (currentPage === 'manage') loadManageCardsPage();
+}
     function deleteCard(idx) { if (!confirm('Supprimer cette carte ?')) return; categories[currentCategory][currentFolder][currentList].splice(idx, 1); if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][currentList]) { delete results[currentCategory][currentFolder][currentList][idx]; const newResults = {}; Object.keys(results[currentCategory][currentFolder][currentList]).forEach(key => { const i = parseInt(key); if (i > idx) newResults[i - 1] = results[currentCategory][currentFolder][currentList][key]; else if (i < idx) newResults[i] = results[currentCategory][currentFolder][currentList][key]; }); results[currentCategory][currentFolder][currentList] = newResults; saveResults(); } saveData(); updateCategoryList(); if (currentPage === 'manage') loadManageCardsPage(); }
 
     // --- ÉDITION DE CARTES EXISTANTES ---
