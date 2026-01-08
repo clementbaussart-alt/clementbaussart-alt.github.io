@@ -299,15 +299,200 @@
         .page.active { display: block; }
         #fileInput, #imageInput { display: none; }
        
-        /* THEME MODAL SPECIFIC */
+        /* THÈME MODAL - NOUVELLE VERSION SIMPLIFIÉE */
         #themeModal { z-index: 3000; }
-        #themeModal .modal-content { max-height: 80vh; overflow: auto; }
-        #themeModal .input-group input[type="color"] {
-            background: #fff;
+        #themeModal .modal-content { 
+            max-width: 700px; 
+            max-height: 90vh; 
+            overflow-y: auto;
+            padding: 25px;
+        }
+        
+        .theme-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: var(--panel-muted);
+            border-radius: 12px;
             border: 1px solid var(--border);
+        }
+        
+        .theme-section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .color-option {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .color-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-soft);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .color-preview {
+            width: 100%;
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .color-preview:hover {
+            transform: scale(1.05);
+        }
+        
+        .color-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .color-input-wrapper input[type="color"] {
+            width: 50px;
+            height: 40px;
+            border: 2px solid var(--border);
             border-radius: 6px;
-            width: 48px; height: 36px;
             padding: 0;
+            cursor: pointer;
+            background: var(--panel);
+        }
+        
+        .color-input-wrapper input[type="text"] {
+            flex: 1;
+            padding: 8px 10px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: monospace;
+            background: var(--panel);
+            color: var(--text);
+        }
+        
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .preset-btn {
+            padding: 15px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: var(--panel);
+            color: var(--text);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .preset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: var(--primary);
+        }
+        
+        .preset-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .preset-preview {
+            width: 100%;
+            height: 60px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+        }
+        
+        .theme-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .theme-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 120px;
+        }
+        
+        .theme-btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+            color: white;
+        }
+        
+        .theme-btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+        
+        .theme-btn-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #ee5a6f 100%);
+            color: white;
+        }
+        
+        .theme-btn-success {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            color: white;
+        }
+        
+        .live-preview {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--panel);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+        
+        .live-preview h4 {
+            margin: 0 0 10px 0;
+            color: var(--text);
+            font-size: 16px;
+        }
+        
+        .preview-elements {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .preview-element {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
         }
        
         /* COMPARATOR STYLES */
@@ -543,7 +728,7 @@
         <button class="btn-comparator" onclick="openComparator()">
             🔍 Comparateur de texte
         </button>
-        <button class="btn-comparator" onclick="openThemeModal()">🎨 Thème</button>
+        <button class="btn-comparator" onclick="openThemeModal()">🎨 Personnaliser le thème</button>
     </div>
     <div id="homePage" class="page active">
         <div class="container home-page">
@@ -731,85 +916,65 @@
 <div class="modal" id="renameCategoryModal"><div class="modal-content"><div class="modal-header">Renommer la catégorie</div><div class="input-group"><label for="renameCategoryInput">Nouveau nom :</label><input type="text" id="renameCategoryInput" placeholder="Nouveau nom"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeRenameCategoryModal()">Annuler</button><button class="btn-add" onclick="renameCategory()">Renommer</button></div></div></div>
 <div class="modal" id="renameFolderModal"><div class="modal-content"><div class="modal-header">Renommer le cours</div><div class="input-group"><label for="renameFolderInput">Nouveau nom :</label><input type="text" id="renameFolderInput" placeholder="Nouveau nom du cours"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeRenameFolderModal()">Annuler</button><button class="btn-add" onclick="renameFolder()">Renommer</button></div></div></div>
 <div class="modal" id="renameListModal"><div class="modal-content"><div class="modal-header">Renommer la liste</div><div class="input-group"><label for="renameListInput">Nouveau nom :</label><input type="text" id="renameListInput" placeholder="Nouveau nom de la liste"></div><div class="modal-buttons"><button class="btn-cancel" onclick="closeRenameListModal()">Annuler</button><button class="btn-add" onclick="renameList()">Renommer</button></div></div></div>
+
+<!-- MODAL DE THÈME SIMPLIFIÉ -->
 <div class="modal" id="themeModal">
     <div class="modal-content">
-        <div class="modal-header">Thème</div>
-        <div class="input-group">
-            <label>Dégradé de fond — départ</label>
-            <input type="color" id="th_bg_from">
+        <div class="modal-header">🎨 Personnaliser le thème</div>
+        
+        <div class="theme-section">
+            <div class="theme-section-title">📱 Pré-réglages rapides</div>
+            <div class="presets-grid" id="themePresets"></div>
         </div>
-        <div class="input-group">
-            <label>Dégradé de fond — fin</label>
-            <input type="color" id="th_bg_to">
+        
+        <div class="theme-section">
+            <div class="theme-section-title">🎨 Couleurs principales</div>
+            <div class="theme-grid" id="primaryColors"></div>
         </div>
-        <div class="input-group">
-            <label>Couleur primaire</label>
-            <input type="color" id="th_primary">
+        
+        <div class="theme-section">
+            <div class="theme-section-title">📝 Interface et texte</div>
+            <div class="theme-grid" id="interfaceColors"></div>
         </div>
-        <div class="input-group">
-            <label>Couleur primaire 2</label>
-            <input type="color" id="th_primary2">
+        
+        <div class="theme-section">
+            <div class="theme-section-title">📊 Couleurs de progression</div>
+            <div class="theme-grid" id="progressColors"></div>
         </div>
-        <div class="input-group">
-            <label>Accent</label>
-            <input type="color" id="th_accent">
+        
+        <div class="live-preview">
+            <h4>👁️ Aperçu en direct</h4>
+            <div class="preview-elements">
+                <div class="preview-element" style="background: var(--primary); color: white;">Primaire</div>
+                <div class="preview-element" style="background: var(--accent); color: white;">Accent</div>
+                <div class="preview-element" style="background: var(--panel); color: var(--text); border: 1px solid var(--border);">Panneau</div>
+                <div class="preview-element" style="background: var(--known); color: white;">Connu</div>
+                <div class="preview-element" style="background: var(--partial); color: white;">Partiel</div>
+                <div class="preview-element" style="background: var(--unknown); color: white;">Inconnu</div>
+            </div>
         </div>
-        <div class="input-group">
-            <label>Accent 2</label>
-            <input type="color" id="th_accent2">
-        </div>
-        <div class="input-group">
-            <label>Texte principal</label>
-            <input type="color" id="th_text">
-        </div>
-        <div class="input-group">
-            <label>Texte secondaire</label>
-            <input type="color" id="th_text_soft">
-        </div>
-        <div class="input-group">
-            <label>Fond des panneaux</label>
-            <input type="color" id="th_panel">
-        </div>
-        <div class="input-group">
-            <label>Fond atténué</label>
-            <input type="color" id="th_panel_muted">
-        </div>
-        <div class="input-group">
-            <label>Bordures</label>
-            <input type="color" id="th_border">
-        </div>
-        <div class="input-group">
-            <label>Fond des cartes d'étude</label>
-            <input type="color" id="th_card_bg">
-        </div>
-        <div class="input-group">
-            <label>Couleur "Connu"</label>
-            <input type="color" id="th_known">
-        </div>
-        <div class="input-group">
-            <label>Couleur "Partiel"</label>
-            <input type="color" id="th_partial">
-        </div>
-        <div class="input-group">
-            <label>Couleur "Pas connu"</label>
-            <input type="color" id="th_unknown">
-        </div>
-        <div class="modal-buttons" style="flex-wrap:wrap">
-            <button class="btn-add" onclick="saveTheme()">Enregistrer</button>
-            <button class="btn-cancel" onclick="closeThemeModal()">Fermer</button>
-            <button class="btn-clear" onclick="resetTheme()">Réinitialiser</button>
-            <button class="btn-export" onclick="exportTheme()">Exporter</button>
-            <label class="btn-action btn-action-secondary" style="cursor:pointer">
-                Importer
-                <input type="file" id="themeImportInput" accept="application/json" style="display:none">
+        
+        <div class="theme-actions">
+            <button class="theme-btn theme-btn-primary" onclick="saveTheme()">
+                💾 Enregistrer
+            </button>
+            <button class="theme-btn theme-btn-secondary" onclick="closeThemeModal()">
+                ✕ Fermer
+            </button>
+            <button class="theme-btn theme-btn-danger" onclick="resetTheme()">
+                🔄 Réinitialiser
+            </button>
+            <button class="theme-btn theme-btn-success" onclick="exportTheme()">
+                📤 Exporter
+            </button>
+            <label class="theme-btn theme-btn-secondary" style="cursor: pointer;">
+                📥 Importer
+                <input type="file" id="themeImportInput" accept="application/json" style="display: none;">
             </label>
-        </div>
-        <div class="input-group" style="display:flex; gap:8px; flex-wrap:wrap">
-            <button class="btn-action btn-action-secondary" type="button" onclick="applyPreset('Clair')">Clair</button>
-            <button class="btn-action btn-action-secondary" type="button" onclick="applyPreset('Sombre')">Sombre</button>
         </div>
     </div>
 </div>
+
 <div id="comparatorModal">
     <div class="comparator-container">
         <div class="comparator-header" style="padding:10px 20px;">
@@ -901,164 +1066,357 @@
     // ——— GIF "majorité connu" ———
     const GIF_KNOWN_URL = 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif';
    
-    // ====== THEME ======
-    const THEME_KEY = 'flashcards_theme_v1';
-    const themeVars = [
-        ['--bg-gradient-from','th_bg_from'],
-        ['--bg-gradient-to','th_bg_to'],
-        ['--primary','th_primary'],
-        ['--primary-2','th_primary2'],
-        ['--accent','th_accent'],
-        ['--accent-2','th_accent2'],
-        ['--text','th_text'],
-        ['--text-soft','th_text_soft'],
-        ['--panel','th_panel'],
-        ['--panel-muted','th_panel_muted'],
-        ['--border','th_border'],
-        ['--card-bg','th_card_bg'],
-        ['--known','th_known'],
-        ['--partial','th_partial'],
-        ['--unknown','th_unknown'],
-    ];
-    const THEME_PRESETS = {
-        Clair: {
-            '--bg-gradient-from':'#667eea','--bg-gradient-to':'#764ba2',
-            '--primary':'#667eea','--primary-2':'#764ba2',
-            '--accent':'#11998e','--accent-2':'#38ef7d',
-            '--text':'#333333','--text-soft':'#666666',
-            '--panel':'#ffffff','--panel-muted':'#f5f7fa',
-            '--border':'#e0e0e','--card-bg':'#ffffff',
-            '--known':'#38ef7d','--partial':'#f5a623','--unknown':'#ff6b6b'
+    // ====== THÈME SIMPLIFIÉ ======
+    const THEME_KEY = 'flashcards_theme_v2';
+    
+    // Structure simplifiée des couleurs
+    const themeConfig = {
+        sections: {
+            'primary': {
+                title: '🎨 Couleurs principales',
+                colors: [
+                    { var: '--primary', label: 'Primaire', description: 'Boutons principaux, liens' },
+                    { var: '--primary-2', label: 'Primaire 2', description: 'Dégradé des boutons' },
+                    { var: '--accent', label: 'Accent', description: 'Éléments secondaires' },
+                    { var: '--accent-2', label: 'Accent 2', description: 'Dégradé des accents' }
+                ]
+            },
+            'interface': {
+                title: '📝 Interface et texte',
+                colors: [
+                    { var: '--bg-gradient-from', label: 'Fond départ', description: 'Début du dégradé' },
+                    { var: '--bg-gradient-to', label: 'Fond fin', description: 'Fin du dégradé' },
+                    { var: '--text', label: 'Texte', description: 'Texte principal' },
+                    { var: '--text-soft', label: 'Texte secondaire', description: 'Texte atténué' },
+                    { var: '--panel', label: 'Panneau', description: 'Fond des cartes' },
+                    { var: '--panel-muted', label: 'Panneau atténué', description: 'Fond secondaire' },
+                    { var: '--border', label: 'Bordures', description: 'Bordures et séparateurs' },
+                    { var: '--card-bg', label: 'Cartes étude', description: 'Fond des flashcards' }
+                ]
+            },
+            'progress': {
+                title: '📊 Couleurs de progression',
+                colors: [
+                    { var: '--known', label: 'Connu', description: 'Cartes connues' },
+                    { var: '--partial', label: 'Partiel', description: 'Cartes partiellement connues' },
+                    { var: '--unknown', label: 'Pas connu', description: 'Cartes non connues' }
+                ]
+            }
         },
-        Sombre: {
-            '--bg-gradient-from':'#0f172a','--bg-gradient-to':'#1f2937',
-            '--primary':'#4f46e5','--primary-2':'#7c3aed',
-            '--accent':'#10b981','--accent-2':'#34d399',
-            '--text':'#e5e7eb','--text-soft':'#9ca3af',
-            '--panel':'#111827','--panel-muted':'#0b1220',
-            '--border':'#374151','--card-bg':'#0b1220',
-            '--known':'#22c55e','--partial':'#f59e0b','--unknown':'#ef4444'
+        presets: {
+            'Classique': {
+                '--bg-gradient-from': '#667eea',
+                '--bg-gradient-to': '#764ba2',
+                '--primary': '#667eea',
+                '--primary-2': '#764ba2',
+                '--accent': '#11998e',
+                '--accent-2': '#38ef7d',
+                '--text': '#333333',
+                '--text-soft': '#666666',
+                '--panel': '#ffffff',
+                '--panel-muted': '#f5f7fa',
+                '--border': '#e0e0e0',
+                '--card-bg': '#ffffff',
+                '--known': '#38ef7d',
+                '--partial': '#f5a623',
+                '--unknown': '#ff6b6b'
+            },
+            'Sombre': {
+                '--bg-gradient-from': '#0f172a',
+                '--bg-gradient-to': '#1f2937',
+                '--primary': '#4f46e5',
+                '--primary-2': '#7c3aed',
+                '--accent': '#10b981',
+                '--accent-2': '#34d399',
+                '--text': '#e5e7eb',
+                '--text-soft': '#9ca3af',
+                '--panel': '#111827',
+                '--panel-muted': '#0b1220',
+                '--border': '#374151',
+                '--card-bg': '#0b1220',
+                '--known': '#22c55e',
+                '--partial': '#f59e0b',
+                '--unknown': '#ef4444'
+            },
+            'Nature': {
+                '--bg-gradient-from': '#0d9488',
+                '--bg-gradient-to': '#059669',
+                '--primary': '#10b981',
+                '--primary-2': '#059669',
+                '--accent': '#3b82f6',
+                '--accent-2': '#60a5fa',
+                '--text': '#1f2937',
+                '--text-soft': '#6b7280',
+                '--panel': '#f9fafb',
+                '--panel-muted': '#f3f4f6',
+                '--border': '#d1d5db',
+                '--card-bg': '#ffffff',
+                '--known': '#10b981',
+                '--partial': '#f59e0b',
+                '--unknown': '#ef4444'
+            },
+            'Violet': {
+                '--bg-gradient-from': '#8b5cf6',
+                '--bg-gradient-to': '#7c3aed',
+                '--primary': '#8b5cf6',
+                '--primary-2': '#7c3aed',
+                '--accent': '#ec4899',
+                '--accent-2': '#f472b6',
+                '--text': '#1f2937',
+                '--text-soft': '#6b7280',
+                '--panel': '#faf5ff',
+                '--panel-muted': '#f3e8ff',
+                '--border': '#e9d5ff',
+                '--card-bg': '#ffffff',
+                '--known': '#10b981',
+                '--partial': '#f59e0b',
+                '--unknown': '#ef4444'
+            },
+            'Minimal': {
+                '--bg-gradient-from': '#f8fafc',
+                '--bg-gradient-to': '#f1f5f9',
+                '--primary': '#64748b',
+                '--primary-2': '#475569',
+                '--accent': '#94a3b8',
+                '--accent-2': '#cbd5e1',
+                '--text': '#1e293b',
+                '--text-soft': '#64748b',
+                '--panel': '#ffffff',
+                '--panel-muted': '#f8fafc',
+                '--border': '#e2e8f0',
+                '--card-bg': '#ffffff',
+                '--known': '#10b981',
+                '--partial': '#f59e0b',
+                '--unknown': '#ef4444'
+            }
         }
     };
-    function applyPreset(name){
-        const preset = THEME_PRESETS[name];
-        if (!preset) return;
-        Object.entries(preset).forEach(([cssVar,val]) => setVar(cssVar,val));
-        for (const [cssVar, inputId] of themeVars) {
-            const el = document.getElementById(inputId);
-            if (el && preset[cssVar]) el.value = toColor(preset[cssVar]) || el.value;
-        }
-        localStorage.setItem(THEME_KEY, JSON.stringify(preset));
-    }
-    function getComputedVar(name){
-        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-    }
-    function setVar(name, value){
+    
+    function setVar(name, value) {
         document.documentElement.style.setProperty(name, value);
     }
-    function openThemeModal(){
-        for (const [cssVar, inputId] of themeVars) {
-            const input = document.getElementById(inputId);
-            if (!input) continue;
-            const cur = getComputedVar(cssVar) || '';
-            input.value = toColor(cur) || input.value || '#000000';
-            input.oninput = (e) => {
-                const val = e.target.value;
-                if (val && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(val)) {
-                    setVar(cssVar, val);
-                }
-            };
+    
+    function getComputedVar(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+    
+    function rgbToHex(rgb) {
+        if (!rgb) return '#000000';
+        if (rgb.startsWith('#')) return rgb;
+        
+        const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/i);
+        if (match) {
+            const r = parseInt(match[1]).toString(16).padStart(2, '0');
+            const g = parseInt(match[2]).toString(16).padStart(2, '0');
+            const b = parseInt(match[3]).toString(16).padStart(2, '0');
+            return '#' + r + g + b;
         }
-        bindThemeAutoSave();
+        return '#000000';
+    }
+    
+    function openThemeModal() {
+        // Générer les pré-réglages
+        const presetsContainer = document.getElementById('themePresets');
+        presetsContainer.innerHTML = '';
+        
+        Object.entries(themeConfig.presets).forEach(([name, colors]) => {
+            const btn = document.createElement('button');
+            btn.className = 'preset-btn';
+            btn.innerHTML = `
+                <div class="preset-preview" style="background: linear-gradient(135deg, ${colors['--bg-gradient-from']} 0%, ${colors['--bg-gradient-to']} 100%);"></div>
+                <span>${name}</span>
+            `;
+            btn.onclick = () => applyPreset(name);
+            presetsContainer.appendChild(btn);
+        });
+        
+        // Générer les sélecteurs de couleurs par section
+        Object.entries(themeConfig.sections).forEach(([sectionId, section]) => {
+            const container = document.getElementById(sectionId + 'Colors');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            section.colors.forEach(color => {
+                const currentValue = getComputedVar(color.var);
+                const hexValue = rgbToHex(currentValue);
+                
+                const colorOption = document.createElement('div');
+                colorOption.className = 'color-option';
+                colorOption.innerHTML = `
+                    <div class="color-label">
+                        <span>${color.label}</span>
+                        <small>${color.description}</small>
+                    </div>
+                    <div class="color-input-wrapper">
+                        <div class="color-preview" style="background: ${currentValue}" 
+                             onclick="document.getElementById('${color.var}').click()"></div>
+                        <input type="color" id="${color.var}" value="${hexValue}" 
+                               oninput="updateColor('${color.var}', this.value)">
+                        <input type="text" value="${hexValue}" 
+                               oninput="updateColor('${color.var}', this.value)">
+                    </div>
+                `;
+                container.appendChild(colorOption);
+            });
+        });
+        
+        // Afficher le modal
         document.getElementById('themeModal').classList.add('show');
     }
-    function closeThemeModal(){
-        document.getElementById('themeModal').classList.remove('show');
-    }
-    function toColor(v){
-        if(!v) return null;
-        const s=v.trim();
-        if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s)) return s;
-        const m = s.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/i);
-        if(m){
-            const r = (+m[1]).toString(16).padStart(2,'0');
-            const g = (+m[2]).toString(16).padStart(2,'0');
-            const b = (+m[3]).toString(16).padStart(2,'0');
-            return '#'+r+g+b;
+    
+    function updateColor(varName, value) {
+        if (!value.startsWith('#')) value = '#' + value;
+        if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value)) {
+            setVar(varName, value);
+            
+            // Mettre à jour l'aperçu
+            const preview = document.querySelector(`#${varName}`).parentElement.querySelector('.color-preview');
+            preview.style.background = value;
+            
+            // Mettre à jour la valeur texte
+            const textInput = document.querySelector(`#${varName}`).nextElementSibling;
+            textInput.value = value;
         }
-        return null;
     }
-    function saveTheme(){
+    
+    function applyPreset(name) {
+        const preset = themeConfig.presets[name];
+        if (!preset) return;
+        
+        Object.entries(preset).forEach(([varName, value]) => {
+            setVar(varName, value);
+            
+            // Mettre à jour les inputs
+            const colorInput = document.getElementById(varName);
+            const textInput = colorInput?.nextElementSibling;
+            const preview = colorInput?.parentElement?.querySelector('.color-preview');
+            
+            if (colorInput) colorInput.value = value;
+            if (textInput) textInput.value = value;
+            if (preview) preview.style.background = value;
+        });
+        
+        // Ajouter une classe active au bouton sélectionné
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.textContent.includes(name)) {
+                btn.classList.add('active');
+            }
+        });
+    }
+    
+    function saveTheme() {
         const theme = {};
-        for (const [cssVar, inputId] of themeVars) {
-            const input = document.getElementById(inputId);
-            if (input && input.value && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(input.value)) {
-                theme[cssVar] = input.value;
-            }
-        }
+        
+        // Collecter toutes les valeurs
+        Object.values(themeConfig.sections).forEach(section => {
+            section.colors.forEach(color => {
+                const input = document.getElementById(color.var);
+                if (input && input.value) {
+                    theme[color.var] = input.value;
+                }
+            });
+        });
+        
         localStorage.setItem(THEME_KEY, JSON.stringify(theme));
-        alert('Thème enregistré ✓');
+        alert('✅ Thème enregistré !');
     }
-    function loadTheme(){
-        try{
-            const raw = localStorage.getItem(THEME_KEY);
-            if(!raw) return;
-            const theme = JSON.parse(raw);
-            Object.entries(theme).forEach(([cssVar, value]) => setVar(cssVar, value));
-        }catch(e){ console.warn('Theme load error', e); }
-    }
-    function resetTheme(){
-        localStorage.removeItem(THEME_KEY);
-        for(const [cssVar] of themeVars){
-            document.documentElement.style.removeProperty(cssVar);
-        }
-        alert('Thème réinitialisé');
-    }
-    let themeAutoSaveTimer = null;
-    function autoSaveThemeSoon(){
-        clearTimeout(themeAutoSaveTimer);
-        themeAutoSaveTimer = setTimeout(() => {
-            const theme = {};
-            for (const [cssVar, inputId] of themeVars) {
-                const el = document.getElementById(inputId);
-                if (el && el.value) theme[cssVar] = el.value;
+    
+    function loadTheme() {
+        try {
+            const saved = localStorage.getItem(THEME_KEY);
+            if (!saved) {
+                applyPreset('Classique');
+                return;
             }
-            localStorage.setItem(THEME_KEY, JSON.stringify(theme));
-        }, 400);
-    }
-    function bindThemeAutoSave(){
-        for (const [, inputId] of themeVars) {
-            const el = document.getElementById(inputId);
-            if (!el) continue;
-            el.addEventListener('input', autoSaveThemeSoon);
+            
+            const theme = JSON.parse(saved);
+            Object.entries(theme).forEach(([varName, value]) => {
+                setVar(varName, value);
+            });
+        } catch (e) {
+            console.warn('Erreur chargement thème:', e);
+            applyPreset('Classique');
         }
     }
-    function exportTheme(){
-        try{
-            const raw = localStorage.getItem(THEME_KEY) || '{}';
-            const blob = new Blob([raw], {type:'application/json'});
+    
+    function resetTheme() {
+        if (confirm('Êtes-vous sûr de vouloir réinitialiser le thème ?')) {
+            localStorage.removeItem(THEME_KEY);
+            applyPreset('Classique');
+            alert('🔄 Thème réinitialisé !');
+        }
+    }
+    
+    function exportTheme() {
+        try {
+            const theme = {};
+            Object.values(themeConfig.sections).forEach(section => {
+                section.colors.forEach(color => {
+                    const input = document.getElementById(color.var);
+                    if (input && input.value) {
+                        theme[color.var] = input.value;
+                    }
+                });
+            });
+            
+            const blob = new Blob([JSON.stringify(theme, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = 'theme.json';
-            document.body.appendChild(a); a.click();
-            document.body.removeChild(a); URL.revokeObjectURL(url);
-        }catch(e){ alert('Export impossible'); }
+            a.href = url;
+            a.download = 'theme_flashcards.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('📤 Thème exporté !');
+        } catch (e) {
+            alert('❌ Erreur lors de l\'export');
+        }
     }
-    document.getElementById('themeImportInput')?.addEventListener('change', e=>{
+    
+    function closeThemeModal() {
+        document.getElementById('themeModal').classList.remove('show');
+    }
+    
+    // Gérer l'import de thème
+    document.getElementById('themeImportInput').addEventListener('change', function(e) {
         const file = e.target.files?.[0];
-        if(!file) return;
+        if (!file) return;
+        
         const reader = new FileReader();
-        reader.onload = ev=>{
-            try{
-                const theme = JSON.parse(ev.target.result);
-                Object.entries(theme).forEach(([cssVar, value]) => setVar(cssVar, value));
-                localStorage.setItem(THEME_KEY, JSON.stringify(theme));
-                alert('Thème importé ✓');
-            }catch(err){ alert('Fichier invalide.'); }
-            e.target.value = '';
+        reader.onload = function(ev) {
+            try {
+                const importedTheme = JSON.parse(ev.target.result);
+                
+                // Appliquer le thème importé
+                Object.entries(importedTheme).forEach(([varName, value]) => {
+                    setVar(varName, value);
+                    
+                    // Mettre à jour les inputs
+                    const colorInput = document.getElementById(varName);
+                    const textInput = colorInput?.nextElementSibling;
+                    const preview = colorInput?.parentElement?.querySelector('.color-preview');
+                    
+                    if (colorInput) colorInput.value = value;
+                    if (textInput) textInput.value = value;
+                    if (preview) preview.style.background = value;
+                });
+                
+                // Sauvegarder
+                localStorage.setItem(THEME_KEY, JSON.stringify(importedTheme));
+                alert('✅ Thème importé avec succès !');
+                
+                e.target.value = '';
+            } catch (err) {
+                alert('❌ Fichier de thème invalide');
+                e.target.value = '';
+            }
         };
         reader.readAsText(file);
     });
+    
     // --- MODE INTÉGRÉ (iframe) ---
     function getQueryParams() {
         const p = new URLSearchParams(window.location.search);
@@ -2719,6 +3077,8 @@ onlyDelBtn.addEventListener('click', () => {
 });
 oldTA.value = "Le contrat entre en vigueur le 1er janvier 2024.\nLe prix est de 100€.\nLe client accepte les conditions.";
 newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 €.\nLe client accepte pleinement les conditions générales.";
+
+// CHARGER LE THÈME ET LES DONNÉES
 loadTheme();
 loadData();
 bootstrapEmbedIfAny();
