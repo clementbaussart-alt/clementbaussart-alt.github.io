@@ -1683,9 +1683,6 @@
     const existingBadges = document.querySelectorAll('.card-importance-header');
     existingBadges.forEach(badge => badge.remove());
     
-    addFilterControls(); 
-    loadCurrentList(); 
-}
     // Créer un nouveau badge seulement sur le recto
     const badge = document.createElement('div');
     const importanceText = card.importance || 'normal';
@@ -1801,7 +1798,8 @@
         
         const current = currentIndex;
         const percent = total > 0 ? (current / total * 100) : 0;
-        document.getElementById('progressBar').style.width = percent + '%';
+        const progressBar = document.querySelector('.progress-fill');
+        if (progressBar) progressBar.style.width = percent + '%';
     }
     function updateStats() {
         const cards = categories[currentCategory][currentFolder][currentList];
@@ -1882,825 +1880,848 @@ function restartSession() {
     document.getElementById('studyModeIndicator').style.display = 'none'; 
     document.getElementById('endSection').style.display = 'none'; 
     document.getElementById('cardSection').style.display = 'block';
-	function reviewWrongCards() { showStudyPage(currentCategory, currentFolder, currentList, true); }
-    function addCard() {
-        const q = document.getElementById('newQuestion').innerHTML.trim();
-        const a = document.getElementById('newAnswer').innerHTML.trim();
-        const impEl = document.getElementById('importanceSelect');
-        const importance = impEl ? (impEl.value || 'normal') : 'normal';
-        if (!q || !a || q === '<br>' || a === '<br>') {
-            alert('Veuillez remplir la question et la réponse.');
-            return;
-        }
-        if (!currentCategory || !currentFolder || !currentList) {
-            alert("Sélectionne d'abord une liste.");
-            return;
-        }
-        categories[currentCategory][currentFolder][currentList].push({
-            question: q,
-            answer: a,
-            importance: importance
-        });
-        saveData();
-        document.getElementById('newQuestion').innerHTML = '';
-        document.getElementById('newAnswer').innerHTML = '';
-        if (impEl) impEl.value = 'normal';
-        updateCategoryList();
-        if (currentPage === 'manage') loadManageCardsPage();
-    }
+    loadCard();
+}
+
+function reviewWrongCards() { 
+    showStudyPage(currentCategory, currentFolder, currentList, true); 
+}
     
-    function deleteCard(idx) { if (!confirm('Supprimer cette carte ?')) return; categories[currentCategory][currentFolder][currentList].splice(idx, 1); if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][currentList]) { delete results[currentCategory][currentFolder][currentList][idx]; const newResults = {}; Object.keys(results[currentCategory][currentFolder][currentList]).forEach(key => { const i = parseInt(key); if (i > idx) newResults[i - 1] = results[currentCategory][currentFolder][currentList][key]; else if (i < idx) newResults[i] = results[currentCategory][currentFolder][currentList][key]; }); results[currentCategory][currentFolder][currentList] = newResults; saveResults(); } saveData(); updateCategoryList(); if (currentPage === 'manage') loadManageCardsPage(); }
-    
-    // --- ÉDITION DE CARTES EXISTANTES ---
-    function startEditCard(idx) {
-        if (!currentCategory || !currentFolder || !currentList) return;
-        const card = categories[currentCategory][currentFolder][currentList][idx];
-        const q = document.getElementById('editQ-' + idx);
-        const a = document.getElementById('editA-' + idx);
-       
-        document.querySelectorAll('.card-inline-editor').forEach(panel => {
-            if (panel.id !== 'editor-' + idx) {
-                panel.style.display = 'none';
-            }
-        });
-        
-        if (!q || !a) return;
-       
-        q.innerHTML = card.question || '';
-        a.innerHTML = card.answer || '';
-       
-        // Ajouter le sélecteur d'importance dans l'éditeur
-        const panel = document.getElementById('editor-' + idx);
-        if (panel) {
-            // Vérifier si le sélecteur d'importance existe déjà
-            let importanceSelect = panel.querySelector('.importance-select');
-            if (!importanceSelect) {
-                importanceSelect = document.createElement('div');
-                importanceSelect.className = 'input-group';
-                importanceSelect.style.marginTop = '10px';
-                importanceSelect.innerHTML = `
-                    <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--text);">Importance :</label>
-                    <select class="importance-select-value" style="width:100%; padding:8px; border:2px solid var(--border); border-radius:8px; background:var(--panel);">
-                        <option value="important">Important (vert)</option>
-                        <option value="normal">Normal (bleu)</option>
-                        <option value="pas important">Pas important (rouge)</option>
-                        <option value="explication">Explication (gris)</option>
-                    </select>
-                `;
-                panel.querySelector('.actions').before(importanceSelect);
-            }
-            
-            // Définir la valeur actuelle
-            const select = importanceSelect.querySelector('.importance-select-value');
-            if (select) {
-                select.value = card.importance || 'normal';
-            }
-            
-            panel.style.display = 'block';
-            panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            q.focus();
-        }
+function addCard() {
+    const q = document.getElementById('newQuestion').innerHTML.trim();
+    const a = document.getElementById('newAnswer').innerHTML.trim();
+    const impEl = document.getElementById('importanceSelect');
+    const importance = impEl ? (impEl.value || 'normal') : 'normal';
+    if (!q || !a || q === '<br>' || a === '<br>') {
+        alert('Veuillez remplir la question et la réponse.');
+        return;
     }
-    function cancelEditCard(idx) {
-        const panel = document.getElementById('editor-' + idx);
-        if (panel) panel.style.display = 'none';
+    if (!currentCategory || !currentFolder || !currentList) {
+        alert("Sélectionne d'abord une liste.");
+        return;
     }
-    function saveEditedCard(idx) {
-        if (!currentCategory || !currentFolder || !currentList) { alert("Erreur de contexte."); return; }
-        const qEl = document.getElementById('editQ-' + idx);
-        const aEl = document.getElementById('editA-' + idx);
-        if (!qEl || !aEl) return;
-       
-        const newQ = (qEl.innerHTML || '').trim();
-        const newA = (aEl.innerHTML || '').trim();
-       
-        if (!newQ || !newA || newQ === '<br>' || newA === '<br>') {
-            alert('Veuillez remplir la question et la réponse.');
-            return;
-        }
-       
-        // Récupérer la valeur d'importance
-        const panel = document.getElementById('editor-' + idx);
-        let importance = 'normal';
-        if (panel) {
-            const select = panel.querySelector('.importance-select-value');
-            if (select) {
-                importance = select.value;
-            }
-        }
-       
-        categories[currentCategory][currentFolder][currentList][idx] = { 
-            question: newQ, 
-            answer: newA,
-            importance: importance
-        };
-        saveData();
-        updateCategoryList();
-        loadManageCardsPage();
-    }
-    function formatExistingCard(idx, command, side) {
-        const el = document.getElementById((side === 'Q' ? 'editQ-' : 'editA-') + idx);
-        if (!el) return;
-        el.focus();
-        document.execCommand(command, false, null);
-    }
-    function colorExistingCard(idx, value, kind, side) {
-        const el = document.getElementById((side === 'Q' ? 'editQ-' : 'editA-') + idx);
-        if (!el) return;
-        el.focus();
-        if (kind === 'fore') document.execCommand('foreColor', false, value);
-        else document.execCommand('backColor', false, value);
-    }
-    function clearFormatExisting(idx, side) {
-        const el = document.getElementById((side === 'Q' ? 'editQ-' : 'editA-') + idx);
-        if (!el) return;
-        el.innerHTML = el.innerText;
-        el.focus();
-    }
-    function insertImageExisting(idx, side) {
-        currentEditingExisting = { idx, side };
-        document.getElementById('imageInput').click();
-    }
-    
-    // MODALS FLASHCARDS
-    function showNewCategoryModal() { document.getElementById('newCategoryModal').classList.add('show'); const input = document.getElementById('categoryNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
-    function closeNewCategoryModal() { document.getElementById('newCategoryModal').classList.remove('show'); document.getElementById('categoryNameInput').value = ''; }
-    function createCategory() { const input = document.getElementById('categoryNameInput'); const name = input.value.trim(); if (!name) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (categories[name]) { alert('Cette catégorie existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } categories[name] = {}; openCategories[name] = true; saveData(); updateCategoryList(); closeNewCategoryModal(); }
-    function deleteCategory(catName) { if (!confirm('Supprimer "' + catName + '" et tous ses cours ?')) return; delete categories[catName]; delete results[catName]; delete openCategories[catName]; saveData(); saveResults(); if (currentCategory === catName) showPage('home'); updateCategoryList(); }
-    function showEditCategoryModal(catName) { renameTarget = catName; document.getElementById('renameCategoryModal').classList.add('show'); const input = document.getElementById('renameCategoryInput'); input.value = catName; setTimeout(() => input.focus(), 150); }
-    function closeRenameCategoryModal() { document.getElementById('renameCategoryModal').classList.remove('show'); document.getElementById('renameCategoryInput').value = ''; renameTarget = null; }
-    function renameCategory() { const input = document.getElementById('renameCategoryInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (categories[newName] && newName !== renameTarget) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (renameTarget && categories[renameTarget]) { categories[newName] = categories[renameTarget]; delete categories[renameTarget]; if (results[renameTarget]) { results[newName] = results[renameTarget]; delete results[renameTarget]; saveResults(); } if (openCategories[renameTarget]) { openCategories[newName] = openCategories[renameTarget]; delete openCategories[renameTarget]; } if (currentCategory === renameTarget) currentCategory = newName; saveData(); updateCategoryList(); closeRenameCategoryModal(); } }
-    function updateFolderCategorySelect() { const select = document.getElementById('folderCategorySelect'); select.innerHTML = ''; const catNames = Object.keys(categories); if (catNames.length === 0) { const opt = document.createElement('option'); opt.value = ''; opt.textContent = 'Aucune catégorie - Créez-en une !'; select.appendChild(opt); } else { catNames.forEach(catName => { const opt = document.createElement('option'); opt.value = catName; opt.textContent = catName; if (catName === currentCategory) opt.selected = true; select.appendChild(opt); }); } }
-    function showNewFolderModal() { updateFolderCategorySelect(); document.getElementById('newFolderModal').classList.add('show'); const input = document.getElementById('folderNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
-    function closeNewFolderModal() { document.getElementById('newFolderModal').classList.remove('show'); document.getElementById('folderNameInput').value = ''; }
-    function createFolder() { const input = document.getElementById('folderNameInput'); const name = input.value.trim(); const catSelect = document.getElementById('folderCategorySelect'); const selectedCat = catSelect.value; if (!selectedCat) { alert('Veuillez créer une catégorie d\'abord.'); return; } if (!name) { alert('Veuillez entrer un nom de cours.'); setTimeout(() => input.focus(), 150); return; } if (categories[selectedCat][name]) { alert('Ce cours existe déjà dans cette catégorie.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } categories[selectedCat][name] = {'Liste par défaut': []}; saveData(); updateCategoryList(); closeNewFolderModal(); showListsPage(selectedCat, name); }
-    function deleteFolder(catName, folderName) { if (!confirm('Supprimer "' + folderName + '" ?')) return; delete categories[catName][folderName]; if (results[catName]) { delete results[catName][folderName]; saveResults(); } if (Object.keys(categories[catName]).length === 0) { delete categories[catName]; delete openCategories[catName]; } saveData(); if (currentCategory === catName && currentFolder === folderName) showPage('home'); updateCategoryList(); }
-    function showEditFolderModal(catName, folderName) { renameTarget = {cat: catName, folder: folderName}; document.getElementById('renameFolderModal').classList.add('show'); const input = document.getElementById('renameFolderInput'); input.value = folderName; setTimeout(() => input.focus(), 150); }
-    function closeRenameFolderModal() { document.getElementById('renameFolderModal').classList.remove('show'); document.getElementById('renameFolderInput').value = ''; renameTarget = null; }
-    function showRenameFolderModal() { if (!currentCategory || !currentFolder) return; showEditFolderModal(currentCategory, currentFolder); }
-    function renameFolder() { const input = document.getElementById('renameFolderInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } const catName = renameTarget.cat; const oldName = renameTarget.folder; if (categories[catName][newName] && newName !== oldName) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (categories[catName][oldName]) { categories[catName][newName] = categories[catName][oldName]; delete categories[catName][oldName]; if (results[catName] && results[catName][oldName]) { results[catName][newName] = results[catName][oldName]; delete results[catName][oldName]; saveResults(); } if (currentCategory === catName && currentFolder === oldName) currentFolder = newName; saveData(); updateCategoryList(); if (currentPage === 'lists') { document.getElementById('listsTitle').textContent = newName; } closeRenameFolderModal(); } }
-    function showNewListModal() { if (!currentCategory || !currentFolder) { alert('Erreur : aucun cours sélectionné.'); return; } document.getElementById('newListModal').classList.add('show'); const input = document.getElementById('listNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
-    function closeNewListModal() { document.getElementById('newListModal').classList.remove('show'); document.getElementById('listNameInput').value = ''; }
-    function createList() { const input = document.getElementById('listNameInput'); const name = input.value.trim(); if (!name) { alert('Veuillez entrer un nom de liste.'); setTimeout(() => input.focus(), 150); return; } if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) { alert('Erreur.'); return; } if (categories[currentCategory][currentFolder][name]) { alert('Cette liste existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } categories[currentCategory][currentFolder][name] = []; saveData(); updateCategoryList(); closeNewListModal(); loadListsPage(); }
-    function deleteList(listName) { if (!confirm('Supprimer "' + listName + '" ?')) return; delete categories[currentCategory][currentFolder][listName]; if (results[currentCategory] && results[currentCategory][currentFolder]) { delete results[currentCategory][currentFolder][listName]; saveResults(); } if (Object.keys(categories[currentCategory][currentFolder]).length === 0) { categories[currentCategory][currentFolder]['Liste par défaut'] = []; } saveData(); updateCategoryList(); loadListsPage(); }
-    function showEditListModal(listName) { renameTarget = listName; document.getElementById('renameListModal').classList.add('show'); const input = document.getElementById('renameListInput'); input.value = listName; setTimeout(() => input.focus(), 150); }
-    function closeRenameListModal() { document.getElementById('renameListModal').classList.remove('show'); document.getElementById('renameListInput').value = ''; renameTarget = null; }
-    function renameList() { const input = document.getElementById('renameListInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) { alert('Erreur.'); return; } if (categories[currentCategory][currentFolder][newName] && newName !== renameTarget) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (renameTarget && categories[currentCategory][currentFolder][renameTarget]) { categories[currentCategory][currentFolder][newName] = categories[currentCategory][currentFolder][renameTarget]; delete categories[currentCategory][currentFolder][renameTarget]; if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][renameTarget]) { results[currentCategory][currentFolder][newName] = results[currentCategory][currentFolder][renameTarget]; delete results[currentCategory][currentFolder][renameTarget]; saveResults(); } if (currentList === renameTarget) currentList = newName; saveData(); updateCategoryList(); loadListsPage(); closeRenameListModal(); } }
-    function exportCards() { if (!currentCategory || !currentFolder || !currentList) { alert('Sélectionne une liste.'); return; } const data = {categoryName: currentCategory, folderName: currentFolder, listName: currentList, cards: categories[currentCategory][currentFolder][currentList]}; const json = JSON.stringify(data, null, 2); const blob = new Blob([json], {type: 'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = currentCategory.replace(/[^a-z0-9]/gi, '_') + '_' + currentFolder.replace(/[^a-z0-9]/gi, '_') + '_' + currentList.replace(/[^a-z0-9]/gi, '_') + '_' + new Date().toISOString().split('T')[0] + '.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
-    function baseAppUrl() {
-        const u = new URL(window.location.href);
-        u.search = '';
-        u.hash = '';
-        return u.toString();
-    }
-    function buildEmbedUrl({cat, folder, list, view}) {
-        const u = new URL(baseAppUrl());
-        u.searchParams.set('embed', '1');
-        if (cat) u.searchParams.set('cat', cat);
-        if (folder) u.searchParams.set('folder', folder);
-        if (list) u.searchParams.set('list', list);
-        if (view) u.searchParams.set('view', view);
-        return u.toString();
-    }
-    function buildIframeCode(src, opts) {
-        const width = (opts && opts.width) || '100%';
-        const height = (opts && opts.height) || '600';
-        const style = (opts && opts.style) || 'border:1px solid #e5e7eb;border-radius:12px;';
-        return `<iframe src="${src}" width="${width}" height="${height}" style="${style}" allowfullscreen loading="lazy"></iframe>`;
-    }
-    function copyFolderEmbed() {
-        if (!currentCategory || !currentFolder) { alert('Aucun cours sélectionné.'); return; }
-        const src = buildEmbedUrl({ cat: currentCategory, folder: currentFolder, view: 'lists' });
-        const code = buildIframeCode(src, { height: '700' });
-        copyText(code);
-    }
-    function copyListEmbed(listName) {
-        const cat = currentCategory;
-        const folder = currentFolder;
-        const list = listName;
-        if (!cat || !folder || !list) { alert('Sélection invalide.'); return; }
-        const src = buildEmbedUrl({ cat, folder, list, view: 'study' });
-        const code = buildIframeCode(src, { height: '700' });
-        copyText(code);
-    }
-    async function copyText(text) {
-        try {
-            await navigator.clipboard.writeText(text);
-            alert('Code d\'intégration copié ✓');
-        } catch (e) {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            document.body.appendChild(ta);
-            ta.select();
-            try { document.execCommand('copy'); alert('Code d\'intégration copié ✓'); }
-            catch { alert('Impossible de copier automatiquement. Sélectionne et copie manuellement.'); }
-            document.body.removeChild(ta);
-        }
-    }
-    function exportAll() {
-        if (!categories || typeof categories !== 'object') {
-            alert("Aucune donnée à exporter.");
-            return;
-        }
-        const snapshot = {
-            exportVersion: "1.0",
-            exportedAt: new Date().toISOString(),
-            summary: {
-                categories: 0,
-                courses: 0,
-                lists: 0,
-                cards: 0
-            },
-            data: [],
-            results: results || {}
-        };
-       
-        Object.keys(categories).forEach(catName => {
-            const cat = categories[catName] || {};
-            const catOut = { categoryName: catName, courses: [] };
-            snapshot.summary.categories++;
-            Object.keys(cat).forEach(folderName => {
-                const folder = cat[folderName] || {};
-                const folderOut = { folderName, lists: [] };
-                snapshot.summary.courses++;
-                Object.keys(folder).forEach(listName => {
-                    const cards = Array.isArray(folder[listName]) ? folder[listName] : [];
-                    const listOut = { listName, cards };
-                    snapshot.summary.lists++;
-                    snapshot.summary.cards += cards.length;
-                    folderOut.lists.push(listOut);
-                });
-                catOut.courses.push(folderOut);
-            });
-            snapshot.data.push(catOut);
-        });
-       
-        const json = JSON.stringify(snapshot, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const safe = s => (s || '').toString().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]+/g, '_');
-        const filename = `flashcards_export_all_${safe(new Date().toISOString().split('T')[0])}.json`;
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-    function importCards() { document.getElementById('fileInput').click(); }
-    document.getElementById('fileInput').addEventListener('change', function(event) {
-        const file = event.target.files && event.target.files[0];
-        if (!file) return;
-        console.log('[IMPORT] name:', file.name, 'type:', file.type, 'size:', file.size);
-        const reader = new FileReader();
-        reader.onerror = () => alert('Lecture de fichier impossible (FileReader).');
-        reader.onload = function(e) {
-            try {
-                let raw = e.target.result || '';
-                raw = raw.replace(/^\uFEFF/, '').trim();
-                if (raw.startsWith('```')) {
-                    raw = raw.replace(/^```[a-zA-Z0-9]*\s*/, '').replace(/```$/, '').trim();
-                }
-                let data;
-                try {
-                    data = JSON.parse(raw);
-                } catch (err) {
-                    console.error('[IMPORT] JSON.parse error:', err);
-                    alert('JSON invalide (échec du parsing). Vérifie qu\'il n\'y a pas de ``` ou de guillemets simples.');
-                    event.target.value = '';
-                    return;
-                }
-                const isList = data && data.categoryName && data.folderName && data.listName && Array.isArray(data.cards);
-                const isAll = data && data.exportVersion && Array.isArray(data.data);
-                if (!isList && !isAll) {
-                    console.warn('[IMPORT] Format non reconnu. Aperçu des clés:', Object.keys(data||{}));
-                    alert('Format non reconnu. Fichier attendu: "liste unique" ou "export tout".');
-                    event.target.value = '';
-                    return;
-                }
-                if (isList) {
-                    const { categoryName, folderName, listName, cards } = data;
-                    if (!categories[categoryName]) categories[categoryName] = {};
-                    if (!categories[categoryName][folderName]) categories[categoryName][folderName] = {};
-                    if (categories[categoryName][folderName][listName]) {
-                        if (!confirm(`La liste "${listName}" existe déjà. Écraser ?`)) {
-                            event.target.value = '';
-                            return;
-                        }
-                    }
-                    categories[categoryName][folderName][listName] = Array.isArray(cards) ? cards : [];
-                    saveData();
-                    updateCategoryList();
-                    if (currentPage === 'home') updateHomeStats();
-                    alert('Import de la liste terminé ✓');
-                    event.target.value = '';
-                    return;
-                }
-                if (isAll) {
-                    let catCount=0, courseCount=0, listCount=0, cardCount=0;
-                    (data.data || []).forEach(cat => {
-                        const catName = cat.categoryName;
-                        if (!catName) return;
-                        catCount++;
-                        if (!categories[catName]) categories[catName] = {};
-                        (cat.courses || []).forEach(course => {
-                            const folderName = course.folderName;
-                            if (!folderName) return;
-                            courseCount++;
-                            if (!categories[catName][folderName]) categories[catName][folderName] = {};
-                            (course.lists || []).forEach(lst => {
-                                const listName = lst.listName;
-                                if (!listName) return;
-                                const cards = Array.isArray(lst.cards) ? lst.cards : [];
-                                listCount++;
-                                cardCount += cards.length;
-                                if (categories[catName][folderName][listName]) {
-                                    const ok = confirm(`"${listName}" existe dans "${folderName}". Écraser ?`);
-                                    if (!ok) return;
-                                }
-                                categories[catName][folderName][listName] = cards;
-                            });
-                        });
-                    });
-                    if (data.results && typeof data.results === 'object') {
-                        function deepMerge(dst, src){
-                            Object.keys(src).forEach(k=>{
-                                if (src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])) {
-                                    if (!dst[k] || typeof dst[k] !== 'object') dst[k] = {};
-                                    deepMerge(dst[k], src[k]);
-                                } else {
-                                    if (dst[k] === undefined) dst[k] = src[k];
-                                }
-                            });
-                        }
-                        if (!results || typeof results !== 'object') results = {};
-                        deepMerge(results, data.results);
-                        saveResults();
-                    }
-                    saveData();
-                    updateCategoryList();
-                    if (currentPage === 'home') updateHomeStats();
-                    alert(`Import complet terminé ✓\nCatégories:${catCount} • Cours:${courseCount} • Listes:${listCount} • Cartes:${cardCount}`);
-                    event.target.value = '';
-                    return;
-                }
-            } catch (err) {
-                console.error('[IMPORT] Exception:', err);
-                alert('Erreur imprévue pendant l\'import. Regarde la console pour le détail.');
-            }
-            event.target.value = '';
-        };
-        reader.readAsText(file);
+    categories[currentCategory][currentFolder][currentList].push({
+        question: q,
+        answer: a,
+        importance: importance
     });
-    function clearCurrentList() { if (!currentCategory || !currentFolder || !currentList) return; if (!confirm('⚠️ Vider la liste ?')) return; categories[currentCategory][currentFolder][currentList] = []; if (results[currentCategory] && results[currentCategory][currentFolder]) { delete results[currentCategory][currentFolder][currentList]; saveResults(); } saveData(); currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; updateCategoryList(); loadManageCardsPage(); }
-    document.getElementById('categoryNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createCategory(); });
-    document.getElementById('folderNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createFolder(); });
-    document.getElementById('listNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createList(); });
-    document.getElementById('renameCategoryInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') renameCategory(); });
-    document.getElementById('renameFolderInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') renameFolder(); });
-    document.getElementById('renameListInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') renameList(); });
-    document.getElementById('newCategoryModal').addEventListener('click', function(e) { if (e.target === this) closeNewCategoryModal(); });
-    document.getElementById('newFolderModal').addEventListener('click', function(e) { if (e.target === this) closeNewFolderModal(); });
-    document.getElementById('newListModal').addEventListener('click', function(e) { if (e.target === this) closeNewListModal(); });
-    document.getElementById('renameCategoryModal').addEventListener('click', function(e) { if (e.target === this) closeRenameCategoryModal(); });
-    document.getElementById('renameFolderModal').addEventListener('click', function(e) { if (e.target === this) closeRenameFolderModal(); });
-    document.getElementById('renameListModal').addEventListener('click', function(e) { if (e.target === this) closeRenameListModal(); });
+    saveData();
+    document.getElementById('newQuestion').innerHTML = '';
+    document.getElementById('newAnswer').innerHTML = '';
+    if (impEl) impEl.value = 'normal';
+    updateCategoryList();
+    if (currentPage === 'manage') loadManageCardsPage();
+}
     
-    // ====== COMPARATEUR DE TEXTE ======
-    function openComparator() {
-        document.getElementById('comparatorModal').classList.add('show');
-        document.body.style.overflow = 'hidden';
-    }
-    function closeComparator() {
-        document.getElementById('comparatorModal').classList.remove('show');
-        document.body.style.overflow = 'auto';
-    }
+function deleteCard(idx) { 
+    if (!confirm('Supprimer cette carte ?')) return; 
+    categories[currentCategory][currentFolder][currentList].splice(idx, 1); 
+    if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][currentList]) { 
+        delete results[currentCategory][currentFolder][currentList][idx]; 
+        const newResults = {}; 
+        Object.keys(results[currentCategory][currentFolder][currentList]).forEach(key => { 
+            const i = parseInt(key); 
+            if (i > idx) newResults[i - 1] = results[currentCategory][currentFolder][currentList][key]; 
+            else if (i < idx) newResults[i] = results[currentCategory][currentFolder][currentList][key]; 
+        }); 
+        results[currentCategory][currentFolder][currentList] = newResults; 
+        saveResults(); 
+    } 
+    saveData(); 
+    updateCategoryList(); 
+    if (currentPage === 'manage') loadManageCardsPage(); 
+}
     
-    // Variables comparateur
-    let showContext = false;
-    let lastFocusedId = null;
-    let showOnlyDeletions = false;
-    let lastFocusedType = null;
-    let lastSelectedBtn = null;
-    const $ = sel => document.querySelector(sel);
-    const oldTA = $("#oldText");
-    const newTA = $("#newText");
-    const outComp = $("#diffOutput");
-    const changesListComp = $("#changesList");
-    const insCountComp = $("#insCount");
-    const delCountComp = $("#delCount");
-    const repCountComp = $("#repCount");
-    const hintComp = $("#hint");
-    const copyBtnComp = $("#copyBtn");
-    const toggleContextBtnComp = $("#toggleContext");
-    const backBtn = $("#backToSelected");
-    const onlyDelBtn = document.getElementById("toggleOnlyDeletions");
-    function escapeHtmlComp(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-    function normalizeSpaces(s) {
-        return s.replace(/\r\n|\r/g, '\n').replace(/([^\n])\n/g, '$1 ').replace(/\t/g, ' ');
-    }
-    function emojiFor(t) { return t==='insertion' ? '➕' : t==='suppression' ? '➖' : '♻️'; }
-    function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
-    function isOnlySpaces(s) { return !s || /^\s+$/.test(s); }
-    function isWhitespaceOnlyChange(removed, added) {
-        const r = (removed||"").replace(/\s+/g,'');
-        const a = (added||"").replace(/\s+/g,'');
-        return r === a && (removed!==added);
-    }
-    function updateBackButton() {
-        if (lastSelectedBtn) {
-            backBtn.classList.add('visible');
-            backBtn.disabled = false;
-        } else {
-            backBtn.classList.remove('visible');
-            backBtn.disabled = true;
+// --- ÉDITION DE CARTES EXISTANTES ---
+function startEditCard(idx) {
+    if (!currentCategory || !currentFolder || !currentList) return;
+    const card = categories[currentCategory][currentFolder][currentList][idx];
+    const q = document.getElementById('editQ-' + idx);
+    const a = document.getElementById('editA-' + idx);
+   
+    document.querySelectorAll('.card-inline-editor').forEach(panel => {
+        if (panel.id !== 'editor-' + idx) {
+            panel.style.display = 'none';
         }
-    }
-    function clearFocusComp() {
-        if (lastFocusedId) {
-            const prev = document.getElementById(lastFocusedId);
-            if (prev && prev.classList) prev.classList.remove('focused');
-            const ghost = document.getElementById(lastFocusedId + '-ghost');
-            if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
-            const delGhost = document.getElementById(lastFocusedId + '-delghost');
-            if (delGhost && delGhost.parentNode) delGhost.parentNode.removeChild(delGhost);
-        }
-        lastFocusedId = null;
-        lastFocusedType = null;
-    }
-    function showDeletionGhostAfter(anchorEl, id, removedText) {
-        const old = document.getElementById(id + '-delghost');
-        if (old && old.parentNode) old.parentNode.removeChild(old);
-        const ghost = document.createElement('span');
-        ghost.id = id + '-delghost';
-        ghost.className = 'del-ghost';
-        const content = (removedText || '').replace(/\r\n|\r/g, '\n').replace(/\n/g, '↵');
-        ghost.innerHTML = `<mark class="del">(${escapeHtmlComp(content)})</mark>`;
-        anchorEl.insertAdjacentElement('afterend', ghost);
-    }
-    function focusChangeComp(id, type, options) {
-        clearFocusComp();
-        const el = document.getElementById(id);
-        if (!el) return;
-           
-        if (el.tagName === 'MARK') {
-            el.classList.add('focused');
-            lastFocusedId = id;
-            lastFocusedType = type || null;
-        } else {
-            lastFocusedId = id;
-            lastFocusedType = type || 'suppression';
-                   
-            if ((type === 'suppression') && options && options.removedText) {
-                showDeletionGhostAfter(el, id, options.removedText);
-            } else {
-                let ghost = document.getElementById(id + '-ghost');
-                if (!ghost) {
-                    ghost = document.createElement('span');
-                    ghost.id = id + '-ghost';
-                    ghost.className = 'focus-ghost';
-                    el.insertAdjacentElement('afterend', ghost);
-                }
-            }
-        }
-           
-        (el.tagName === 'MARK' ? el : document.getElementById(id)).scrollIntoView({behavior:'smooth', block:'center'});
-    }
-    function computeComp() {
-        const oldTxt = oldTA.value || "";
-        const newTxt = newTA.value || "";
-        const parts = (window.Diff && Diff.diffWordsWithSpace) ? Diff.diffWordsWithSpace(oldTxt, newTxt) : [{removed:true,value:oldTxt},{added:true,value:newTxt}];
-       
-        let html = "";
-        let changes = [];
-        let ins=0, del=0, rep=0, idxChange=0;
-       
-        for (let i=0; i<parts.length; i++) {
-            const p = parts[i];
-           
-            if (p.removed && !p.added) {
-                const next = parts[i+1];
-               
-                if (next && next.added && !next.removed) {
-                    const isWhitespaceOnly = isWhitespaceOnlyChange(p.value, next.value);
-                   
-                    if (!isOnlySpaces(next.value) && !isOnlySpaces(p.value) && !isWhitespaceOnly) {
-                        const anchorId = `chg-${++idxChange}`;
-                       
-                        const removedHtml = `<mark class="del" id="${anchorId}-del">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
-                        const addedHtml = `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(next.value))}</mark>`;
-                       
-                        html += removedHtml + addedHtml;
-                        rep++;
-                        changes.push({id: anchorId, type: 'remplacement', added: next.value, removed: p.value, isWhitespaceOnly: false});
-                        i++;
-                        continue;
-                    } else {
-                        if (isWhitespaceOnly) {
-                            html += escapeHtmlComp(normalizeSpaces(next.value));
-                            rep++;
-                            changes.push({id: `chg-${++idxChange}`, type: 'remplacement', added: next.value, removed: p.value, isWhitespaceOnly: true});
-                            i++;
-                            continue;
-                        }
-                    }
-                }
-               
-                if (isOnlySpaces(p.value)) continue;
-               
-                const anchorId = `chg-${++idxChange}`;
-                html += `<mark class="del" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
-                del++;
-                changes.push({id: anchorId, type: 'suppression', added: '', removed: p.value, isWhitespaceOnly: false});
-                continue;
-            }
-            if (p.added && !p.removed) {
-                if (isOnlySpaces(p.value)) continue;
-                const anchorId = `chg-${++idxChange}`;
-                html += `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
-                ins++;
-                changes.push({id: anchorId, type: 'insertion', added: p.value, removed: '', isWhitespaceOnly: false});
-                continue;
-            }
-           
-            html += escapeHtmlComp(normalizeSpaces(p.value));
-        }
-       
-        outComp.innerHTML = html.replace(/\n/g, '<br>');
-        const finalChanges = changes.filter(c => !c.isWhitespaceOnly);
-       
-        renderChangesListComp(finalChanges);
-       
-        insCountComp.textContent = finalChanges.filter(c => c.type === 'insertion').length;
-        delCountComp.textContent = finalChanges.filter(c => c.type === 'suppression').length;
-        repCountComp.textContent = finalChanges.filter(c => c.type === 'remplacement').length;
-       
-        hintComp.textContent = `${finalChanges.length} modifications détectées${rep? " • remplacements: "+rep : ""}.`;
-    }
+    });
     
-    // --- LOGIQUE IMPORT TEXTE / CSV ---
-    function showImportTextModal() {
-        const modal = document.getElementById('importTextModal');
-        const catSelect = document.getElementById('importCatSelect');
-        const listInput = document.getElementById('importListName');
-        const txtArea = document.getElementById('importTextContent');
-       
-        listInput.value = '';
-        txtArea.value = '';
-        catSelect.innerHTML = '';
-       
-        const catNames = Object.keys(categories);
-        if (catNames.length === 0) {
-            alert("Créez d'abord une catégorie et un cours via le bouton 'Créer un cours'.");
-            return;
+    if (!q || !a) return;
+   
+    q.innerHTML = card.question || '';
+    a.innerHTML = card.answer || '';
+   
+    // Ajouter le sélecteur d'importance dans l'éditeur
+    const panel = document.getElementById('editor-' + idx);
+    if (panel) {
+        // Vérifier si le sélecteur d'importance existe déjà
+        let importanceSelect = panel.querySelector('.importance-select');
+        if (!importanceSelect) {
+            importanceSelect = document.createElement('div');
+            importanceSelect.className = 'input-group';
+            importanceSelect.style.marginTop = '10px';
+            importanceSelect.innerHTML = `
+                <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--text);">Importance :</label>
+                <select class="importance-select-value" style="width:100%; padding:8px; border:2px solid var(--border); border-radius:8px; background:var(--panel);">
+                    <option value="important">Important (vert)</option>
+                    <option value="normal">Normal (bleu)</option>
+                    <option value="pas important">Pas important (rouge)</option>
+                    <option value="explication">Explication (gris)</option>
+                </select>
+            `;
+            panel.querySelector('.actions').before(importanceSelect);
         }
-       
-        catNames.forEach(cat => {
-            const opt = document.createElement('option');
-            opt.value = cat;
-            opt.textContent = cat;
-            catSelect.appendChild(opt);
+        
+        // Définir la valeur actuelle
+        const select = importanceSelect.querySelector('.importance-select-value');
+        if (select) {
+            select.value = card.importance || 'normal';
+        }
+        
+        panel.style.display = 'block';
+        panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        q.focus();
+    }
+}
+function cancelEditCard(idx) {
+    const panel = document.getElementById('editor-' + idx);
+    if (panel) panel.style.display = 'none';
+}
+function saveEditedCard(idx) {
+    if (!currentCategory || !currentFolder || !currentList) { alert("Erreur de contexte."); return; }
+    const qEl = document.getElementById('editQ-' + idx);
+    const aEl = document.getElementById('editA-' + idx);
+    if (!qEl || !aEl) return;
+   
+    const newQ = (qEl.innerHTML || '').trim();
+    const newA = (aEl.innerHTML || '').trim();
+   
+    if (!newQ || !newA || newQ === '<br>' || newA === '<br>') {
+        alert('Veuillez remplir la question et la réponse.');
+        return;
+    }
+   
+    // Récupérer la valeur d'importance
+    const panel = document.getElementById('editor-' + idx);
+    let importance = 'normal';
+    if (panel) {
+        const select = panel.querySelector('.importance-select-value');
+        if (select) {
+            importance = select.value;
+        }
+    }
+   
+    categories[currentCategory][currentFolder][currentList][idx] = { 
+        question: newQ, 
+        answer: newA,
+        importance: importance
+    };
+    saveData();
+    updateCategoryList();
+    loadManageCardsPage();
+}
+function formatExistingCard(idx, command, side) {
+    const el = document.getElementById((side === 'Q' ? 'editQ-' : 'editA-') + idx);
+    if (!el) return;
+    el.focus();
+    document.execCommand(command, false, null);
+}
+function colorExistingCard(idx, value, kind, side) {
+    const el = document.getElementById((side === 'Q' ? 'editQ-' : 'editA-') + idx);
+    if (!el) return;
+    el.focus();
+    if (kind === 'fore') document.execCommand('foreColor', false, value);
+    else document.execCommand('backColor', false, value);
+}
+function clearFormatExisting(idx, side) {
+    const el = document.getElementById((side === 'Q' ? 'editQ-' : 'editA-') + idx);
+    if (!el) return;
+    el.innerHTML = el.innerText;
+    el.focus();
+}
+function insertImageExisting(idx, side) {
+    currentEditingExisting = { idx, side };
+    document.getElementById('imageInput').click();
+}
+    
+// MODALS FLASHCARDS
+function showNewCategoryModal() { document.getElementById('newCategoryModal').classList.add('show'); const input = document.getElementById('categoryNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
+function closeNewCategoryModal() { document.getElementById('newCategoryModal').classList.remove('show'); document.getElementById('categoryNameInput').value = ''; }
+function createCategory() { const input = document.getElementById('categoryNameInput'); const name = input.value.trim(); if (!name) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (categories[name]) { alert('Cette catégorie existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } categories[name] = {}; openCategories[name] = true; saveData(); updateCategoryList(); closeNewCategoryModal(); }
+function deleteCategory(catName) { if (!confirm('Supprimer "' + catName + '" et tous ses cours ?')) return; delete categories[catName]; delete results[catName]; delete openCategories[catName]; saveData(); saveResults(); if (currentCategory === catName) showPage('home'); updateCategoryList(); }
+function showEditCategoryModal(catName) { renameTarget = catName; document.getElementById('renameCategoryModal').classList.add('show'); const input = document.getElementById('renameCategoryInput'); input.value = catName; setTimeout(() => input.focus(), 150); }
+function closeRenameCategoryModal() { document.getElementById('renameCategoryModal').classList.remove('show'); document.getElementById('renameCategoryInput').value = ''; renameTarget = null; }
+function renameCategory() { const input = document.getElementById('renameCategoryInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (categories[newName] && newName !== renameTarget) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (renameTarget && categories[renameTarget]) { categories[newName] = categories[renameTarget]; delete categories[renameTarget]; if (results[renameTarget]) { results[newName] = results[renameTarget]; delete results[renameTarget]; saveResults(); } if (openCategories[renameTarget]) { openCategories[newName] = openCategories[renameTarget]; delete openCategories[renameTarget]; } if (currentCategory === renameTarget) currentCategory = newName; saveData(); updateCategoryList(); closeRenameCategoryModal(); } }
+function updateFolderCategorySelect() { const select = document.getElementById('folderCategorySelect'); select.innerHTML = ''; const catNames = Object.keys(categories); if (catNames.length === 0) { const opt = document.createElement('option'); opt.value = ''; opt.textContent = 'Aucune catégorie - Créez-en une !'; select.appendChild(opt); } else { catNames.forEach(catName => { const opt = document.createElement('option'); opt.value = catName; opt.textContent = catName; if (catName === currentCategory) opt.selected = true; select.appendChild(opt); }); } }
+function showNewFolderModal() { updateFolderCategorySelect(); document.getElementById('newFolderModal').classList.add('show'); const input = document.getElementById('folderNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
+function closeNewFolderModal() { document.getElementById('newFolderModal').classList.remove('show'); document.getElementById('folderNameInput').value = ''; }
+function createFolder() { const input = document.getElementById('folderNameInput'); const name = input.value.trim(); const catSelect = document.getElementById('folderCategorySelect'); const selectedCat = catSelect.value; if (!selectedCat) { alert('Veuillez créer une catégorie d\'abord.'); return; } if (!name) { alert('Veuillez entrer un nom de cours.'); setTimeout(() => input.focus(), 150); return; } if (categories[selectedCat][name]) { alert('Ce cours existe déjà dans cette catégorie.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } categories[selectedCat][name] = {'Liste par défaut': []}; saveData(); updateCategoryList(); closeNewFolderModal(); showListsPage(selectedCat, name); }
+function deleteFolder(catName, folderName) { if (!confirm('Supprimer "' + folderName + '" ?')) return; delete categories[catName][folderName]; if (results[catName]) { delete results[catName][folderName]; saveResults(); } if (Object.keys(categories[catName]).length === 0) { delete categories[catName]; delete openCategories[catName]; } saveData(); if (currentCategory === catName && currentFolder === folderName) showPage('home'); updateCategoryList(); }
+function showEditFolderModal(catName, folderName) { renameTarget = {cat: catName, folder: folderName}; document.getElementById('renameFolderModal').classList.add('show'); const input = document.getElementById('renameFolderInput'); input.value = folderName; setTimeout(() => input.focus(), 150); }
+function closeRenameFolderModal() { document.getElementById('renameFolderModal').classList.remove('show'); document.getElementById('renameFolderInput').value = ''; renameTarget = null; }
+function showRenameFolderModal() { if (!currentCategory || !currentFolder) return; showEditFolderModal(currentCategory, currentFolder); }
+function renameFolder() { const input = document.getElementById('renameFolderInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } const catName = renameTarget.cat; const oldName = renameTarget.folder; if (categories[catName][newName] && newName !== oldName) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (categories[catName][oldName]) { categories[catName][newName] = categories[catName][oldName]; delete categories[catName][oldName]; if (results[catName] && results[catName][oldName]) { results[catName][newName] = results[catName][oldName]; delete results[catName][oldName]; saveResults(); } if (currentCategory === catName && currentFolder === oldName) currentFolder = newName; saveData(); updateCategoryList(); if (currentPage === 'lists') { document.getElementById('listsTitle').textContent = newName; } closeRenameFolderModal(); } }
+function showNewListModal() { if (!currentCategory || !currentFolder) { alert('Erreur : aucun cours sélectionné.'); return; } document.getElementById('newListModal').classList.add('show'); const input = document.getElementById('listNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
+function closeNewListModal() { document.getElementById('newListModal').classList.remove('show'); document.getElementById('listNameInput').value = ''; }
+function createList() { const input = document.getElementById('listNameInput'); const name = input.value.trim(); if (!name) { alert('Veuillez entrer un nom de liste.'); setTimeout(() => input.focus(), 150); return; } if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) { alert('Erreur.'); return; } if (categories[currentCategory][currentFolder][name]) { alert('Cette liste existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } categories[currentCategory][currentFolder][name] = []; saveData(); updateCategoryList(); closeNewListModal(); loadListsPage(); }
+function deleteList(listName) { if (!confirm('Supprimer "' + listName + '" ?')) return; delete categories[currentCategory][currentFolder][listName]; if (results[currentCategory] && results[currentCategory][currentFolder]) { delete results[currentCategory][currentFolder][listName]; saveResults(); } if (Object.keys(categories[currentCategory][currentFolder]).length === 0) { categories[currentCategory][currentFolder]['Liste par défaut'] = []; } saveData(); updateCategoryList(); loadListsPage(); }
+function showEditListModal(listName) { renameTarget = listName; document.getElementById('renameListModal').classList.add('show'); const input = document.getElementById('renameListInput'); input.value = listName; setTimeout(() => input.focus(), 150); }
+function closeRenameListModal() { document.getElementById('renameListModal').classList.remove('show'); document.getElementById('renameListInput').value = ''; renameTarget = null; }
+function renameList() { const input = document.getElementById('renameListInput'); const newName = input.value.trim(); if (!newName) { alert('Veuillez entrer un nom.'); setTimeout(() => input.focus(), 150); return; } if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) { alert('Erreur.'); return; } if (categories[currentCategory][currentFolder][newName] && newName !== renameTarget) { alert('Ce nom existe déjà.'); input.value = ''; setTimeout(() => input.focus(), 150); return; } if (renameTarget && categories[currentCategory][currentFolder][renameTarget]) { categories[currentCategory][currentFolder][newName] = categories[currentCategory][currentFolder][renameTarget]; delete categories[currentCategory][currentFolder][renameTarget]; if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][renameTarget]) { results[currentCategory][currentFolder][newName] = results[currentCategory][currentFolder][renameTarget]; delete results[currentCategory][currentFolder][renameTarget]; saveResults(); } if (currentList === renameTarget) currentList = newName; saveData(); updateCategoryList(); loadListsPage(); closeRenameListModal(); } }
+function exportCards() { if (!currentCategory || !currentFolder || !currentList) { alert('Sélectionne une liste.'); return; } const data = {categoryName: currentCategory, folderName: currentFolder, listName: currentList, cards: categories[currentCategory][currentFolder][currentList]}; const json = JSON.stringify(data, null, 2); const blob = new Blob([json], {type: 'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = currentCategory.replace(/[^a-z0-9]/gi, '_') + '_' + currentFolder.replace(/[^a-z0-9]/gi, '_') + '_' + currentList.replace(/[^a-z0-9]/gi, '_') + '_' + new Date().toISOString().split('T')[0] + '.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+function baseAppUrl() {
+    const u = new URL(window.location.href);
+    u.search = '';
+    u.hash = '';
+    return u.toString();
+}
+function buildEmbedUrl({cat, folder, list, view}) {
+    const u = new URL(baseAppUrl());
+    u.searchParams.set('embed', '1');
+    if (cat) u.searchParams.set('cat', cat);
+    if (folder) u.searchParams.set('folder', folder);
+    if (list) u.searchParams.set('list', list);
+    if (view) u.searchParams.set('view', view);
+    return u.toString();
+}
+function buildIframeCode(src, opts) {
+    const width = (opts && opts.width) || '100%';
+    const height = (opts && opts.height) || '600';
+    const style = (opts && opts.style) || 'border:1px solid #e5e7eb;border-radius:12px;';
+    return `<iframe src="${src}" width="${width}" height="${height}" style="${style}" allowfullscreen loading="lazy"></iframe>`;
+}
+function copyFolderEmbed() {
+    if (!currentCategory || !currentFolder) { alert('Aucun cours sélectionné.'); return; }
+    const src = buildEmbedUrl({ cat: currentCategory, folder: currentFolder, view: 'lists' });
+    const code = buildIframeCode(src, { height: '700' });
+    copyText(code);
+}
+function copyListEmbed(listName) {
+    const cat = currentCategory;
+    const folder = currentFolder;
+    const list = listName;
+    if (!cat || !folder || !list) { alert('Sélection invalide.'); return; }
+    const src = buildEmbedUrl({ cat, folder, list, view: 'study' });
+    const code = buildIframeCode(src, { height: '700' });
+    copyText(code);
+}
+async function copyText(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        alert('Code d\'intégration copié ✓');
+    } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); alert('Code d\'intégration copié ✓'); }
+        catch { alert('Impossible de copier automatiquement. Sélectionne et copie manuellement.'); }
+        document.body.removeChild(ta);
+    }
+}
+function exportAll() {
+    if (!categories || typeof categories !== 'object') {
+        alert("Aucune donnée à exporter.");
+        return;
+    }
+    const snapshot = {
+        exportVersion: "1.0",
+        exportedAt: new Date().toISOString(),
+        summary: {
+            categories: 0,
+            courses: 0,
+            lists: 0,
+            cards: 0
+        },
+        data: [],
+        results: results || {}
+    };
+   
+    Object.keys(categories).forEach(catName => {
+        const cat = categories[catName] || {};
+        const catOut = { categoryName: catName, courses: [] };
+        snapshot.summary.categories++;
+        Object.keys(cat).forEach(folderName => {
+            const folder = cat[folderName] || {};
+            const folderOut = { folderName, lists: [] };
+            snapshot.summary.courses++;
+            Object.keys(folder).forEach(listName => {
+                const cards = Array.isArray(folder[listName]) ? folder[listName] : [];
+                const listOut = { listName, cards };
+                snapshot.summary.lists++;
+                snapshot.summary.cards += cards.length;
+                folderOut.lists.push(listOut);
+            });
+            catOut.courses.push(folderOut);
         });
-        if (currentCategory && categories[currentCategory]) {
-            catSelect.value = currentCategory;
-        }
-        updateImportFolderSelect();
-        modal.classList.add('show');
-        setTimeout(() => listInput.focus(), 100);
-    }
-    function updateImportFolderSelect() {
-        const catSelect = document.getElementById('importCatSelect');
-        const folderSelect = document.getElementById('importFolderSelect');
-        const catName = catSelect.value;
-       
-        folderSelect.innerHTML = '';
-       
-        if (catName && categories[catName]) {
-            const folders = Object.keys(categories[catName]);
-            if (folders.length === 0) {
-                const opt = document.createElement('option');
-                opt.text = "(Aucun cours)";
-                folderSelect.appendChild(opt);
-            } else {
-                folders.forEach(f => {
-                    const opt = document.createElement('option');
-                    opt.value = f;
-                    opt.textContent = f;
-                    folderSelect.appendChild(opt);
-                });
-                if (currentCategory === catName && currentFolder && categories[catName][currentFolder]) {
-                    folderSelect.value = currentFolder;
-                }
+        snapshot.data.push(catOut);
+    });
+   
+    const json = JSON.stringify(snapshot, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const safe = s => (s || '').toString().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]+/g, '_');
+    const filename = `flashcards_export_all_${safe(new Date().toISOString().split('T')[0])}.json`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+function importCards() { document.getElementById('fileInput').click(); }
+document.getElementById('fileInput').addEventListener('change', function(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    console.log('[IMPORT] name:', file.name, 'type:', file.type, 'size:', file.size);
+    const reader = new FileReader();
+    reader.onerror = () => alert('Lecture de fichier impossible (FileReader).');
+    reader.onload = function(e) {
+        try {
+            let raw = e.target.result || '';
+            raw = raw.replace(/^\uFEFF/, '').trim();
+            if (raw.startsWith('```')) {
+                raw = raw.replace(/^```[a-zA-Z0-9]*\s*/, '').replace(/```$/, '').trim();
             }
-        }
-    }
-    function closeImportTextModal() {
-        document.getElementById('importTextModal').classList.remove('show');
-    }
-    function performTextImport() {
-        const catName = document.getElementById('importCatSelect').value;
-        const folderName = document.getElementById('importFolderSelect').value;
-        const listName = document.getElementById('importListName').value.trim();
-        const rawText = document.getElementById('importTextContent').value;
-        const sepType = document.getElementById('importSeparator').value;
-        if (!catName || !folderName || folderName === "(Aucun cours)") {
-            alert("Veuillez sélectionner une catégorie et un cours valides.");
-            return;
-        }
-        if (!listName) {
-            alert("Veuillez donner un nom à la liste.");
-            return;
-        }
-        if (!rawText.trim()) {
-            alert("Le texte à importer est vide.");
-            return;
-        }
-        let separator = sepType;
-        if (sepType === 'tab') separator = '\t';
-        const lines = rawText.split(/\r?\n/);
-        let importedCount = 0;
-        const newCards = [];
-        lines.forEach(line => {
-            if (!line.trim()) return;
-            const parts = line.split(separator);
-            if (parts.length >= 2) {
-                const q = parts[0].trim();
-                const a = parts.slice(1).join(separator).trim();
-                if (q && a) {
-                    newCards.push({ question: q, answer: a, importance: 'normal' });
-                    importedCount++;
-                }
-            }
-        });
-        if (importedCount === 0) {
-            alert("Aucune carte détectée. Vérifiez le séparateur (ex: Tabulation vs Virgule).");
-            return;
-        }
-        if (!categories[catName][folderName][listName]) {
-            categories[catName][folderName][listName] = [];
-        } else {
-            if (!confirm(`La liste "${listName}" existe déjà. Voulez-vous ajouter ces ${importedCount} cartes à la suite ?`)) {
+            let data;
+            try {
+                data = JSON.parse(raw);
+            } catch (err) {
+                console.error('[IMPORT] JSON.parse error:', err);
+                alert('JSON invalide (échec du parsing). Vérifie qu\'il n\'y a pas de ``` ou de guillemets simples.');
+                event.target.value = '';
                 return;
             }
-        }
-        categories[catName][folderName][listName].push(...newCards);
-        saveData();
-        updateCategoryList();
-        if (currentPage === 'home') updateHomeStats();
-        alert(`${importedCount} cartes importées avec succès dans "${listName}" !`);
-        closeImportTextModal();
-        showListsPage(catName, folderName);
-    }
-    function flashSidebarCard(btn) {
-        const prevShadow = btn.style.boxShadow;
-        btn.style.boxShadow = '0 0 0 3px rgba(255,209,102,0.45)';
-        setTimeout(() => { btn.style.boxShadow = prevShadow; }, 750);
-    }
-    function renderChangesListComp(changes) {
-        changesListComp.innerHTML = "";
-        let filtered = changes;
-        if (showOnlyDeletions) {
-            filtered = changes.filter(c => c.type === 'suppression' || c.type === 'remplacement');
-        }
-        if (!filtered.length) {
-            changesListComp.innerHTML = '<div style="color:#8b93a6;padding:8px">Aucun changement.</div>';
-            updateBackButton();
-            return;
-        }
-        const ctxSpan = showContext ? 24 : 0;
-        let toRestoreId = (lastSelectedBtn && lastSelectedBtn.dataset.id) ? lastSelectedBtn.dataset.id : null;
-        lastSelectedBtn = null;
-        for (const c of filtered) {
-            const btn = document.createElement('button');
-            btn.className = 'comp-change';
-            btn.type = 'button';
-            btn.dataset.id = c.id;
-            btn.dataset.type = c.type;
-            if (c.type === 'suppression' || c.type === 'remplacement') {
-                btn.dataset.removed = c.removed;
+            const isList = data && data.categoryName && data.folderName && data.listName && Array.isArray(data.cards);
+            const isAll = data && data.exportVersion && Array.isArray(data.data);
+            if (!isList && !isAll) {
+                console.warn('[IMPORT] Format non reconnu. Aperçu des clés:', Object.keys(data||{}));
+                alert('Format non reconnu. Fichier attendu: "liste unique" ou "export tout".');
+                event.target.value = '';
+                return;
             }
-            let tokenHtml = '';
-            if (c.type === 'insertion') {
-                tokenHtml = `<mark class="token">${escapeHtmlComp(c.added.replace(/\n/g, '↵'))}</mark>`;
-            } else if (c.type === 'suppression') {
-                tokenHtml = `<mark class="token del">${escapeHtmlComp(c.removed.replace(/\n/g, '↵'))}</mark>`;
-            } else {
-                tokenHtml = `<mark class="token del">${escapeHtmlComp(c.removed.replace(/\n/g, '↵'))}</mark> <span style="display:inline-block;width:6px"></span> <mark class="token">${escapeHtmlComp(c.added.replace(/\n/g, '↵'))}</mark>`;
+            if (isList) {
+                const { categoryName, folderName, listName, cards } = data;
+                if (!categories[categoryName]) categories[categoryName] = {};
+                if (!categories[categoryName][folderName]) categories[categoryName][folderName] = {};
+                if (categories[categoryName][folderName][listName]) {
+                    if (!confirm(`La liste "${listName}" existe déjà. Écraser ?`)) {
+                        event.target.value = '';
+                        return;
+                    }
+                }
+                categories[categoryName][folderName][listName] = Array.isArray(cards) ? cards : [];
+                saveData();
+                updateCategoryList();
+                if (currentPage === 'home') updateHomeStats();
+                alert('Import de la liste terminé ✓');
+                event.target.value = '';
+                return;
             }
-            let ctx = '';
-            if (ctxSpan > 0) {
-                const src = c.type==='suppression' ? (oldTA.value||"") : (newTA.value||"");
-                const needle = (c.type==='suppression' ? c.removed : c.added) || "";
-                const pos = needle.length > 0 ? src.indexOf(needle) : -1;
-                if (pos>=0) {
-                    const start = Math.max(0,pos-ctxSpan);
-                    const end = Math.min(src.length, pos+needle.length+ctxSpan);
-                    ctx = (start>0?'…':'') + src.slice(start,end).replace(/\r\n|\r/g, '\n').replace(/\n/g, '↵').replace(/\s+/g,' ') + (end<src.length?'…':'');
+            if (isAll) {
+                let catCount=0, courseCount=0, listCount=0, cardCount=0;
+                (data.data || []).forEach(cat => {
+                    const catName = cat.categoryName;
+                    if (!catName) return;
+                    catCount++;
+                    if (!categories[catName]) categories[catName] = {};
+                    (cat.courses || []).forEach(course => {
+                        const folderName = course.folderName;
+                        if (!folderName) return;
+                        courseCount++;
+                        if (!categories[catName][folderName]) categories[catName][folderName] = {};
+                        (course.lists || []).forEach(lst => {
+                            const listName = lst.listName;
+                            if (!listName) return;
+                            const cards = Array.isArray(lst.cards) ? lst.cards : [];
+                            listCount++;
+                            cardCount += cards.length;
+                            if (categories[catName][folderName][listName]) {
+                                const ok = confirm(`"${listName}" existe dans "${folderName}". Écraser ?`);
+                                if (!ok) return;
+                            }
+                            categories[catName][folderName][listName] = cards;
+                        });
+                    });
+                });
+                if (data.results && typeof data.results === 'object') {
+                    function deepMerge(dst, src){
+                        Object.keys(src).forEach(k=>{
+                            if (src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])) {
+                                if (!dst[k] || typeof dst[k] !== 'object') dst[k] = {};
+                                deepMerge(dst[k], src[k]);
+                            } else {
+                                if (dst[k] === undefined) dst[k] = src[k];
+                            }
+                        });
+                    }
+                    if (!results || typeof results !== 'object') results = {};
+                    deepMerge(results, data.results);
+                    saveResults();
+                }
+                saveData();
+                updateCategoryList();
+                if (currentPage === 'home') updateHomeStats();
+                alert(`Import complet terminé ✓\nCatégories:${catCount} • Cours:${courseCount} • Listes:${listCount} • Cartes:${cardCount}`);
+                event.target.value = '';
+                return;
+            }
+        } catch (err) {
+            console.error('[IMPORT] Exception:', err);
+            alert('Erreur imprévue pendant l\'import. Regarde la console pour le détail.');
+        }
+        event.target.value = '';
+    };
+    reader.readAsText(file);
+});
+function clearCurrentList() { if (!currentCategory || !currentFolder || !currentList) return; if (!confirm('⚠️ Vider la liste ?')) return; categories[currentCategory][currentFolder][currentList] = []; if (results[currentCategory] && results[currentCategory][currentFolder]) { delete results[currentCategory][currentFolder][currentList]; saveResults(); } saveData(); currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; updateCategoryList(); loadManageCardsPage(); }
+document.getElementById('categoryNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createCategory(); });
+document.getElementById('folderNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createFolder(); });
+document.getElementById('listNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') createList(); });
+document.getElementById('renameCategoryInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') renameCategory(); });
+document.getElementById('renameFolderInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') renameFolder(); });
+document.getElementById('renameListInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') renameList(); });
+document.getElementById('newCategoryModal').addEventListener('click', function(e) { if (e.target === this) closeNewCategoryModal(); });
+document.getElementById('newFolderModal').addEventListener('click', function(e) { if (e.target === this) closeNewFolderModal(); });
+document.getElementById('newListModal').addEventListener('click', function(e) { if (e.target === this) closeNewListModal(); });
+document.getElementById('renameCategoryModal').addEventListener('click', function(e) { if (e.target === this) closeRenameCategoryModal(); });
+document.getElementById('renameFolderModal').addEventListener('click', function(e) { if (e.target === this) closeRenameFolderModal(); });
+document.getElementById('renameListModal').addEventListener('click', function(e) { if (e.target === this) closeRenameListModal(); });
+
+// ====== COMPARATEUR DE TEXTE ======
+function openComparator() {
+    document.getElementById('comparatorModal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+function closeComparator() {
+    document.getElementById('comparatorModal').classList.remove('show');
+    document.body.style.overflow = 'auto';
+}
+
+// Variables comparateur
+let showContext = false;
+let lastFocusedId = null;
+let showOnlyDeletions = false;
+let lastFocusedType = null;
+let lastSelectedBtn = null;
+const $ = sel => document.querySelector(sel);
+const oldTA = $("#oldText");
+const newTA = $("#newText");
+const outComp = $("#diffOutput");
+const changesListComp = $("#changesList");
+const insCountComp = $("#insCount");
+const delCountComp = $("#delCount");
+const repCountComp = $("#repCount");
+const hintComp = $("#hint");
+const copyBtnComp = $("#copyBtn");
+const toggleContextBtnComp = $("#toggleContext");
+const backBtn = $("#backToSelected");
+const onlyDelBtn = document.getElementById("toggleOnlyDeletions");
+function escapeHtmlComp(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function normalizeSpaces(s) {
+    return s.replace(/\r\n|\r/g, '\n').replace(/([^\n])\n/g, '$1 ').replace(/\t/g, ' ');
+}
+function emojiFor(t) { return t==='insertion' ? '➕' : t==='suppression' ? '➖' : '♻️'; }
+function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+function isOnlySpaces(s) { return !s || /^\s+$/.test(s); }
+function isWhitespaceOnlyChange(removed, added) {
+    const r = (removed||"").replace(/\s+/g,'');
+    const a = (added||"").replace(/\s+/g,'');
+    return r === a && (removed!==added);
+}
+function updateBackButton() {
+    if (lastSelectedBtn) {
+        backBtn.classList.add('visible');
+        backBtn.disabled = false;
+    } else {
+        backBtn.classList.remove('visible');
+        backBtn.disabled = true;
+    }
+}
+function clearFocusComp() {
+    if (lastFocusedId) {
+        const prev = document.getElementById(lastFocusedId);
+        if (prev && prev.classList) prev.classList.remove('focused');
+        const ghost = document.getElementById(lastFocusedId + '-ghost');
+        if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+        const delGhost = document.getElementById(lastFocusedId + '-delghost');
+        if (delGhost && delGhost.parentNode) delGhost.parentNode.removeChild(delGhost);
+    }
+    lastFocusedId = null;
+    lastFocusedType = null;
+}
+function showDeletionGhostAfter(anchorEl, id, removedText) {
+    const old = document.getElementById(id + '-delghost');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    const ghost = document.createElement('span');
+    ghost.id = id + '-delghost';
+    ghost.className = 'del-ghost';
+    const content = (removedText || '').replace(/\r\n|\r/g, '\n').replace(/\n/g, '↵');
+    ghost.innerHTML = `<mark class="del">(${escapeHtmlComp(content)})</mark>`;
+    anchorEl.insertAdjacentElement('afterend', ghost);
+}
+function focusChangeComp(id, type, options) {
+    clearFocusComp();
+    const el = document.getElementById(id);
+    if (!el) return;
+       
+    if (el.tagName === 'MARK') {
+        el.classList.add('focused');
+        lastFocusedId = id;
+        lastFocusedType = type || null;
+    } else {
+        lastFocusedId = id;
+        lastFocusedType = type || 'suppression';
+               
+        if ((type === 'suppression') && options && options.removedText) {
+            showDeletionGhostAfter(el, id, options.removedText);
+        } else {
+            let ghost = document.getElementById(id + '-ghost');
+            if (!ghost) {
+                ghost = document.createElement('span');
+                ghost.id = id + '-ghost';
+                ghost.className = 'focus-ghost';
+                el.insertAdjacentElement('afterend', ghost);
+            }
+        }
+    }
+       
+    (el.tagName === 'MARK' ? el : document.getElementById(id)).scrollIntoView({behavior:'smooth', block:'center'});
+}
+function computeComp() {
+    const oldTxt = oldTA.value || "";
+    const newTxt = newTA.value || "";
+    const parts = (window.Diff && Diff.diffWordsWithSpace) ? Diff.diffWordsWithSpace(oldTxt, newTxt) : [{removed:true,value:oldTxt},{added:true,value:newTxt}];
+   
+    let html = "";
+    let changes = [];
+    let ins=0, del=0, rep=0, idxChange=0;
+   
+    for (let i=0; i<parts.length; i++) {
+        const p = parts[i];
+       
+        if (p.removed && !p.added) {
+            const next = parts[i+1];
+           
+            if (next && next.added && !next.removed) {
+                const isWhitespaceOnly = isWhitespaceOnlyChange(p.value, next.value);
+               
+                if (!isOnlySpaces(next.value) && !isOnlySpaces(p.value) && !isWhitespaceOnly) {
+                    const anchorId = `chg-${++idxChange}`;
+                   
+                    const removedHtml = `<mark class="del" id="${anchorId}-del">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
+                    const addedHtml = `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(next.value))}</mark>`;
+                   
+                    html += removedHtml + addedHtml;
+                    rep++;
+                    changes.push({id: anchorId, type: 'remplacement', added: next.value, removed: p.value, isWhitespaceOnly: false});
+                    i++;
+                    continue;
+                } else {
+                    if (isWhitespaceOnly) {
+                        html += escapeHtmlComp(normalizeSpaces(next.value));
+                        rep++;
+                        changes.push({id: `chg-${++idxChange}`, type: 'remplacement', added: next.value, removed: p.value, isWhitespaceOnly: true});
+                        i++;
+                        continue;
+                    }
                 }
             }
-            btn.innerHTML = `<span class="type">${emojiFor(c.type)} ${cap(c.type)}</span> ${tokenHtml} ${ctx ? `<span class="ctx">${escapeHtmlComp(ctx)}</span>` : ``}`;
-            btn.addEventListener('click', () => {
-                const prev = document.querySelector('.comp-change.selected');
-                if (prev) prev.classList.remove('selected');
-                btn.classList.add('selected');
-                lastSelectedBtn = btn;
-                let focusId = btn.dataset.id;
-                let focusType = btn.dataset.type;
-                const isReplacement = focusType === 'remplacement';
-                if (isReplacement) focusType = 'insertion';
-                const opts = (btn.dataset.type === 'suppression') ? { removedText: btn.dataset.removed || '' } : undefined;
-                focusChangeComp(isReplacement ? focusId : focusId, focusType, opts);
-                updateBackButton();
-            });
-            changesListComp.appendChild(btn);
-            if (toRestoreId && c.id === toRestoreId) {
-                btn.classList.add('selected');
-                lastSelectedBtn = btn;
-            }
+           
+            if (isOnlySpaces(p.value)) continue;
+           
+            const anchorId = `chg-${++idxChange}`;
+            html += `<mark class="del" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
+            del++;
+            changes.push({id: anchorId, type: 'suppression', added: '', removed: p.value, isWhitespaceOnly: false});
+            continue;
         }
-        updateBackButton();
+        if (p.added && !p.removed) {
+            if (isOnlySpaces(p.value)) continue;
+            const anchorId = `chg-${++idxChange}`;
+            html += `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
+            ins++;
+            changes.push({id: anchorId, type: 'insertion', added: p.value, removed: '', isWhitespaceOnly: false});
+            continue;
+        }
+       
+        html += escapeHtmlComp(normalizeSpaces(p.value));
     }
-    document.getElementById("compareBtn").addEventListener('click', () => {
-        if (lastSelectedBtn) { lastSelectedBtn.classList.remove('selected'); lastSelectedBtn = null; }
-        clearFocusComp();
-        computeComp();
+   
+    outComp.innerHTML = html.replace(/\n/g, '<br>');
+    const finalChanges = changes.filter(c => !c.isWhitespaceOnly);
+   
+    renderChangesListComp(finalChanges);
+   
+    insCountComp.textContent = finalChanges.filter(c => c.type === 'insertion').length;
+    delCountComp.textContent = finalChanges.filter(c => c.type === 'suppression').length;
+    repCountComp.textContent = finalChanges.filter(c => c.type === 'remplacement').length;
+   
+    hintComp.textContent = `${finalChanges.length} modifications détectées${rep? " • remplacements: "+rep : ""}.`;
+}
+
+// --- LOGIQUE IMPORT TEXTE / CSV ---
+function showImportTextModal() {
+    const modal = document.getElementById('importTextModal');
+    const catSelect = document.getElementById('importCatSelect');
+    const listInput = document.getElementById('importListName');
+    const txtArea = document.getElementById('importTextContent');
+   
+    listInput.value = '';
+    txtArea.value = '';
+    catSelect.innerHTML = '';
+   
+    const catNames = Object.keys(categories);
+    if (catNames.length === 0) {
+        alert("Créez d'abord une catégorie et un cours via le bouton 'Créer un cours'.");
+        return;
+    }
+   
+    catNames.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        catSelect.appendChild(opt);
+    });
+    if (currentCategory && categories[currentCategory]) {
+        catSelect.value = currentCategory;
+    }
+    updateImportFolderSelect();
+    modal.classList.add('show');
+    setTimeout(() => listInput.focus(), 100);
+}
+function updateImportFolderSelect() {
+    const catSelect = document.getElementById('importCatSelect');
+    const folderSelect = document.getElementById('importFolderSelect');
+    const catName = catSelect.value;
+   
+    folderSelect.innerHTML = '';
+   
+    if (catName && categories[catName]) {
+        const folders = Object.keys(categories[catName]);
+        if (folders.length === 0) {
+            const opt = document.createElement('option');
+            opt.text = "(Aucun cours)";
+            folderSelect.appendChild(opt);
+        } else {
+            folders.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f;
+                opt.textContent = f;
+                folderSelect.appendChild(opt);
+            });
+            if (currentCategory === catName && currentFolder && categories[catName][currentFolder]) {
+                folderSelect.value = currentFolder;
+            }
+        }
+    }
+}
+function closeImportTextModal() {
+    document.getElementById('importTextModal').classList.remove('show');
+}
+function performTextImport() {
+    const catName = document.getElementById('importCatSelect').value;
+    const folderName = document.getElementById('importFolderSelect').value;
+    const listName = document.getElementById('importListName').value.trim();
+    const rawText = document.getElementById('importTextContent').value;
+    const sepType = document.getElementById('importSeparator').value;
+    if (!catName || !folderName || folderName === "(Aucun cours)") {
+        alert("Veuillez sélectionner une catégorie et un cours valides.");
+        return;
+    }
+    if (!listName) {
+        alert("Veuillez donner un nom à la liste.");
+        return;
+    }
+    if (!rawText.trim()) {
+        alert("Le texte à importer est vide.");
+        return;
+    }
+    let separator = sepType;
+    if (sepType === 'tab') separator = '\t';
+    const lines = rawText.split(/\r?\n/);
+    let importedCount = 0;
+    const newCards = [];
+    lines.forEach(line => {
+        if (!line.trim()) return;
+        const parts = line.split(separator);
+        if (parts.length >= 2) {
+            const q = parts[0].trim();
+            const a = parts.slice(1).join(separator).trim();
+            if (q && a) {
+                newCards.push({ question: q, answer: a, importance: 'normal' });
+                importedCount++;
+            }
+        }
+    });
+    if (importedCount === 0) {
+        alert("Aucune carte détectée. Vérifiez le séparateur (ex: Tabulation vs Virgule).");
+        return;
+    }
+    if (!categories[catName][folderName][listName]) {
+        categories[catName][folderName][listName] = [];
+    } else {
+        if (!confirm(`La liste "${listName}" existe déjà. Voulez-vous ajouter ces ${importedCount} cartes à la suite ?`)) {
+            return;
+        }
+    }
+    categories[catName][folderName][listName].push(...newCards);
+    saveData();
+    updateCategoryList();
+    if (currentPage === 'home') updateHomeStats();
+    alert(`${importedCount} cartes importées avec succès dans "${listName}" !`);
+    closeImportTextModal();
+    showListsPage(catName, folderName);
+}
+function flashSidebarCard(btn) {
+    const prevShadow = btn.style.boxShadow;
+    btn.style.boxShadow = '0 0 0 3px rgba(255,209,102,0.45)';
+    setTimeout(() => { btn.style.boxShadow = prevShadow; }, 750);
+}
+function renderChangesListComp(changes) {
+    changesListComp.innerHTML = "";
+    let filtered = changes;
+    if (showOnlyDeletions) {
+        filtered = changes.filter(c => c.type === 'suppression' || c.type === 'remplacement');
+    }
+    if (!filtered.length) {
+        changesListComp.innerHTML = '<div style="color:#8b93a6;padding:8px">Aucun changement.</div>';
         updateBackButton();
-    });
-    document.getElementById("toggleContext").addEventListener('click', () => {
-        showContext = !showContext;
-        document.getElementById("toggleContext").textContent = showContext ? "Contexte —" : "± Contexte";
-        const prevSelectedId = lastSelectedBtn ? lastSelectedBtn.dataset.id : null;
-        const prevFocused = lastFocusedId;
-        computeComp();
-        if (prevSelectedId) {
-            const candidate = Array.from(document.querySelectorAll('.comp-change')).find(b => b.dataset.id === prevSelectedId);
-            if (candidate) {
-                candidate.classList.add('selected');
-                lastSelectedBtn = candidate;
-            } else {
-                lastSelectedBtn = null;
+        return;
+    }
+    const ctxSpan = showContext ? 24 : 0;
+    let toRestoreId = (lastSelectedBtn && lastSelectedBtn.dataset.id) ? lastSelectedBtn.dataset.id : null;
+    lastSelectedBtn = null;
+    for (const c of filtered) {
+        const btn = document.createElement('button');
+        btn.className = 'comp-change';
+        btn.type = 'button';
+        btn.dataset.id = c.id;
+        btn.dataset.type = c.type;
+        if (c.type === 'suppression' || c.type === 'remplacement') {
+            btn.dataset.removed = c.removed;
+        }
+        let tokenHtml = '';
+        if (c.type === 'insertion') {
+            tokenHtml = `<mark class="token">${escapeHtmlComp(c.added.replace(/\n/g, '↵'))}</mark>`;
+        } else if (c.type === 'suppression') {
+            tokenHtml = `<mark class="token del">${escapeHtmlComp(c.removed.replace(/\n/g, '↵'))}</mark>`;
+        } else {
+            tokenHtml = `<mark class="token del">${escapeHtmlComp(c.removed.replace(/\n/g, '↵'))}</mark> <span style="display:inline-block;width:6px"></span> <mark class="token">${escapeHtmlComp(c.added.replace(/\n/g, '↵'))}</mark>`;
+        }
+        let ctx = '';
+        if (ctxSpan > 0) {
+            const src = c.type==='suppression' ? (oldTA.value||"") : (newTA.value||"");
+            const needle = (c.type==='suppression' ? c.removed : c.added) || "";
+            const pos = needle.length > 0 ? src.indexOf(needle) : -1;
+            if (pos>=0) {
+                const start = Math.max(0,pos-ctxSpan);
+                const end = Math.min(src.length, pos+needle.length+ctxSpan);
+                ctx = (start>0?'…':'') + src.slice(start,end).replace(/\r\n|\r/g, '\n').replace(/\n/g, '↵').replace(/\s+/g,' ') + (end<src.length?'…':'');
             }
         }
-        if (prevFocused) {
-            const el = document.getElementById(prevFocused);
-            if (el && el.tagName === 'MARK') {
-                el.classList.add('focused');
-                lastFocusedId = prevFocused;
-            } else {
-                lastFocusedId = null;
-                lastFocusedType = null;
-            }
+        btn.innerHTML = `<span class="type">${emojiFor(c.type)} ${cap(c.type)}</span> ${tokenHtml} ${ctx ? `<span class="ctx">${escapeHtmlComp(ctx)}</span>` : ``}`;
+        btn.addEventListener('click', () => {
+            const prev = document.querySelector('.comp-change.selected');
+            if (prev) prev.classList.remove('selected');
+            btn.classList.add('selected');
+            lastSelectedBtn = btn;
+            let focusId = btn.dataset.id;
+            let focusType = btn.dataset.type;
+            const isReplacement = focusType === 'remplacement';
+            if (isReplacement) focusType = 'insertion';
+            const opts = (btn.dataset.type === 'suppression') ? { removedText: btn.dataset.removed || '' } : undefined;
+            focusChangeComp(isReplacement ? focusId : focusId, focusType, opts);
+            updateBackButton();
+        });
+        changesListComp.appendChild(btn);
+        if (toRestoreId && c.id === toRestoreId) {
+            btn.classList.add('selected');
+            lastSelectedBtn = btn;
         }
-        updateBackButton();
-    });
-    document.getElementById("copyBtn").addEventListener('click', async () => {
-        try {
-            await navigator.clipboard.writeText(outComp.innerHTML);
-            copyBtnComp.textContent = 'Copié ✓';
-            setTimeout(() => copyBtnComp.textContent = 'Copier le résultat', 900);
-        } catch(e) {
-            alert("Impossible de copier. Sélectionne et copie manuellement.");
+    }
+    updateBackButton();
+}
+document.getElementById("compareBtn").addEventListener('click', () => {
+    if (lastSelectedBtn) { lastSelectedBtn.classList.remove('selected'); lastSelectedBtn = null; }
+    clearFocusComp();
+    computeComp();
+    updateBackButton();
+});
+document.getElementById("toggleContext").addEventListener('click', () => {
+    showContext = !showContext;
+    document.getElementById("toggleContext").textContent = showContext ? "Contexte —" : "± Contexte";
+    const prevSelectedId = lastSelectedBtn ? lastSelectedBtn.dataset.id : null;
+    const prevFocused = lastFocusedId;
+    computeComp();
+    if (prevSelectedId) {
+        const candidate = Array.from(document.querySelectorAll('.comp-change')).find(b => b.dataset.id === prevSelectedId);
+        if (candidate) {
+            candidate.classList.add('selected');
+            lastSelectedBtn = candidate;
+        } else {
+            lastSelectedBtn = null;
         }
-    });
-    backBtn.addEventListener('click', () => {
-        if (!lastSelectedBtn) return;
-        lastSelectedBtn.scrollIntoView({behavior:'smooth', block:'center'});
-        flashSidebarCard(lastSelectedBtn);
-    });
-    onlyDelBtn.addEventListener('click', () => {
-        showOnlyDeletions = !showOnlyDeletions;
-        onlyDelBtn.classList.toggle('active', showOnlyDeletions);
-        onlyDelBtn.textContent = showOnlyDeletions ? '➖ Suppressions (ON)' : '➖ Suppressions uniquement';
-        const prevSelectedId = lastSelectedBtn ? lastSelectedBtn.dataset.id : null;
-        const prevFocused = lastFocusedId;
-        computeComp();
-        if (prevSelectedId) {
-            const cand = Array.from(document.querySelectorAll('.comp-change')).find(b => b.dataset.id === prevSelectedId);
-            if (cand) {
-                cand.classList.add('selected');
-                lastSelectedBtn = cand;
-            } else {
-                lastSelectedBtn = null;
-            }
+    }
+    if (prevFocused) {
+        const el = document.getElementById(prevFocused);
+        if (el && el.tagName === 'MARK') {
+            el.classList.add('focused');
+            lastFocusedId = prevFocused;
+        } else {
+            lastFocusedId = null;
+            lastFocusedType = null;
         }
-        if (prevFocused) {
-            const el = document.getElementById(prevFocused);
-            if (el && el.tagName === 'MARK') {
-                el.classList.add('focused');
-                lastFocusedId = prevFocused;
-            } else {
-                lastFocusedId = null;
-                lastFocusedType = null;
-            }
+    }
+    updateBackButton();
+});
+document.getElementById("copyBtn").addEventListener('click', async () => {
+    try {
+        await navigator.clipboard.writeText(outComp.innerHTML);
+        copyBtnComp.textContent = 'Copié ✓';
+        setTimeout(() => copyBtnComp.textContent = 'Copier le résultat', 900);
+    } catch(e) {
+        alert("Impossible de copier. Sélectionne et copie manuellement.");
+    }
+});
+backBtn.addEventListener('click', () => {
+    if (!lastSelectedBtn) return;
+    lastSelectedBtn.scrollIntoView({behavior:'smooth', block:'center'});
+    flashSidebarCard(lastSelectedBtn);
+});
+onlyDelBtn.addEventListener('click', () => {
+    showOnlyDeletions = !showOnlyDeletions;
+    onlyDelBtn.classList.toggle('active', showOnlyDeletions);
+    onlyDelBtn.textContent = showOnlyDeletions ? '➖ Suppressions (ON)' : '➖ Suppressions uniquement';
+    const prevSelectedId = lastSelectedBtn ? lastSelectedBtn.dataset.id : null;
+    const prevFocused = lastFocusedId;
+    computeComp();
+    if (prevSelectedId) {
+        const cand = Array.from(document.querySelectorAll('.comp-change')).find(b => b.dataset.id === prevSelectedId);
+        if (cand) {
+            cand.classList.add('selected');
+            lastSelectedBtn = cand;
+        } else {
+            lastSelectedBtn = null;
         }
-        updateBackButton();
-    });
-    oldTA.value = "Le contrat entre en vigueur le 1er janvier 2024.\nLe prix est de 100€.\nLe client accepte les conditions.";
-    newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 €.\nLe client accepte pleinement les conditions générales.";
-    loadTheme();
-    loadData();
-    bootstrapEmbedIfAny();
-    </script>
+    }
+    if (prevFocused) {
+        const el = document.getElementById(prevFocused);
+        if (el && el.tagName === 'MARK') {
+            el.classList.add('focused');
+            lastFocusedId = prevFocused;
+        } else {
+            lastFocusedId = null;
+            lastFocusedType = null;
+        }
+    }
+    updateBackButton();
+});
+oldTA.value = "Le contrat entre en vigueur le 1er janvier 2024.\nLe prix est de 100€.\nLe client accepte les conditions.";
+newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 €.\nLe client accepte pleinement les conditions générales.";
+loadTheme();
+loadData();
+bootstrapEmbedIfAny();
+</script>
 </body>
 </html>
