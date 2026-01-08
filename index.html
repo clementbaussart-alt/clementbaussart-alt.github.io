@@ -208,18 +208,13 @@
 	border: 1px solid var(--border); /* avant: 2px */
 	align-items: center;
 }
-
-.editor-btn {
-	background: var(--panel);
-	border: 1px solid var(--primary); /* avant: 2px */
-	color: var(--primary);
-	padding: 6px 10px;       /* avant: 8px 14px */
-	border-radius: 6px;
-	cursor: pointer;
-	font-size: 12px;         /* avant: 14px */
-	font-weight: 700;
-	transition: all 0.2s;
-	line-height: 1;
+.editor-btn{
+	font-size: 12px !important;
+	padding: 4px 8px !important;
+	border-width: 1px !important;
+	line-height: 1 !important;
+	min-width: 0 !important;
+	min-height: 0 !important;
 }
         .editor-btn:hover { background: var(--primary); color: white; }
         .editor-content { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; min-height: 120px; resize: vertical; overflow-y: auto; background: var(--panel); color: var(--text); }
