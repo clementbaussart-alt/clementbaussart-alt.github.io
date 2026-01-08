@@ -462,9 +462,9 @@
                         
                         <!-- Boutons G I S -->
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-bottom: 4px;">
-                            <button class="editor-btn" onclick="formatText('bold','Q')" title="Gras" aria-label="Gras"><b>G</b></button>
-							<button class="editor-btn" onclick="formatText('italic','Q')" title="Italique" aria-label="Italique"><i>I</i></button>
-							<button class="editor-btn" onclick="formatText('underline','Q')" title="Souligné" aria-label="Souligné"><u>S</u></button>
+                            <button class="editor-btn" onclick="execFormatCommand('bold')" title="Gras" aria-label="Gras"><b>G</b></button>
+							<button class="editor-btn" onclick="execFormatCommand('italic')" title="Italique" aria-label="Italique"><i>I</i></button>
+							<button class="editor-btn" onclick="execFormatCommand('underline')" title="Souligné" aria-label="Souligné"><u>S</u></button>
                         </div>
                         
                         <!-- Couleurs -->
@@ -473,11 +473,11 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">
                                 <div>
                                     <div style="font-size: 8px; color: var(--text-soft); margin-bottom: 1px; text-align: center;">Texte</div>
-                                    <input type="color" id="textColorQ" value="#000000" title="Couleur du texte" style="width: 100%; height: 22px; border: 1px solid var(--border); border-radius: 2px; cursor: pointer; padding: 0;">
+                                    <input type="color" id="textColorPicker" value="#000000" title="Couleur du texte" style="width: 100%; height: 22px; border: 1px solid var(--border); border-radius: 2px; cursor: pointer; padding: 0;" onchange="applyColorToSelection('foreColor', this.value)">
                                 </div>
                                 <div>
                                     <div style="font-size: 8px; color: var(--text-soft); margin-bottom: 1px; text-align: center;">Fond</div>
-                                    <input type="color" id="bgColorQ" value="#ffff00" title="Couleur de fond" style="width: 100%; height: 22px; border: 1px solid var(--border); border-radius: 2px; cursor: pointer; padding: 0;">
+                                    <input type="color" id="bgColorPicker" value="#ffff00" title="Couleur de fond" style="width: 100%; height: 22px; border: 1px solid var(--border); border-radius: 2px; cursor: pointer; padding: 0;" onchange="applyColorToSelection('backColor', this.value)">
                                 </div>
                             </div>
                         </div>
@@ -495,12 +495,11 @@
                         
                         <!-- Boutons Image et Effacer -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 2px;">
-                            <button class="editor-btn" onclick="insertImage('Q')" style="padding: 3px; font-size: 9px; height: 22px; display: flex; align-items: center; justify-content: center; gap: 2px; border: 1px solid var(--border); border-radius: 2px; background: var(--panel);">
+                            <button class="editor-btn" onclick="insertImage()" style="padding: 3px; font-size: 9px; height: 22px; display: flex; align-items: center; justify-content: center; gap: 2px; border: 1px solid var(--border); border-radius: 2px; background: var(--panel);">
                                 <span>🖼️</span>
                                 <span style="font-size: 8px;">Image</span>
                             </button>
-                            <button class="editor-btn" onclick="clearFormat('Q')" title="Effacer la mise en forme" aria-label="Effacer la mise en forme">✖</button>
-                            </button>
+                            <button class="editor-btn" onclick="clearFormatNow()" title="Effacer la mise en forme" aria-label="Effacer la mise en forme">✖</button>
                         </div>
                         
                         <!-- Indication -->
@@ -934,78 +933,48 @@
             view: p.get('view') || null // "manage" | "study" | "lists" (optionnel)
         };
     }
-	// Fonction pour appliquer le formatage
-function execFormatCommand(command) { 
-    const activeEditor = document.activeElement;
-    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
-        document.execCommand(command, false, null);
-        activeEditor.focus();
-    }
-}
+	
+	// FONCTIONS DE FORMATAGE CORRIGÉES
+	function execFormatCommand(command) { 
+		const activeEditor = document.activeElement;
+		if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+			document.execCommand(command, false, null);
+			activeEditor.focus();
+		}
+	}
 
-function clearFormatNow() { 
-    const activeEditor = document.activeElement;
-    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
-        const text = activeEditor.innerText;
-        activeEditor.innerHTML = text;
-        activeEditor.focus();
-    }
-}
-// Fonction pour appliquer la couleur
-function applyColorToSelection(command, color) {
-    const activeEditor = document.activeElement;
-    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
-        document.execCommand(command, false, color);
-        activeEditor.focus();
-    }
-}
+	function clearFormatNow() { 
+		const activeEditor = document.activeElement;
+		if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+			const text = activeEditor.innerText;
+			activeEditor.innerHTML = text;
+			activeEditor.focus();
+		}
+	}
 
-// Fonction pour insérer une image (doit déjà exister)
-function insertImage(side) {
-    // Marquer quel éditeur est actif
-    const activeEditor = document.activeElement;
-    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
-        window.currentEditingSide = activeEditor.id === 'newQuestion' ? 'Q' : 'A';
-    } else {
-        window.currentEditingSide = side;
-    }
-    
-    // Déclencher le sélecteur de fichier
-    document.getElementById('imageInput').click();
-}
+	// Fonction pour appliquer la couleur
+	function applyColorToSelection(command, color) {
+		const activeEditor = document.activeElement;
+		if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+			document.execCommand(command, false, color);
+			activeEditor.focus();
+		}
+	}
 
-// Assurez-vous que la fonction addCard() fonctionne
-function addCard() {
-    const q = document.getElementById('newQuestion').innerHTML.trim();
-    const a = document.getElementById('newAnswer').innerHTML.trim();
-    const impEl = document.getElementById('importanceSelect');
-    const importance = impEl ? (impEl.value || 'normal') : 'normal';
-    
-    if (!q || !a || q === '<br>' || a === '<br>') {
-        alert('Veuillez remplir la question et la réponse.');
-        return;
-    }
-    
-    if (!currentCategory || !currentFolder || !currentList) {
-        alert("Sélectionne d'abord une liste.");
-        return;
-    }
-    
-    categories[currentCategory][currentFolder][currentList].push({
-        question: q,
-        answer: a,
-        importance: importance
-    });
-    
-    saveData();
-    document.getElementById('newQuestion').innerHTML = '';
-    document.getElementById('newAnswer').innerHTML = '';
-    
-    if (impEl) impEl.value = 'normal';
-    updateCategoryList();
-    
-    if (currentPage === 'manage') loadManageCardsPage();
-}
+	// Fonction pour insérer une image
+	function insertImage() {
+		// Marquer quel éditeur est actif
+		const activeEditor = document.activeElement;
+		if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+			window.currentEditingSide = activeEditor.id === 'newQuestion' ? 'Q' : 'A';
+		} else {
+			window.currentEditingSide = 'Q';
+		}
+		
+		// Déclencher le sélecteur de fichier
+		document.getElementById('imageInput').click();
+	}
+	
     function bootstrapEmbedIfAny() {
         try {
             const qp = getQueryParams();
@@ -1030,24 +999,46 @@ function addCard() {
             console.error('Erreur embed:', e);
         }
     }
+	
+    // Initialisation des gestionnaires de couleur
+	document.addEventListener('DOMContentLoaded', function() {
+		const textColorPicker = document.getElementById('textColorPicker');
+		const bgColorPicker = document.getElementById('bgColorPicker');
+		
+		if (textColorPicker) {
+			textColorPicker.addEventListener('change', function(e) {
+				applyColorToSelection('foreColor', e.target.value);
+			});
+		}
+		
+		if (bgColorPicker) {
+			bgColorPicker.addEventListener('change', function(e) {
+				applyColorToSelection('backColor', e.target.value);
+			});
+		}
+	});
+
     // FONCTIONS FLASHCARDS
     function toggleSidebar() { const sidebar = document.getElementById('sidebar'); const mainContent = document.getElementById('mainContent'); const toggleBtn = document.getElementById('toggleSidebarBtn'); sidebar.classList.toggle('hidden'); mainContent.classList.toggle('sidebar-hidden'); toggleBtn.classList.toggle('sidebar-hidden'); }
-    function formatText(command) { 
-    const activeEditor = document.activeElement;
-    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
-        document.execCommand(command, false, null);
-        activeEditor.focus();
-    }
-}
+    
+	// Fonction formatText corrigée
+	function formatText(command) { 
+		const activeEditor = document.activeElement;
+		if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+			document.execCommand(command, false, null);
+			activeEditor.focus();
+		}
+	}
 
-function clearFormat() { 
-    const activeEditor = document.activeElement;
-    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
-        activeEditor.innerHTML = activeEditor.innerText;
-        activeEditor.focus();
-    }
-}
-    function insertImage(side) { currentEditingSide = side; document.getElementById('imageInput').click(); }
+	function clearFormat() { 
+		const activeEditor = document.activeElement;
+		if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+			activeEditor.innerHTML = activeEditor.innerText;
+			activeEditor.focus();
+		}
+	}
+    
+    // Gestionnaire d'image corrigé
     document.getElementById('imageInput').addEventListener('change', function(e) {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
@@ -1066,7 +1057,8 @@ function clearFormat() {
                 targetId = (currentEditingExisting.side === 'Q' ? 'editQ-' : 'editA-') + currentEditingExisting.idx;
                 editor = document.getElementById(targetId);
             } else {
-                editor = document.getElementById('new' + (currentEditingSide === 'Q' ? 'Question' : 'Answer'));
+                const editorId = window.currentEditingSide === 'Q' ? 'newQuestion' : 'newAnswer';
+                editor = document.getElementById(editorId);
             }
             if (!editor) {
                 console.error("Éditeur introuvable.");
@@ -1090,43 +1082,12 @@ function clearFormat() {
            
             editor.focus();
             currentEditingExisting = { idx: null, side: null };
+            window.currentEditingSide = null;
         };
         reader.readAsDataURL(file);
         e.target.value = '';
     });
-    // Initialisation des gestionnaires de couleur
-document.addEventListener('DOMContentLoaded', function() {
-    const textColorPicker = document.getElementById('textColorPicker');
-    const bgColorPicker = document.getElementById('bgColorPicker');
     
-    if (textColorPicker) {
-        textColorPicker.addEventListener('change', function(e) {
-            const activeEditor = document.activeElement;
-            if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
-                document.execCommand('foreColor', false, e.target.value);
-                activeEditor.focus();
-            }
-        });
-    }
-    
-    if (bgColorPicker) {
-        bgColorPicker.addEventListener('change', function(e) {
-            const activeEditor = document.activeElement;
-            if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
-                document.execCommand('backColor', false, e.target.value);
-                activeEditor.focus();
-            }
-        });
-    }
-});
-// Fonction pour appliquer la couleur à la sélection active
-function applyColorToSelection(command, color) {
-    const activeEditor = document.activeElement;
-    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
-        document.execCommand(command, false, color);
-        activeEditor.focus();
-    }
-}
     function showPage(e) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); if (e === 'home') { document.getElementById('homePage').classList.add('active'); document.querySelector('.nav-item').classList.add('active'); currentPage = 'home'; currentCategory = null; currentFolder = null; currentList = null; updateHomeStats(); } }
     function showListsPage(category, folder) { currentCategory = category; currentFolder = folder; currentList = null; currentPage = 'lists'; document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); document.getElementById('listsPage').classList.add('active'); document.getElementById('listsTitle').textContent = folder; updateCategoryList(); loadListsPage(); }
     function showManageCardsPage(category, folderName, listName) { currentCategory = category; currentFolder = folderName; currentList = listName; currentPage = 'manage'; document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); document.getElementById('manageCardsPage').classList.add('active'); document.getElementById('manageTitle').textContent = 'Gérer : ' + listName; document.getElementById('backToLists').onclick = function() { showListsPage(currentCategory, currentFolder); }; updateCategoryList(); loadManageCardsPage(); }
@@ -1523,162 +1484,9 @@ function applyColorToSelection(command, color) {
         updateCategoryList();
         if (currentPage === 'manage') loadManageCardsPage();
     }
-    // Fonctions pour les nouvelles options de mise en forme
-function applyPresetFormat(type) {
-    const activeEditor = document.activeElement;
-    if (!activeEditor || !activeEditor.classList.contains('editor-content')) return;
     
-    switch(type) {
-        case 'highlight':
-            document.execCommand('backColor', false, '#fff3cd');
-            document.execCommand('foreColor', false, '#856404');
-            break;
-        case 'code':
-            document.execCommand('formatBlock', false, '<pre>');
-            document.execCommand('backColor', false, '#f8f9fa');
-            document.execCommand('foreColor', false, '#e83e8c');
-            break;
-        case 'quote':
-            document.execCommand('formatBlock', false, '<blockquote>');
-            document.execCommand('styleWithCSS', false, true);
-            document.execCommand('foreColor', false, '#6c757d');
-            break;
-    }
-    activeEditor.focus();
-}
-
-function insertSpecialChar(type) {
-    const activeEditor = document.activeElement;
-    if (!activeEditor || !activeEditor.classList.contains('editor-content')) return;
-    
-    let text = '';
-    switch(type) {
-        case 'bullet':
-            text = '• ';
-            break;
-        case 'number':
-            text = '1. ';
-            break;
-        case 'divider':
-            text = '\n---\n';
-            break;
-    }
-    
-    document.execCommand('insertText', false, text);
-    activeEditor.focus();
-}
-
-function duplicateCurrentCard() {
-    if (!currentCategory || !currentFolder || !currentList) return;
-    const cards = categories[currentCategory][currentFolder][currentList];
-    if (cards.length === 0) {
-        alert("Aucune carte à dupliquer.");
-        return;
-    }
-    
-    const lastCard = cards[cards.length - 1];
-    document.getElementById('newQuestion').innerHTML = lastCard.question;
-    document.getElementById('newAnswer').innerHTML = lastCard.answer;
-    
-    // Copier aussi l'importance si elle existe
-    if (lastCard.importance) {
-        const impSelect = document.getElementById('importanceSelect');
-        if (impSelect) impSelect.value = lastCard.importance;
-    }
-    
-    alert("Dernière carte dupliquée dans les champs d'édition !");
-}
-
-function clearAllFormats() {
-    const qEditor = document.getElementById('newQuestion');
-    const aEditor = document.getElementById('newAnswer');
-    
-    if (qEditor) qEditor.innerHTML = qEditor.innerText;
-    if (aEditor) aEditor.innerHTML = aEditor.innerText;
-    
-    // Réinitialiser aussi l'importance
-    const impSelect = document.getElementById('importanceSelect');
-    if (impSelect) impSelect.value = 'normal';
-    
-    alert("Tous les formats ont été effacés.");
-}
-
-function previewCard() {
-    const question = document.getElementById('newQuestion').innerHTML.trim();
-    const answer = document.getElementById('newAnswer').innerHTML.trim();
-    
-    if (!question && !answer) {
-        alert("Aucun contenu à prévisualiser.");
-        return;
-    }
-    
-    const previewWindow = window.open('', '_blank', 'width=600,height=400');
-    previewWindow.document.write(`
-        <html>
-        <head>
-            <title>Aperçu de la carte</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                .card { border: 2px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
-                .front { background: #f8f9fa; }
-                .back { background: #e8ebff; }
-                .label { font-weight: bold; color: #667eea; margin-bottom: 10px; }
-                .content { margin-bottom: 10px; }
-				/* --- UI COMPACT (force) --- */
-#importanceSelect,
-#folderCategorySelect,
-#importSeparator,
-#importCatSelect,
-#importFolderSelect,
-.input-group select {
-	font-size: 12px !important;
-	padding: 6px 8px !important;
-	height: 32px !important;
-}
-
-.editor-toolbar {
-	padding: 6px !important;
-	gap: 6px !important;
-}
-
-.editor-btn {
-	font-size: 12px !important;
-	padding: 5px 8px !important;
-	line-height: 1 !important;
-}
-
-.color-picker {
-	width: 26px !important;
-	height: 26px !important;
-	padding: 0 !important;
-}
-
-.input-group input[type="text"]{
-	font-size: 12px !important;
-	padding: 6px 8px !important;
-	height: 32px !important;
-}
-            </style>
-        </head>
-        <body>
-            <h2>👁️ Aperçu de la carte</h2>
-            <div class="card front">
-                <div class="label">Question / Recto :</div>
-                <div class="content">${question || '(vide)'}</div>
-            </div>
-            <div class="card back">
-                <div class="label">Réponse / Verso :</div>
-                <div class="content">${answer || '(vide)'}</div>
-            </div>
-            <button onclick="window.close()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                Fermer
-            </button>
-        </body>
-        </html>
-    `);
-    previewWindow.document.close();
-}
     function deleteCard(idx) { if (!confirm('Supprimer cette carte ?')) return; categories[currentCategory][currentFolder][currentList].splice(idx, 1); if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][currentList]) { delete results[currentCategory][currentFolder][currentList][idx]; const newResults = {}; Object.keys(results[currentCategory][currentFolder][currentList]).forEach(key => { const i = parseInt(key); if (i > idx) newResults[i - 1] = results[currentCategory][currentFolder][currentList][key]; else if (i < idx) newResults[i] = results[currentCategory][currentFolder][currentList][key]; }); results[currentCategory][currentFolder][currentList] = newResults; saveResults(); } saveData(); updateCategoryList(); if (currentPage === 'manage') loadManageCardsPage(); }
+    
     // --- ÉDITION DE CARTES EXISTANTES ---
     function startEditCard(idx) {
         if (!currentCategory || !currentFolder || !currentList) return;
@@ -1749,6 +1557,7 @@ function previewCard() {
         currentEditingExisting = { idx, side };
         document.getElementById('imageInput').click();
     }
+    
     // MODALS FLASHCARDS
     function showNewCategoryModal() { document.getElementById('newCategoryModal').classList.add('show'); const input = document.getElementById('categoryNameInput'); input.value = ''; setTimeout(() => input.focus(), 150); }
     function closeNewCategoryModal() { document.getElementById('newCategoryModal').classList.remove('show'); document.getElementById('categoryNameInput').value = ''; }
@@ -1999,6 +1808,7 @@ function previewCard() {
     document.getElementById('renameCategoryModal').addEventListener('click', function(e) { if (e.target === this) closeRenameCategoryModal(); });
     document.getElementById('renameFolderModal').addEventListener('click', function(e) { if (e.target === this) closeRenameFolderModal(); });
     document.getElementById('renameListModal').addEventListener('click', function(e) { if (e.target === this) closeRenameListModal(); });
+    
     // ====== COMPARATEUR DE TEXTE ======
     function openComparator() {
         document.getElementById('comparatorModal').classList.add('show');
@@ -2008,6 +1818,7 @@ function previewCard() {
         document.getElementById('comparatorModal').classList.remove('show');
         document.body.style.overflow = 'auto';
     }
+    
     // Variables comparateur
     let showContext = false;
     let lastFocusedId = null;
@@ -2169,6 +1980,7 @@ function previewCard() {
        
         hintComp.textContent = `${finalChanges.length} modifications détectées${rep? " • remplacements: "+rep : ""}.`;
     }
+    
     // --- LOGIQUE IMPORT TEXTE / CSV ---
     function showImportTextModal() {
         const modal = document.getElementById('importTextModal');
