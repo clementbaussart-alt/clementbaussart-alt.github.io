@@ -367,33 +367,36 @@
         .result-gif.show { display: block; }
        
         /* Styles pour les badges d'importance sur les cartes */
-        .card-importance-badge {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            z-index: 10;
-            pointer-events: none;
-            opacity: 0.5;
-            transition: opacity 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
+        /* Styles pour les badges d'importance sur les cartes - EN HAUT */
+.card-importance-header {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 
-        .card-importance-badge.important { background: #10b981; color: white; }
-        .card-importance-badge.normal { background: #3b82f6; color: white; }
-        .card-importance-badge.pas-important { background: #ef4444; color: white; }
-        .card-importance-badge.explication { background: #6b7280; color: white; }
+.card-importance-header.important { background: #10b981; color: white; }
+.card-importance-header.normal { background: #3b82f6; color: white; }
+.card-importance-header.pas-important { background: #ef4444; color: white; }
+.card-importance-header.explication { background: #6b7280; color: white; }
 
-        .card:hover .card-importance-badge {
-            opacity: 0.8;
-        }
-
+.card:hover .card-importance-header {
+    opacity: 1;
+}
         /* Contrôles de filtrage par importance */
         .filter-controls {
             background: var(--panel-muted);
@@ -1614,70 +1617,99 @@
     }
     
     function loadCard() { 
-        if (!currentCategory || !currentFolder || !currentList || 
-            !categories[currentCategory] || !categories[currentCategory][currentFolder] || 
-            !categories[currentCategory][currentFolder][currentList]) return;
-        
-        const cards = categories[currentCategory][currentFolder][currentList];
-        
-        // Filtrer les cartes si un filtre est actif
-        let filteredCards = cards;
-        if (window.activeImportanceFilter && window.activeImportanceFilter.length > 0) {
-            filteredCards = cards.filter(card => 
-                window.activeImportanceFilter.includes(card.importance || 'normal')
-            );
-        }
-        
-        if (isReviewMode) {
-            if (currentIndex >= reviewIndices.length) {
-                showEndScreen();
-                return;
-            }
-            const idx = reviewIndices[currentIndex];
-            const card = cards[idx];
-            displayCardContent(card);
-        } else {
-            if (currentIndex >= filteredCards.length) {
-                showEndScreen();
-                return;
-            }
-            const card = filteredCards[currentIndex];
-            displayCardContent(card);
-        }
-        
-        updateProgress();
-        updateStats();
+    if (!currentCategory || !currentFolder || !currentList || 
+        !categories[currentCategory] || !categories[currentCategory][currentFolder] || 
+        !categories[currentCategory][currentFolder][currentList]) return;
+    
+    const cards = categories[currentCategory][currentFolder][currentList];
+    
+    // Filtrer les cartes si un filtre est actif
+    let filteredCards = cards;
+    if (window.activeImportanceFilter && window.activeImportanceFilter.length > 0) {
+        filteredCards = cards.filter(card => 
+            window.activeImportanceFilter.includes(card.importance || 'normal')
+        );
     }
     
+    if (isReviewMode) {
+        if (currentIndex >= reviewIndices.length) {
+            showEndScreen();
+            return;
+        }
+        const idx = reviewIndices[currentIndex];
+        const card = cards[idx];
+        displayCardContent(card);
+    } else {
+        if (currentIndex >= filteredCards.length) {
+            showEndScreen();
+            return;
+        }
+        const card = filteredCards[currentIndex];
+        displayCardContent(card);
+    }
+    
+    updateProgress();
+    updateStats();
+}
     function displayCardContent(card) {
-        document.getElementById('question').innerHTML = card.question;
-        document.getElementById('answer').innerHTML = card.answer;
-        
-        // Sauvegarder l'importance actuelle pour les stats
-        window.currentImportance = card.importance || 'normal';
-        
-        // Ajouter ou mettre à jour le badge d'importance
-        let badge = document.querySelector('.card-importance-badge');
-        if (!badge) {
-            badge = document.createElement('div');
-            badge.className = 'card-importance-badge';
-            document.getElementById('flashcard').appendChild(badge);
-        }
-        
-        // Mettre à jour le badge
-        const importanceText = card.importance || 'normal';
-        badge.textContent = importanceText;
-        badge.className = 'card-importance-badge ' + importanceText.replace(' ', '-');
-        
-        // Réinitialiser l'état de la carte
-        document.getElementById('flashcard').classList.remove('flipped');
-        isFlipped = false;
+    document.getElementById('question').innerHTML = card.question;
+    document.getElementById('answer').innerHTML = card.answer;
+    
+    // Sauvegarder l'importance actuelle pour les stats
+    window.currentImportance = card.importance || 'normal';
+    
+    // Supprimer tous les badges existants
+    const existingBadges = document.querySelectorAll('.card-importance-header');
+    existingBadges.forEach(badge => badge.remove());
+    
+    addFilterControls(); 
+    loadCurrentList(); 
+}
+    // Créer un nouveau badge seulement sur le recto
+    const badge = document.createElement('div');
+    const importanceText = card.importance || 'normal';
+    badge.className = 'card-importance-header ' + importanceText.replace(' ', '-');
+    
+    // Icône selon l'importance
+    let icon = '';
+    switch(importanceText) {
+        case 'important': icon = '⚠️'; break;
+        case 'normal': icon = '📘'; break;
+        case 'pas important': icon = '📕'; break;
+        case 'explication': icon = '📓'; break;
+        default: icon = '📘';
     }
     
+    badge.innerHTML = `<span>${icon}</span><span>${importanceText.toUpperCase()}</span>`;
+    
+    // Ajouter seulement au recto
+    const cardFront = document.querySelector('.card-front');
+    if (cardFront) {
+        cardFront.appendChild(badge);
+    }
+    
+    // Réinitialiser l'état de la carte
+    document.getElementById('flashcard').classList.remove('flipped');
+    isFlipped = false;
+}
     function showEmptyState() { document.getElementById('cardSection').style.display = 'none'; document.getElementById('endSection').style.display = 'none'; document.getElementById('emptyState').style.display = 'block'; document.getElementById('progressBar').style.width = '0%'; }
     function hideEmptyState() { document.getElementById('cardSection').style.display = 'block'; document.getElementById('endSection').style.display = 'none'; document.getElementById('emptyState').style.display = 'none'; }
     
-    function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); isFlipped = !isFlipped; }
+    function flipCard() { 
+    const card = document.getElementById('flashcard');
+    card.classList.toggle('flipped'); 
+    isFlipped = !isFlipped;
+    
+    // Cacher/afficher le badge selon le côté
+    const badge = document.querySelector('.card-importance-header');
+    if (badge) {
+        if (isFlipped) {
+            badge.style.display = 'none'; // Cacher sur le verso
+        } else {
+            badge.style.display = 'flex'; // Afficher sur le recto
+        }
+    }
+}
     function editCurrentCard() {
         if (!currentCategory || !currentFolder || !currentList) { alert("Aucune liste sélectionnée."); return; }
         const cards = categories[currentCategory][currentFolder][currentList] || [];
@@ -1820,8 +1852,16 @@
         document.getElementById('barUnknown').style.width = unknownPercent + '%';
         document.getElementById('barUnknown').textContent = stats.unknown;
     }
-    function restartSession() { currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; isReviewMode = false; reviewIndices = []; window.activeImportanceFilter = []; document.getElementById('studyModeIndicator').style.display = 'none'; document.getElementById('endSection').style.display = 'none'; document.getElementById('cardSection').style.display = 'block'; addFilterControls(); loadCurrentList(); }
-    function reviewWrongCards() { showStudyPage(currentCategory, currentFolder, currentList, true); }
+function restartSession() { 
+    currentIndex = 0; 
+    stats = {known: 0, partial: 0, unknown: 0}; 
+    isReviewMode = false; 
+    reviewIndices = []; 
+    window.activeImportanceFilter = []; 
+    document.getElementById('studyModeIndicator').style.display = 'none'; 
+    document.getElementById('endSection').style.display = 'none'; 
+    document.getElementById('cardSection').style.display = 'block';
+	function reviewWrongCards() { showStudyPage(currentCategory, currentFolder, currentList, true); }
     function addCard() {
         const q = document.getElementById('newQuestion').innerHTML.trim();
         const a = document.getElementById('newAnswer').innerHTML.trim();
