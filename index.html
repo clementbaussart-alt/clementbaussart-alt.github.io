@@ -936,6 +936,114 @@
             view: p.get('view') || null // "manage" | "study" | "lists" (optionnel)
         };
     }
+	// Fonction pour appliquer le formatage
+function formatText(command) { 
+    const activeEditor = document.activeElement;
+    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+        document.execCommand(command, false, null);
+        activeEditor.focus();
+    }
+}
+
+// Fonction pour effacer le formatage
+function clearFormat() { 
+    const activeEditor = document.activeElement;
+    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+        // Sauvegarder la position du curseur
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const startOffset = range.startOffset;
+        const endOffset = range.endOffset;
+        
+        // Remplacer le HTML par le texte brut
+        const text = activeEditor.innerText;
+        activeEditor.innerHTML = text;
+        
+        // Restaurer la position du curseur
+        const textNode = activeEditor.firstChild || activeEditor;
+        const newRange = document.createRange();
+        newRange.setStart(textNode, Math.min(startOffset, text.length));
+        newRange.setEnd(textNode, Math.min(endOffset, text.length));
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+        
+        activeEditor.focus();
+    }
+}
+
+// Gestionnaires pour les couleurs
+document.addEventListener('DOMContentLoaded', function() {
+    const textColorInput = document.getElementById('textColorQ');
+    const bgColorInput = document.getElementById('bgColorQ');
+    
+    if (textColorInput) {
+        textColorInput.addEventListener('change', function(e) { 
+            applyColorToSelection('foreColor', e.target.value); 
+        });
+    }
+    
+    if (bgColorInput) {
+        bgColorInput.addEventListener('change', function(e) { 
+            applyColorToSelection('backColor', e.target.value); 
+        });
+    }
+});
+
+// Fonction pour appliquer la couleur
+function applyColorToSelection(command, color) {
+    const activeEditor = document.activeElement;
+    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+        document.execCommand(command, false, color);
+        activeEditor.focus();
+    }
+}
+
+// Fonction pour insérer une image (doit déjà exister)
+function insertImage(side) {
+    // Marquer quel éditeur est actif
+    const activeEditor = document.activeElement;
+    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+        window.currentEditingSide = activeEditor.id === 'newQuestion' ? 'Q' : 'A';
+    } else {
+        window.currentEditingSide = side;
+    }
+    
+    // Déclencher le sélecteur de fichier
+    document.getElementById('imageInput').click();
+}
+
+// Assurez-vous que la fonction addCard() fonctionne
+function addCard() {
+    const q = document.getElementById('newQuestion').innerHTML.trim();
+    const a = document.getElementById('newAnswer').innerHTML.trim();
+    const impEl = document.getElementById('importanceSelect');
+    const importance = impEl ? (impEl.value || 'normal') : 'normal';
+    
+    if (!q || !a || q === '<br>' || a === '<br>') {
+        alert('Veuillez remplir la question et la réponse.');
+        return;
+    }
+    
+    if (!currentCategory || !currentFolder || !currentList) {
+        alert("Sélectionne d'abord une liste.");
+        return;
+    }
+    
+    categories[currentCategory][currentFolder][currentList].push({
+        question: q,
+        answer: a,
+        importance: importance
+    });
+    
+    saveData();
+    document.getElementById('newQuestion').innerHTML = '';
+    document.getElementById('newAnswer').innerHTML = '';
+    
+    if (impEl) impEl.value = 'normal';
+    updateCategoryList();
+    
+    if (currentPage === 'manage') loadManageCardsPage();
+}
     function bootstrapEmbedIfAny() {
         try {
             const qp = getQueryParams();
