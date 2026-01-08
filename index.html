@@ -199,13 +199,13 @@
         .card-edit-label { font-weight: 600; color: var(--text-soft); margin-right: 5px; }
         .editor-toolbar {
 	display: flex;
-	gap: 6px;                /* avant: 5px */
+	gap: 6px;
 	margin-bottom: 10px;
 	flex-wrap: wrap;
-	padding: 8px;            /* avant: 10px */
+	padding: 8px;
 	background: var(--panel-muted);
 	border-radius: 8px;
-	border: 1px solid var(--border); /* avant: 2px */
+	border: 1px solid var(--border);
 	align-items: center;
 }
 .editor-btn{
@@ -247,10 +247,10 @@
         .input-group label { display: block; margin-bottom: 5px; color: var(--text); font-weight: 600; }
         .input-group input[type="text"], .input-group input[type="color"] {
 	width: 100%;
-	padding: 8px 10px;       /* avant: 12px 15px */
+	padding: 8px 10px;
 	border: 2px solid var(--border);
 	border-radius: 8px;
-	font-size: 14px;         /* avant: 16px */
+	font-size: 14px;
 	font-family: inherit;
 	background: var(--panel);
 	color: var(--text);
@@ -259,10 +259,10 @@
         .input-group input[type="text"]:focus { outline: none; border-color: var(--primary); }
         .input-group select {
 	width: 100%;
-	padding: 8px 10px;       /* avant: 12px 15px */
+	padding: 8px 10px;
 	border: 2px solid var(--border);
 	border-radius: 8px;
-	font-size: 14px;         /* avant: 16px */
+	font-size: 14px;
 	font-family: inherit;
 	background: var(--panel);
 	color: var(--text);
@@ -365,6 +365,137 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.12);
         }
         .result-gif.show { display: block; }
+       
+        /* Styles pour les badges d'importance sur les cartes */
+        .card-importance-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .card-importance-badge.important { background: #10b981; color: white; }
+        .card-importance-badge.normal { background: #3b82f6; color: white; }
+        .card-importance-badge.pas-important { background: #ef4444; color: white; }
+        .card-importance-badge.explication { background: #6b7280; color: white; }
+
+        .card:hover .card-importance-badge {
+            opacity: 0.8;
+        }
+
+        /* Contrôles de filtrage par importance */
+        .filter-controls {
+            background: var(--panel-muted);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .filter-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-soft);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-btn.active {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .filter-btn.important { background: #10b98120; color: #10b981; border-color: #10b981; }
+        .filter-btn.normal { background: #3b82f620; color: #3b82f6; border-color: #3b82f6; }
+        .filter-btn.pas-important { background: #ef444420; color: #ef4444; border-color: #ef4444; }
+        .filter-btn.explication { background: #6b728020; color: #6b7280; border-color: #6b7280; }
+
+        .filter-btn.active.important { background: #10b981; color: white; }
+        .filter-btn.active.normal { background: #3b82f6; color: white; }
+        .filter-btn.active.pas-important { background: #ef4444; color: white; }
+        .filter-btn.active.explication { background: #6b7280; color: white; }
+
+        .filter-btn .count {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .filter-btn.active .count {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Indicateur de filtrage actif */
+        .filter-indicator {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+
+        /* Options de filtrage dans le mode révision */
+        .review-options {
+            background: var(--panel-muted);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid var(--border);
+        }
+
+        .review-options h4 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
     </style>
 </head>
 <body>
@@ -419,14 +550,11 @@
         <h2 id="manageTitle">Gérer les cartes</h2>
         
         <div class="manage-section">
-            <!-- Disposition en deux colonnes -->
             <div style="display: grid; grid-template-columns: 1fr 110px; gap: 15px; margin-bottom: 25px;">
-                <!-- Colonne gauche : Éditeurs côte à côte avec numérotation -->
                 <div>
                     <h3 style="margin-bottom: 12px; color: var(--text); font-size: 15px;">Ajouter une carte</h3>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                        <!-- Recto - TERME -->
                         <div class="input-group">
                             <div style="display: flex; align-items: center; margin-bottom: 4px;">
                                 <div style="background: var(--primary); color: white; width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; margin-right: 5px;">1</div>
@@ -435,7 +563,6 @@
                             <div class="editor-content" id="newQuestion" contenteditable="true" style="height: 100px; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font-size: 13px; background: var(--panel); overflow-y: auto; resize: vertical; line-height: 1.4;"></div>
                         </div>
                         
-                        <!-- Verso - DÉFINITION -->
                         <div class="input-group">
                             <div style="display: flex; align-items: center; margin-bottom: 4px;">
                                 <div style="background: var(--primary); color: white; width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; margin-right: 5px;">2</div>
@@ -445,29 +572,24 @@
                         </div>
                     </div>
                     
-                    <!-- Bouton Ajouter -->
                     <button class="btn-add" onclick="addCard()" style="margin-top: 8px; padding: 8px 20px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); color: white; border: none; border-radius: 5px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
                         <span>➕</span>
                         <span>Ajouter la carte</span>
                     </button>
                 </div>
                 
-                <!-- Colonne droite : Options très compactes -->
                 <div>
                     <div style="background: var(--panel-muted); padding: 8px; border-radius: 6px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px;">
-                        <!-- Titre FORMAT -->
                         <div style="font-size: 11px; color: var(--text-soft); font-weight: 600; text-align: center; margin-bottom: 2px; text-transform: uppercase;">
                             FORMAT
                         </div>
                         
-                        <!-- Boutons G I S -->
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-bottom: 4px;">
                             <button class="editor-btn" onclick="execFormatCommand('bold')" title="Gras" aria-label="Gras"><b>G</b></button>
 							<button class="editor-btn" onclick="execFormatCommand('italic')" title="Italique" aria-label="Italique"><i>I</i></button>
 							<button class="editor-btn" onclick="execFormatCommand('underline')" title="Souligné" aria-label="Souligné"><u>S</u></button>
                         </div>
                         
-                        <!-- Couleurs -->
                         <div style="margin-bottom: 4px;">
                             <div style="font-size: 9px; color: var(--text-soft); margin-bottom: 2px; text-align: center;">Couleurs</div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">
@@ -482,7 +604,6 @@
                             </div>
                         </div>
                         
-                        <!-- Niveau d'importance -->
                         <div style="margin-bottom: 4px;">
                             <div style="font-size: 9px; color: var(--text-soft); margin-bottom: 2px; text-align: center;">Importance</div>
                             <select id="importanceSelect" style="width: 100%; padding: 3px 4px; border: 1px solid var(--border); border-radius: 2px; font-size: 10px; background: var(--panel); cursor: pointer; height: 22px;">
@@ -493,7 +614,6 @@
                             </select>
                         </div>
                         
-                        <!-- Boutons Image et Effacer -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 2px;">
                             <button class="editor-btn" onclick="insertImage()" style="padding: 3px; font-size: 9px; height: 22px; display: flex; align-items: center; justify-content: center; gap: 2px; border: 1px solid var(--border); border-radius: 2px; background: var(--panel);">
                                 <span>🖼️</span>
@@ -502,7 +622,6 @@
                             <button class="editor-btn" onclick="clearFormatNow()" title="Effacer la mise en forme" aria-label="Effacer la mise en forme">✖</button>
                         </div>
                         
-                        <!-- Indication -->
                         <div style="margin-top: 4px; padding: 3px; background: var(--panel); border-radius: 2px; border: 1px dashed var(--border);">
                             <p style="font-size: 7px; color: var(--text-soft); text-align: center; line-height: 1.1; margin: 0;">
                                 Sélectionnez du texte<br>puis cliquez
@@ -533,7 +652,6 @@
         <div class="container study-page">
             <div class="breadcrumb"><a id="backToListsStudy">← Retour aux listes</a></div>
             <div class="study-controls"> <div> <h2 id="studyTitle" style="display:inline">Liste</h2> <span id="studyModeIndicator" class="study-mode-indicator" style="display:none">🔄 Mode révision</span> </div> <button class="btn-edit-current" id="btnEditCurrent" onclick="editCurrentCard()">✏️ Éditer cette carte</button></div>
-            <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
             <div id="cardSection">
                 <div class="flip-hint">👆 Clique pour retourner (molette pour scroller)</div>
                 <div class="card-container">
@@ -753,6 +871,8 @@
     // VARIABLES GLOBALES FLASHCARDS
     let categories = {}, results = {}, currentCategory = null, currentFolder = null, currentList = null, currentPage = 'home', currentIndex = 0, isFlipped = false, isReviewMode = false, reviewIndices = [], stats = {known: 0, partial: 0, unknown: 0}, currentEditingSide = null, renameTarget = null, openCategories = {};
     let currentEditingExisting = { idx: null, side: null };
+    window.activeImportanceFilter = [];
+    window.currentImportance = 'normal';
    
     // ——— GIF "majorité connu" ———
     const GIF_KNOWN_URL = 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif';
@@ -783,7 +903,7 @@
             '--accent':'#11998e','--accent-2':'#38ef7d',
             '--text':'#333333','--text-soft':'#666666',
             '--panel':'#ffffff','--panel-muted':'#f5f7fa',
-            '--border':'#e0e0e0','--card-bg':'#ffffff',
+            '--border':'#e0e0e','--card-bg':'#ffffff',
             '--known':'#38ef7d','--partial':'#f5a623','--unknown':'#ff6b6b'
         },
         Sombre: {
@@ -800,12 +920,10 @@
         const preset = THEME_PRESETS[name];
         if (!preset) return;
         Object.entries(preset).forEach(([cssVar,val]) => setVar(cssVar,val));
-        // Répercute dans les inputs si le modal est ouvert
         for (const [cssVar, inputId] of themeVars) {
             const el = document.getElementById(inputId);
             if (el && preset[cssVar]) el.value = toColor(preset[cssVar]) || el.value;
         }
-        // Sauvegarde
         localStorage.setItem(THEME_KEY, JSON.stringify(preset));
     }
     function getComputedVar(name){
@@ -815,7 +933,6 @@
         document.documentElement.style.setProperty(name, value);
     }
     function openThemeModal(){
-        // 1) Pré-remplir + live preview
         for (const [cssVar, inputId] of themeVars) {
             const input = document.getElementById(inputId);
             if (!input) continue;
@@ -824,19 +941,16 @@
             input.oninput = (e) => {
                 const val = e.target.value;
                 if (val && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(val)) {
-                    setVar(cssVar, val); // aperçu en direct
+                    setVar(cssVar, val);
                 }
             };
         }
-        // 2) Branche l'auto‑save
         bindThemeAutoSave();
-        // 3) Ouvre le modal
         document.getElementById('themeModal').classList.add('show');
     }
     function closeThemeModal(){
         document.getElementById('themeModal').classList.remove('show');
     }
-    // Convertit rgb(...) ou vide -> #rrggbb si possible
     function toColor(v){
         if(!v) return null;
         const s=v.trim();
@@ -871,7 +985,6 @@
     }
     function resetTheme(){
         localStorage.removeItem(THEME_KEY);
-        // Supprime les overrides inline, retombe sur les valeurs par défaut du :root
         for(const [cssVar] of themeVars){
             document.documentElement.style.removeProperty(cssVar);
         }
@@ -930,7 +1043,7 @@
             cat: p.get('cat') || null,
             folder: p.get('folder') || null,
             list: p.get('list') || null,
-            view: p.get('view') || null // "manage" | "study" | "lists" (optionnel)
+            view: p.get('view') || null
         };
     }
 	
@@ -952,7 +1065,6 @@
 		}
 	}
 
-	// Fonction pour appliquer la couleur
 	function applyColorToSelection(command, color) {
 		const activeEditor = document.activeElement;
 		if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
@@ -961,9 +1073,7 @@
 		}
 	}
 
-	// Fonction pour insérer une image
 	function insertImage() {
-		// Marquer quel éditeur est actif
 		const activeEditor = document.activeElement;
 		if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
 			window.currentEditingSide = activeEditor.id === 'newQuestion' ? 'Q' : 'A';
@@ -971,7 +1081,6 @@
 			window.currentEditingSide = 'Q';
 		}
 		
-		// Déclencher le sélecteur de fichier
 		document.getElementById('imageInput').click();
 	}
 	
@@ -1000,8 +1109,7 @@
         }
     }
 	
-    // Initialisation des gestionnaires de couleur
-	document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
 		const textColorPicker = document.getElementById('textColorPicker');
 		const bgColorPicker = document.getElementById('bgColorPicker');
 		
@@ -1021,7 +1129,6 @@
     // FONCTIONS FLASHCARDS
     function toggleSidebar() { const sidebar = document.getElementById('sidebar'); const mainContent = document.getElementById('mainContent'); const toggleBtn = document.getElementById('toggleSidebarBtn'); sidebar.classList.toggle('hidden'); mainContent.classList.toggle('sidebar-hidden'); toggleBtn.classList.toggle('sidebar-hidden'); }
     
-	// Fonction formatText corrigée
 	function formatText(command) { 
 		const activeEditor = document.activeElement;
 		if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
@@ -1038,7 +1145,6 @@
 		}
 	}
     
-    // Gestionnaire d'image corrigé
     document.getElementById('imageInput').addEventListener('change', function(e) {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
@@ -1099,7 +1205,10 @@
         currentIndex = 0;
         stats = {known: 0, partial: 0, unknown: 0};
         isReviewMode = reviewMode;
-       
+        
+        // Réinitialiser les filtres
+        window.activeImportanceFilter = [];
+        
         if (isReviewMode) {
             reviewIndices = getCardsToReview();
             if (reviewIndices.length === 0) {
@@ -1109,7 +1218,7 @@
         } else {
             reviewIndices = [];
         }
-       
+        
         document.querySelectorAll('.page').forEach(e => e.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
         document.getElementById('studyPage').classList.add('active');
@@ -1118,9 +1227,111 @@
         document.getElementById('backToListsStudy').onclick = function() { showListsPage(currentCategory, currentFolder); };
         currentPage = 'study';
         updateCategoryList();
+        
+        // Ajouter les contrôles de filtrage
+        addFilterControls();
         loadCurrentList();
     }
-    function getCardsToReview() { if (!currentCategory || !currentFolder || !currentList || !results[currentCategory] || !results[currentCategory][currentFolder] || !results[currentCategory][currentFolder][currentList]) return []; const e = results[currentCategory][currentFolder][currentList], t = []; Object.keys(e).forEach(r => { const o = e[r]; if (o === 'partial' || o === 'unknown') t.push(parseInt(r)); }); return t; }
+    
+    function addFilterControls() {
+        const cardSection = document.getElementById('cardSection');
+        // Supprimer les anciens contrôles s'ils existent
+        const oldControls = cardSection.querySelector('.filter-controls');
+        if (oldControls) oldControls.remove();
+        
+        const controls = document.createElement('div');
+        controls.className = 'filter-controls';
+        
+        // Comptage des cartes par importance
+        const cards = categories[currentCategory][currentFolder][currentList];
+        const counts = {
+            'important': 0,
+            'normal': 0,
+            'pas important': 0,
+            'explication': 0
+        };
+        
+        cards.forEach(card => {
+            const importance = card.importance || 'normal';
+            counts[importance] = (counts[importance] || 0) + 1;
+        });
+        
+        controls.innerHTML = `
+            <div class="filter-title">
+                📊 Filtrer par importance
+                ${window.activeImportanceFilter.length > 0 ? 
+                    `<span class="filter-indicator">${window.activeImportanceFilter.length} filtre(s) actif(s)</span>` : ''}
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn important ${window.activeImportanceFilter.includes('important') ? 'active' : ''}" 
+                        onclick="toggleImportanceFilter('important')">
+                    <span>Important</span>
+                    <span class="count">${counts.important}</span>
+                </button>
+                <button class="filter-btn normal ${window.activeImportanceFilter.includes('normal') ? 'active' : ''}" 
+                        onclick="toggleImportanceFilter('normal')">
+                    <span>Normal</span>
+                    <span class="count">${counts.normal}</span>
+                </button>
+                <button class="filter-btn pas-important ${window.activeImportanceFilter.includes('pas important') ? 'active' : ''}" 
+                        onclick="toggleImportanceFilter('pas important')">
+                    <span>Pas important</span>
+                    <span class="count">${counts['pas important']}</span>
+                </button>
+                <button class="filter-btn explication ${window.activeImportanceFilter.includes('explication') ? 'active' : ''}" 
+                        onclick="toggleImportanceFilter('explication')">
+                    <span>Explication</span>
+                    <span class="count">${counts.explication}</span>
+                </button>
+                ${window.activeImportanceFilter.length > 0 ? 
+                    `<button class="filter-btn" onclick="clearImportanceFilter()" style="background:var(--border);color:var(--text);">
+                        ✕ Tout effacer
+                    </button>` : ''}
+            </div>
+        `;
+        
+        // Insérer avant la première carte
+        cardSection.insertBefore(controls, cardSection.firstChild);
+    }
+    
+    function toggleImportanceFilter(importance) {
+        if (!window.activeImportanceFilter) window.activeImportanceFilter = [];
+        
+        const index = window.activeImportanceFilter.indexOf(importance);
+        if (index === -1) {
+            window.activeImportanceFilter.push(importance);
+        } else {
+            window.activeImportanceFilter.splice(index, 1);
+        }
+        
+        // Réinitialiser la session
+        currentIndex = 0;
+        stats = {known: 0, partial: 0, unknown: 0};
+        
+        // Recharger les contrôles et la carte
+        addFilterControls();
+        loadCurrentList();
+    }
+    
+    function clearImportanceFilter() {
+        window.activeImportanceFilter = [];
+        currentIndex = 0;
+        stats = {known: 0, partial: 0, unknown: 0};
+        
+        // Recharger les contrôles et la carte
+        addFilterControls();
+        loadCurrentList();
+    }
+    
+    function getCardsToReview() { 
+        if (!currentCategory || !currentFolder || !currentList || !results[currentCategory] || !results[currentCategory][currentFolder] || !results[currentCategory][currentFolder][currentList]) return []; 
+        const e = results[currentCategory][currentFolder][currentList], t = []; 
+        Object.keys(e).forEach(r => { 
+            const o = e[r]; 
+            if (o === 'partial' || o === 'unknown') t.push(parseInt(r)); 
+        }); 
+        return t; 
+    }
     function getNextList() { if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) return null; const lists = Object.keys(categories[currentCategory][currentFolder]); const currentIndex = lists.indexOf(currentList); if (currentIndex === -1 || currentIndex === lists.length - 1) return null; return lists[currentIndex + 1]; }
     function goToNextList() { const nextList = getNextList(); if (nextList) { showStudyPage(currentCategory, currentFolder, nextList, false); } }
     function loadData() {
@@ -1154,7 +1365,10 @@
         }
        
         if (Object.keys(categories).length === 0) {
-            categories = {'📚 Mes cours': {'Droit Administratif': {'Chapitre 1': [{question: "Qu'est-ce que le principe de légalité ?", answer: "Le principe selon lequel l'administration doit agir conformément aux règles de droit."}]}}};
+            categories = {'📚 Mes cours': {'Droit Administratif': {'Chapitre 1': [
+                {question: "Qu'est-ce que le principe de légalité ?", answer: "Le principe selon lequel l'administration doit agir conformément aux règles de droit.", importance: 'important'},
+                {question: "Qu'est-ce que la théorie du service public ?", answer: "Une théorie développée par Léon Duguit selon laquelle l'État doit assurer certains services essentiels à la population.", importance: 'normal'}
+            ]}}};
             openCategories['📚 Mes cours'] = true;
         }
         updateCategoryList();
@@ -1329,10 +1543,12 @@
            
             const questionPreview = (card.question || '').replace(/<[^>]*>/g, '').substring(0, 100);
             const answerPreview = (card.answer || '').replace(/<[^>]*>/g, '').substring(0, 100);
+            const importance = card.importance || 'normal';
+            const importanceBadge = `<span class="importance-badge-editor ${importance.replace(' ', '-')}" style="margin-left:10px;font-size:10px;padding:2px 6px;">${importance}</span>`;
            
             div.innerHTML =
               '<div class="card-edit-header">' +
-                '<div class="card-edit-number">Carte #' + (idx + 1) + '</div>' +
+                '<div class="card-edit-number">Carte #' + (idx + 1) + importanceBadge + '</div>' +
                 '<div class="card-edit-actions">' +
                   '<button class="btn-edit-card" onclick="startEditCard(' + idx + ')">✏️</button>' +
                   '<button class="btn-delete-card" onclick="deleteCard(' + idx + ')">✕</button>' +
@@ -1378,10 +1594,89 @@
         });
     }
     function updateHomeStats() { let totalCourses = 0; let totalCards = 0; Object.values(categories).forEach(cat => { Object.values(cat).forEach(folder => { totalCourses++; Object.values(folder).forEach(lists => { totalCards += lists.length; }); }); }); document.getElementById('totalCourses').textContent = totalCourses; document.getElementById('totalCards').textContent = totalCards; const list = document.getElementById('courseList'); list.innerHTML = ''; if (totalCourses === 0) { list.innerHTML = '<p style="color:#999;text-align:center;padding:20px">Aucun cours créé.</p>'; return; } Object.keys(categories).forEach(catName => { Object.keys(categories[catName]).forEach(folderName => { let cardCount = 0; const listCount = Object.keys(categories[catName][folderName]).length; Object.values(categories[catName][folderName]).forEach(lists => { cardCount += lists.length; }); const div = document.createElement('div'); div.className = 'course-card'; div.onclick = () => showListsPage(catName, folderName); div.innerHTML = '<div class="course-card-left"><div class="course-card-title">' + escapeHtml(folderName) + '</div><div class="course-card-info">' + listCount + ' liste' + (listCount > 1 ? 's' : '') + ' • ' + cardCount + ' carte' + (cardCount > 1 ? 's' : '') + '</div></div><div class="course-card-arrow">→</div>'; list.appendChild(div); }); }); }
-    function loadCurrentList() { if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) { showEmptyState(); return; } const cards = categories[currentCategory][currentFolder][currentList]; if (isReviewMode && reviewIndices.length === 0) { showEmptyState(); return; } if (cards.length === 0) { showEmptyState(); } else { hideEmptyState(); loadCard(); } }
+    function loadCurrentList() { 
+        if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) { 
+            showEmptyState(); 
+            return; 
+        } 
+        const cards = categories[currentCategory][currentFolder][currentList];
+        
+        if (isReviewMode && reviewIndices.length === 0) { 
+            showEmptyState(); 
+            return; 
+        } 
+        if (cards.length === 0) { 
+            showEmptyState(); 
+        } else { 
+            hideEmptyState(); 
+            loadCard(); 
+        } 
+    }
+    
+    function loadCard() { 
+        if (!currentCategory || !currentFolder || !currentList || 
+            !categories[currentCategory] || !categories[currentCategory][currentFolder] || 
+            !categories[currentCategory][currentFolder][currentList]) return;
+        
+        const cards = categories[currentCategory][currentFolder][currentList];
+        
+        // Filtrer les cartes si un filtre est actif
+        let filteredCards = cards;
+        if (window.activeImportanceFilter && window.activeImportanceFilter.length > 0) {
+            filteredCards = cards.filter(card => 
+                window.activeImportanceFilter.includes(card.importance || 'normal')
+            );
+        }
+        
+        if (isReviewMode) {
+            if (currentIndex >= reviewIndices.length) {
+                showEndScreen();
+                return;
+            }
+            const idx = reviewIndices[currentIndex];
+            const card = cards[idx];
+            displayCardContent(card);
+        } else {
+            if (currentIndex >= filteredCards.length) {
+                showEndScreen();
+                return;
+            }
+            const card = filteredCards[currentIndex];
+            displayCardContent(card);
+        }
+        
+        updateProgress();
+        updateStats();
+    }
+    
+    function displayCardContent(card) {
+        document.getElementById('question').innerHTML = card.question;
+        document.getElementById('answer').innerHTML = card.answer;
+        
+        // Sauvegarder l'importance actuelle pour les stats
+        window.currentImportance = card.importance || 'normal';
+        
+        // Ajouter ou mettre à jour le badge d'importance
+        let badge = document.querySelector('.card-importance-badge');
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.className = 'card-importance-badge';
+            document.getElementById('flashcard').appendChild(badge);
+        }
+        
+        // Mettre à jour le badge
+        const importanceText = card.importance || 'normal';
+        badge.textContent = importanceText;
+        badge.className = 'card-importance-badge ' + importanceText.replace(' ', '-');
+        
+        // Réinitialiser l'état de la carte
+        document.getElementById('flashcard').classList.remove('flipped');
+        isFlipped = false;
+    }
+    
     function showEmptyState() { document.getElementById('cardSection').style.display = 'none'; document.getElementById('endSection').style.display = 'none'; document.getElementById('emptyState').style.display = 'block'; document.getElementById('progressBar').style.width = '0%'; }
     function hideEmptyState() { document.getElementById('cardSection').style.display = 'block'; document.getElementById('endSection').style.display = 'none'; document.getElementById('emptyState').style.display = 'none'; }
-    function loadCard() { if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) return; const cards = categories[currentCategory][currentFolder][currentList]; if (isReviewMode) { if (currentIndex >= reviewIndices.length) { showEndScreen(); return; } const idx = reviewIndices[currentIndex]; const card = cards[idx]; document.getElementById('question').innerHTML = card.question; document.getElementById('answer').innerHTML = card.answer; } else { if (currentIndex >= cards.length) { showEndScreen(); return; } const card = cards[currentIndex]; document.getElementById('question').innerHTML = card.question; document.getElementById('answer').innerHTML = card.answer; } window.currentImportance = card.importance || 'normal'; document.getElementById('flashcard').classList.remove('flipped'); isFlipped = false; updateProgress(); updateStats(); }
+    
     function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); isFlipped = !isFlipped; }
     function editCurrentCard() {
         if (!currentCategory || !currentFolder || !currentList) { alert("Aucune liste sélectionnée."); return; }
@@ -1400,14 +1695,82 @@
         showManageCardsPage(currentCategory, currentFolder, currentList);
         setTimeout(() => startEditCard(idx), 0);
     }
-    function answer(type) { if (!results[currentCategory]) results[currentCategory] = {}; if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {}; if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {}; const idx = isReviewMode ? reviewIndices[currentIndex] : currentIndex; results[currentCategory][currentFolder][currentList][idx] = type; saveResults(); stats[type]++; currentIndex++; loadCard(); }
-    function updateProgress() { const cards = categories[currentCategory][currentFolder][currentList]; const total = isReviewMode ? reviewIndices.length : cards.length; const current = currentIndex; const percent = current / total * 100; document.getElementById('progressBar').style.width = percent + '%'; }
-    function updateStats() { 
-        const cards = categories[currentCategory][currentFolder][currentList]; 
-        const total = isReviewMode ? reviewIndices.length : cards.length; 
+    function answer(type) { 
+        if (!results[currentCategory]) results[currentCategory] = {}; 
+        if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {}; 
+        if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {}; 
+        
+        let actualIndex;
+        if (isReviewMode) {
+            actualIndex = reviewIndices[currentIndex];
+        } else {
+            // Pour les filtres normaux, nous devons trouver l'index réel dans le tableau original
+            const cards = categories[currentCategory][currentFolder][currentList];
+            let filteredCards = cards;
+            if (window.activeImportanceFilter && window.activeImportanceFilter.length > 0) {
+                filteredCards = cards.filter(card => 
+                    window.activeImportanceFilter.includes(card.importance || 'normal')
+                );
+            }
+            
+            if (currentIndex >= filteredCards.length) {
+                showEndScreen();
+                return;
+            }
+            
+            const currentCard = filteredCards[currentIndex];
+            // Trouver l'index réel dans le tableau original
+            actualIndex = cards.findIndex(card => 
+                card.question === currentCard.question && card.answer === currentCard.answer
+            );
+        }
+        
+        results[currentCategory][currentFolder][currentList][actualIndex] = type; 
+        saveResults(); 
+        stats[type]++; 
+        currentIndex++; 
+        loadCard(); 
+    }
+    function updateProgress() { 
+        const cards = categories[currentCategory][currentFolder][currentList];
+        
+        // Calculer le total en fonction du filtre actif
+        let total;
+        if (isReviewMode) {
+            total = reviewIndices.length;
+        } else if (window.activeImportanceFilter && window.activeImportanceFilter.length > 0) {
+            total = cards.filter(card => 
+                window.activeImportanceFilter.includes(card.importance || 'normal')
+            ).length;
+        } else {
+            total = cards.length;
+        }
+        
+        const current = currentIndex;
+        const percent = total > 0 ? (current / total * 100) : 0;
+        document.getElementById('progressBar').style.width = percent + '%';
+    }
+    function updateStats() {
+        const cards = categories[currentCategory][currentFolder][currentList];
+        
+        // Calculer le total en fonction du filtre actif
+        let total;
+        if (isReviewMode) {
+            total = reviewIndices.length;
+        } else if (window.activeImportanceFilter && window.activeImportanceFilter.length > 0) {
+            total = cards.filter(card => 
+                window.activeImportanceFilter.includes(card.importance || 'normal')
+            ).length;
+        } else {
+            total = cards.length;
+        }
+        
+        const importanceText = window.currentImportance || 'normal';
+        const importanceDisplay = importanceText.charAt(0).toUpperCase() + importanceText.slice(1);
+        
         document.getElementById('stats').textContent =
             'Carte ' + (currentIndex + 1) + '/' + total +
-            ' | Niveau: ' + (window.currentImportance || 'normal') +
+            ' | Importance: ' + importanceDisplay +
             ' | Connu: ' + stats.known +
             ' | Partiel: ' + stats.partial +
             ' | Pas connu: ' + stats.unknown;
@@ -1457,7 +1820,7 @@
         document.getElementById('barUnknown').style.width = unknownPercent + '%';
         document.getElementById('barUnknown').textContent = stats.unknown;
     }
-    function restartSession() { currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; isReviewMode = false; reviewIndices = []; document.getElementById('studyModeIndicator').style.display = 'none'; document.getElementById('endSection').style.display = 'none'; document.getElementById('cardSection').style.display = 'block'; loadCard(); }
+    function restartSession() { currentIndex = 0; stats = {known: 0, partial: 0, unknown: 0}; isReviewMode = false; reviewIndices = []; window.activeImportanceFilter = []; document.getElementById('studyModeIndicator').style.display = 'none'; document.getElementById('endSection').style.display = 'none'; document.getElementById('cardSection').style.display = 'block'; addFilterControls(); loadCurrentList(); }
     function reviewWrongCards() { showStudyPage(currentCategory, currentFolder, currentList, true); }
     function addCard() {
         const q = document.getElementById('newQuestion').innerHTML.trim();
@@ -1499,13 +1862,39 @@
                 panel.style.display = 'none';
             }
         });
+        
         if (!q || !a) return;
        
         q.innerHTML = card.question || '';
         a.innerHTML = card.answer || '';
        
+        // Ajouter le sélecteur d'importance dans l'éditeur
         const panel = document.getElementById('editor-' + idx);
         if (panel) {
+            // Vérifier si le sélecteur d'importance existe déjà
+            let importanceSelect = panel.querySelector('.importance-select');
+            if (!importanceSelect) {
+                importanceSelect = document.createElement('div');
+                importanceSelect.className = 'input-group';
+                importanceSelect.style.marginTop = '10px';
+                importanceSelect.innerHTML = `
+                    <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--text);">Importance :</label>
+                    <select class="importance-select-value" style="width:100%; padding:8px; border:2px solid var(--border); border-radius:8px; background:var(--panel);">
+                        <option value="important">Important (vert)</option>
+                        <option value="normal">Normal (bleu)</option>
+                        <option value="pas important">Pas important (rouge)</option>
+                        <option value="explication">Explication (gris)</option>
+                    </select>
+                `;
+                panel.querySelector('.actions').before(importanceSelect);
+            }
+            
+            // Définir la valeur actuelle
+            const select = importanceSelect.querySelector('.importance-select-value');
+            if (select) {
+                select.value = card.importance || 'normal';
+            }
+            
             panel.style.display = 'block';
             panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
             q.focus();
@@ -1529,7 +1918,21 @@
             return;
         }
        
-        categories[currentCategory][currentFolder][currentList][idx] = { question: newQ, answer: newA };
+        // Récupérer la valeur d'importance
+        const panel = document.getElementById('editor-' + idx);
+        let importance = 'normal';
+        if (panel) {
+            const select = panel.querySelector('.importance-select-value');
+            if (select) {
+                importance = select.value;
+            }
+        }
+       
+        categories[currentCategory][currentFolder][currentList][idx] = { 
+            question: newQ, 
+            answer: newA,
+            importance: importance
+        };
         saveData();
         updateCategoryList();
         loadManageCardsPage();
@@ -1694,13 +2097,10 @@
         reader.onload = function(e) {
             try {
                 let raw = e.target.result || '';
-                // 1) Nettoyage basique: supprime BOM et fences markdown éventuels
                 raw = raw.replace(/^\uFEFF/, '').trim();
                 if (raw.startsWith('```')) {
-                    // retire fences ```json ... ```
                     raw = raw.replace(/^```[a-zA-Z0-9]*\s*/, '').replace(/```$/, '').trim();
                 }
-                // 2) Parse JSON
                 let data;
                 try {
                     data = JSON.parse(raw);
@@ -1710,7 +2110,6 @@
                     event.target.value = '';
                     return;
                 }
-                // 3) Détection format + import
                 const isList = data && data.categoryName && data.folderName && data.listName && Array.isArray(data.cards);
                 const isAll = data && data.exportVersion && Array.isArray(data.data);
                 if (!isList && !isAll) {
@@ -1738,7 +2137,6 @@
                     return;
                 }
                 if (isAll) {
-                    // Import "export tout"
                     let catCount=0, courseCount=0, listCount=0, cardCount=0;
                     (data.data || []).forEach(cat => {
                         const catName = cat.categoryName;
@@ -1765,7 +2163,6 @@
                         });
                     });
                     if (data.results && typeof data.results === 'object') {
-                        // merge non destructif des résultats
                         function deepMerge(dst, src){
                             Object.keys(src).forEach(k=>{
                                 if (src[k] && typeof src[k] === 'object' && !Array.isArray(src[k])) {
@@ -1988,12 +2385,10 @@
         const listInput = document.getElementById('importListName');
         const txtArea = document.getElementById('importTextContent');
        
-        // Reset des champs
         listInput.value = '';
         txtArea.value = '';
         catSelect.innerHTML = '';
        
-        // Remplir les catégories
         const catNames = Object.keys(categories);
         if (catNames.length === 0) {
             alert("Créez d'abord une catégorie et un cours via le bouton 'Créer un cours'.");
@@ -2006,7 +2401,6 @@
             opt.textContent = cat;
             catSelect.appendChild(opt);
         });
-        // Sélectionner la catégorie courante si elle existe
         if (currentCategory && categories[currentCategory]) {
             catSelect.value = currentCategory;
         }
@@ -2034,7 +2428,6 @@
                     opt.textContent = f;
                     folderSelect.appendChild(opt);
                 });
-                // Pré-sélectionner le dossier courant si pertinent
                 if (currentCategory === catName && currentFolder && categories[catName][currentFolder]) {
                     folderSelect.value = currentFolder;
                 }
@@ -2050,7 +2443,6 @@
         const listName = document.getElementById('importListName').value.trim();
         const rawText = document.getElementById('importTextContent').value;
         const sepType = document.getElementById('importSeparator').value;
-        // Validations
         if (!catName || !folderName || folderName === "(Aucun cours)") {
             alert("Veuillez sélectionner une catégorie et un cours valides.");
             return;
@@ -2063,27 +2455,19 @@
             alert("Le texte à importer est vide.");
             return;
         }
-        // Détermination du séparateur réel
         let separator = sepType;
         if (sepType === 'tab') separator = '\t';
-        // Analyse du texte ligne par ligne
         const lines = rawText.split(/\r?\n/);
         let importedCount = 0;
         const newCards = [];
         lines.forEach(line => {
-            if (!line.trim()) return; // Ignorer lignes vides
-           
-            // On sépare la ligne en 2 parties maximum (Question / Reste)
-            // Si la réponse contient le séparateur, on ne veut pas couper encore
+            if (!line.trim()) return;
             const parts = line.split(separator);
-           
             if (parts.length >= 2) {
                 const q = parts[0].trim();
-                // On rejoint le reste au cas où le séparateur serait dans la réponse
                 const a = parts.slice(1).join(separator).trim();
-               
                 if (q && a) {
-                    newCards.push({ question: q, answer: a });
+                    newCards.push({ question: q, answer: a, importance: 'normal' });
                     importedCount++;
                 }
             }
@@ -2092,30 +2476,19 @@
             alert("Aucune carte détectée. Vérifiez le séparateur (ex: Tabulation vs Virgule).");
             return;
         }
-        // Sauvegarde dans la structure de données
         if (!categories[catName][folderName][listName]) {
-            // Création nouvelle liste
             categories[catName][folderName][listName] = [];
         } else {
-            // La liste existe, on demande si on fusionne
             if (!confirm(`La liste "${listName}" existe déjà. Voulez-vous ajouter ces ${importedCount} cartes à la suite ?`)) {
                 return;
             }
         }
-        // Ajout des cartes
         categories[catName][folderName][listName].push(...newCards);
-       
         saveData();
-        updateCategoryList(); // Met à jour la barre latérale
-       
-        // Si on est sur l'accueil, mettre à jour les stats
+        updateCategoryList();
         if (currentPage === 'home') updateHomeStats();
-       
-        // Feedback et fermeture
         alert(`${importedCount} cartes importées avec succès dans "${listName}" !`);
         closeImportTextModal();
-       
-        // Redirection immédiate vers la liste créée
         showListsPage(catName, folderName);
     }
     function flashSidebarCard(btn) {
@@ -2125,7 +2498,6 @@
     }
     function renderChangesListComp(changes) {
         changesListComp.innerHTML = "";
-       
         let filtered = changes;
         if (showOnlyDeletions) {
             filtered = changes.filter(c => c.type === 'suppression' || c.type === 'remplacement');
@@ -2159,16 +2531,13 @@
             if (ctxSpan > 0) {
                 const src = c.type==='suppression' ? (oldTA.value||"") : (newTA.value||"");
                 const needle = (c.type==='suppression' ? c.removed : c.added) || "";
-               
                 const pos = needle.length > 0 ? src.indexOf(needle) : -1;
-               
                 if (pos>=0) {
                     const start = Math.max(0,pos-ctxSpan);
                     const end = Math.min(src.length, pos+needle.length+ctxSpan);
                     ctx = (start>0?'…':'') + src.slice(start,end).replace(/\r\n|\r/g, '\n').replace(/\n/g, '↵').replace(/\s+/g,' ') + (end<src.length?'…':'');
                 }
             }
-           
             btn.innerHTML = `<span class="type">${emojiFor(c.type)} ${cap(c.type)}</span> ${tokenHtml} ${ctx ? `<span class="ctx">${escapeHtmlComp(ctx)}</span>` : ``}`;
             btn.addEventListener('click', () => {
                 const prev = document.querySelector('.comp-change.selected');
@@ -2178,10 +2547,8 @@
                 let focusId = btn.dataset.id;
                 let focusType = btn.dataset.type;
                 const isReplacement = focusType === 'remplacement';
-               
                 if (isReplacement) focusType = 'insertion';
                 const opts = (btn.dataset.type === 'suppression') ? { removedText: btn.dataset.removed || '' } : undefined;
-               
                 focusChangeComp(isReplacement ? focusId : focusId, focusType, opts);
                 updateBackButton();
             });
@@ -2247,7 +2614,6 @@
         const prevSelectedId = lastSelectedBtn ? lastSelectedBtn.dataset.id : null;
         const prevFocused = lastFocusedId;
         computeComp();
-       
         if (prevSelectedId) {
             const cand = Array.from(document.querySelectorAll('.comp-change')).find(b => b.dataset.id === prevSelectedId);
             if (cand) {
