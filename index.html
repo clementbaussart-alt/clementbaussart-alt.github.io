@@ -935,68 +935,22 @@
         };
     }
 	// Fonction pour appliquer le formatage
-function formatText(command, side) {
-	const el = document.getElementById('new' + (side === 'Q' ? 'Question' : 'Answer'));
-	if (!el) return;
-
-	// force le focus dans l'éditeur
-	el.focus();
-
-	// essaie execCommand
-	let ok = false;
-	try { ok = document.execCommand(command, false, null); } catch(e) { ok = false; }
-
-	// fallback moderne si execCommand ne fait rien
-	if (!ok && document.queryCommandSupported && document.queryCommandSupported(command)) {
-		try { document.execCommand(command, false, null); } catch(e) {}
-	}
-
-	el.focus();
-}
-// Fonction pour effacer le formatage
-function clearFormat() { 
+function execFormatCommand(command) { 
     const activeEditor = document.activeElement;
     if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
-        // Sauvegarder la position du curseur
-        const selection = window.getSelection();
-        const range = selection.getRangeAt(0);
-        const startOffset = range.startOffset;
-        const endOffset = range.endOffset;
-        
-        // Remplacer le HTML par le texte brut
-        const text = activeEditor.innerText;
-        activeEditor.innerHTML = text;
-        
-        // Restaurer la position du curseur
-        const textNode = activeEditor.firstChild || activeEditor;
-        const newRange = document.createRange();
-        newRange.setStart(textNode, Math.min(startOffset, text.length));
-        newRange.setEnd(textNode, Math.min(endOffset, text.length));
-        selection.removeAllRanges();
-        selection.addRange(newRange);
-        
+        document.execCommand(command, false, null);
         activeEditor.focus();
     }
 }
 
-// Gestionnaires pour les couleurs
-document.addEventListener('DOMContentLoaded', function() {
-    const textColorInput = document.getElementById('textColorQ');
-    const bgColorInput = document.getElementById('bgColorQ');
-    
-    if (textColorInput) {
-        textColorInput.addEventListener('change', function(e) { 
-            applyColorToSelection('foreColor', e.target.value); 
-        });
+function clearFormatNow() { 
+    const activeEditor = document.activeElement;
+    if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+        const text = activeEditor.innerText;
+        activeEditor.innerHTML = text;
+        activeEditor.focus();
     }
-    
-    if (bgColorInput) {
-        bgColorInput.addEventListener('change', function(e) { 
-            applyColorToSelection('backColor', e.target.value); 
-        });
-    }
-});
-
+}
 // Fonction pour appliquer la couleur
 function applyColorToSelection(command, color) {
     const activeEditor = document.activeElement;
@@ -1140,14 +1094,31 @@ function clearFormat() {
         reader.readAsDataURL(file);
         e.target.value = '';
     });
-    // Gestionnaires pour les couleurs
-document.getElementById('textColorQ').addEventListener('change', function(e) { 
-    applyColorToSelection('foreColor', e.target.value); 
+    // Initialisation des gestionnaires de couleur
+document.addEventListener('DOMContentLoaded', function() {
+    const textColorPicker = document.getElementById('textColorPicker');
+    const bgColorPicker = document.getElementById('bgColorPicker');
+    
+    if (textColorPicker) {
+        textColorPicker.addEventListener('change', function(e) {
+            const activeEditor = document.activeElement;
+            if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+                document.execCommand('foreColor', false, e.target.value);
+                activeEditor.focus();
+            }
+        });
+    }
+    
+    if (bgColorPicker) {
+        bgColorPicker.addEventListener('change', function(e) {
+            const activeEditor = document.activeElement;
+            if (activeEditor && (activeEditor.id === 'newQuestion' || activeEditor.id === 'newAnswer')) {
+                document.execCommand('backColor', false, e.target.value);
+                activeEditor.focus();
+            }
+        });
+    }
 });
-document.getElementById('bgColorQ').addEventListener('change', function(e) { 
-    applyColorToSelection('backColor', e.target.value); 
-});
-
 // Fonction pour appliquer la couleur à la sélection active
 function applyColorToSelection(command, color) {
     const activeEditor = document.activeElement;
