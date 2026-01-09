@@ -1015,6 +1015,41 @@
         /* Modal paramètres utilisateur */
         .profile-settings-modal .modal-content {
             max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .profile-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .profile-form .input-group {
+            margin-bottom: 8px;
+        }
+
+        .profile-form .input-group label {
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .profile-form .input-group input,
+        .profile-form .input-group textarea {
+            padding: 8px 10px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: 2px solid var(--border);
+            width: 100%;
+        }
+
+        .profile-form .input-group textarea {
+            min-height: 60px;
+            resize: vertical;
         }
         
         .avatar-upload {
@@ -1066,12 +1101,6 @@
             display: none;
         }
         
-        .profile-form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
         .profile-actions {
             display: flex;
             gap: 10px;
@@ -1120,6 +1149,153 @@
         
         .notification.error {
             background: linear-gradient(135deg, var(--danger) 0%, #ee5a6f 100%);
+        }
+        
+        /* Styles pour le mode plein écran */
+        .fullscreen-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .fullscreen-mode.active {
+            display: flex;
+        }
+
+        .fullscreen-card-container {
+            width: 90%;
+            height: 80%;
+            perspective: 1000px;
+        }
+
+        .fullscreen-card {
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .fullscreen-card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .fullscreen-card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            overflow-y: auto;
+            border-radius: 20px;
+        }
+
+        .fullscreen-card-front {
+            background: var(--card-bg);
+        }
+
+        .fullscreen-card-back {
+            background: var(--card-bg);
+            transform: rotateY(180deg);
+        }
+
+        .fullscreen-card-text {
+            font-size: 28px;
+            line-height: 1.6;
+            color: var(--text);
+            text-align: center;
+            width: 100%;
+        }
+
+        .fullscreen-card-text img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .fullscreen-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            z-index: 10001;
+        }
+
+        .fullscreen-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            min-width: 140px;
+        }
+
+        .fullscreen-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 10001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fullscreen-close-btn:hover {
+            background: rgba(0,0,0,0.7);
+        }
+        
+        .btn-fullscreen {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-fullscreen:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
     </style>
 </head>
@@ -1364,7 +1540,16 @@
             <div id="studyPage" class="page">
                 <div class="container study-page">
                     <div class="breadcrumb"><a id="backToListsStudy">← Retour aux listes</a></div>
-                    <div class="study-controls"> <div> <h2 id="studyTitle" style="display:inline">Liste</h2> <span id="studyModeIndicator" class="study-mode-indicator" style="display:none">🔄 Mode révision</span> </div> <button class="btn-edit-current" id="btnEditCurrent" onclick="editCurrentCard()">✏️ Éditer cette carte</button></div>
+                    <div class="study-controls"> 
+                        <div> 
+                            <h2 id="studyTitle" style="display:inline">Liste</h2> 
+                            <span id="studyModeIndicator" class="study-mode-indicator" style="display:none">🔄 Mode révision</span> 
+                        </div> 
+                        <div>
+                            <button class="btn-edit-current" id="btnEditCurrent" onclick="editCurrentCard()">✏️ Éditer cette carte</button>
+                            <button class="btn-fullscreen" onclick="openFullscreenStudy()">⛶ Plein écran</button>
+                        </div>
+                    </div>
                     <div id="cardSection">
                         <div class="flip-hint">👆 Clique pour retourner (molette pour scroller)</div>
                         <div class="card-container">
@@ -1735,6 +1920,26 @@
                         🗑️ Supprimer mon compte
                     </button>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Mode plein écran pour les fiches -->
+        <div id="fullscreenMode" class="fullscreen-mode">
+            <button class="fullscreen-close-btn" onclick="exitFullscreen()">✕</button>
+            <div class="fullscreen-card-container">
+                <div class="fullscreen-card" id="fullscreenCard" onclick="flipFullscreenCard()">
+                    <div class="fullscreen-card-face fullscreen-card-front">
+                        <div class="fullscreen-card-text" id="fullscreenQuestion"></div>
+                    </div>
+                    <div class="fullscreen-card-face fullscreen-card-back">
+                        <div class="fullscreen-card-text" id="fullscreenAnswer"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="fullscreen-controls">
+                <button class="fullscreen-btn" style="background: linear-gradient(135deg, var(--known) 0%, var(--accent-2) 100%);" onclick="fullscreenAnswer('known')">✓ Connu</button>
+                <button class="fullscreen-btn" style="background: linear-gradient(135deg, var(--partial) 0%, #f7b733 100%);" onclick="fullscreenAnswer('partial')">~ Partiel</button>
+                <button class="fullscreen-btn" style="background: linear-gradient(135deg, var(--unknown) 0%, #ee5a6f 100%);" onclick="fullscreenAnswer('unknown')">✗ Inconnu</button>
             </div>
         </div>
     </div>
@@ -2906,6 +3111,27 @@
             }); 
         }
         
+        function showListsPage(catName, folderName) {
+            currentCategory = catName;
+            currentFolder = folderName;
+            currentPage = 'lists';
+            
+            // Mettre à jour la barre latérale
+            updateCategoryList();
+            
+            // Mettre à jour le titre
+            const title = document.getElementById('listsTitle');
+            if (title) {
+                title.textContent = folderName;
+            }
+            
+            // Charger les listes
+            loadListsPage();
+            
+            // Afficher la page
+            showPage('lists');
+        }
+        
         function loadListsPage() {
             const container = document.getElementById('listsGrid');
             container.innerHTML = '';
@@ -2959,6 +3185,126 @@
             });
         }
         
+        function showManageCardsPage(catName, folderName, listName) {
+            currentCategory = catName;
+            currentFolder = folderName;
+            currentList = listName;
+            currentPage = 'manage';
+            
+            // Mettre à jour la barre latérale
+            updateCategoryList();
+            
+            // Mettre à jour le titre
+            const title = document.getElementById('manageTitle');
+            if (title) {
+                title.textContent = listName;
+            }
+            
+            // Charger les cartes
+            loadManageCardsPage();
+            
+            // Afficher la page
+            showPage('manage');
+        }
+        
+        // ====== FONCTIONS DU MODE PLEIN ÉCRAN ======
+        let fullscreenIndex = 0;
+        let fullscreenCards = [];
+        let fullscreenReviewMode = false;
+        let fullscreenReviewIndices = [];
+
+        function openFullscreenStudy() {
+            if (!currentCategory || !currentFolder || !currentList) {
+                showNotification('Sélectionnez d\'abord une liste', 'error');
+                return;
+            }
+            
+            const cards = categories[currentCategory][currentFolder][currentList];
+            if (!cards || cards.length === 0) {
+                showNotification('Cette liste est vide', 'error');
+                return;
+            }
+            
+            // Filtrer les cartes si un filtre d'importance est actif
+            if (window.activeImportanceFilter && window.activeImportanceFilter.length > 0) {
+                fullscreenCards = cards.filter(card => 
+                    window.activeImportanceFilter.includes(card.importance)
+                );
+            } else {
+                fullscreenCards = [...cards];
+            }
+            
+            if (fullscreenCards.length === 0) {
+                showNotification('Aucune carte ne correspond au filtre', 'error');
+                return;
+            }
+            
+            // Mélanger les cartes
+            fullscreenCards = shuffleArray([...fullscreenCards]);
+            
+            // Réinitialiser l'index
+            fullscreenIndex = 0;
+            
+            // Afficher la première carte
+            showFullscreenCard();
+            
+            // Activer le mode plein écran
+            document.getElementById('fullscreenMode').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function showFullscreenCard() {
+            if (fullscreenIndex >= fullscreenCards.length) {
+                // Fin de la session
+                exitFullscreen();
+                showNotification('Session terminée !', 'success');
+                return;
+            }
+            
+            const card = fullscreenCards[fullscreenIndex];
+            document.getElementById('fullscreenQuestion').innerHTML = card.question;
+            document.getElementById('fullscreenAnswer').innerHTML = card.answer;
+            
+            // Réinitialiser la rotation de la carte
+            const fullscreenCard = document.getElementById('fullscreenCard');
+            fullscreenCard.classList.remove('flipped');
+        }
+
+        function flipFullscreenCard() {
+            const card = document.getElementById('fullscreenCard');
+            card.classList.toggle('flipped');
+        }
+
+        function fullscreenAnswer(type) {
+            // Enregistrer la réponse
+            const card = fullscreenCards[fullscreenIndex];
+            
+            // Enregistrer dans les résultats si l'utilisateur n'est pas invité
+            if (currentUser && !currentUser.guest) {
+                if (!results[currentCategory]) results[currentCategory] = {};
+                if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
+                if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
+                results[currentCategory][currentFolder][currentList][fullscreenIndex] = type;
+                saveResults();
+            }
+            
+            // Passer à la carte suivante
+            fullscreenIndex++;
+            
+            // Afficher la prochaine carte
+            showFullscreenCard();
+        }
+
+        function exitFullscreen() {
+            document.getElementById('fullscreenMode').classList.remove('active');
+            document.body.style.overflow = 'auto';
+            
+            // Rafraîchir l'affichage normal si on était en mode étude
+            if (currentPage === 'study') {
+                loadStudyPage();
+            }
+        }
+        
         // ====== FONCTIONS DU COMPARATEUR ======
         let showContext = false;
         let lastFocusedId = null;
@@ -2988,9 +3334,6 @@
             document.getElementById('comparatorModal').classList.remove('show');
             document.body.style.overflow = 'auto';
         }
-        
-        // ... (les fonctions du comparateur restent inchangées)
-        // Pour des raisons de longueur, je ne les ai pas toutes réécrites
         
         // ====== FONCTIONS DU THÈME ======
         const THEME_KEY = 'flashcards_theme_v2';
@@ -3074,20 +3417,31 @@
         }
         
         function openThemeModal() {
+            const modal = document.getElementById('themeModal');
+            if (!modal) {
+                console.error('Theme modal not found');
+                return;
+            }
+            modal.classList.add('show');
+            
+            // Initialiser les couleurs
             const presetsContainer = document.getElementById('themePresets');
-            presetsContainer.innerHTML = '';
+            if (presetsContainer) {
+                presetsContainer.innerHTML = '';
+                
+                Object.entries(themeConfig.presets).forEach(([name, colors]) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'preset-btn';
+                    btn.innerHTML = `
+                        <div class="preset-preview" style="background: linear-gradient(135deg, ${colors['--bg-gradient-from']} 0%, ${colors['--bg-gradient-to']} 100%);"></div>
+                        <span>${name}</span>
+                    `;
+                    btn.onclick = () => applyPreset(name);
+                    presetsContainer.appendChild(btn);
+                });
+            }
             
-            Object.entries(themeConfig.presets).forEach(([name, colors]) => {
-                const btn = document.createElement('button');
-                btn.className = 'preset-btn';
-                btn.innerHTML = `
-                    <div class="preset-preview" style="background: linear-gradient(135deg, ${colors['--bg-gradient-from']} 0%, ${colors['--bg-gradient-to']} 100%);"></div>
-                    <span>${name}</span>
-                `;
-                btn.onclick = () => applyPreset(name);
-                presetsContainer.appendChild(btn);
-            });
-            
+            // Initialiser les sélecteurs de couleur
             Object.entries(themeConfig.sections).forEach(([sectionId, section]) => {
                 const container = document.getElementById(sectionId + 'Colors');
                 if (!container) return;
@@ -3116,8 +3470,6 @@
                     container.appendChild(colorOption);
                 });
             });
-            
-            document.getElementById('themeModal').classList.add('show');
         }
         
         function updateColor(varName, value) {
@@ -3199,6 +3551,27 @@
             }
         }
         
+        function closeThemeModal() {
+            document.getElementById('themeModal').classList.remove('show');
+        }
+        
+        function rgbToHex(rgb) {
+            // Si c'est déjà en hex, retourner la valeur
+            if (rgb.startsWith('#')) return rgb;
+            
+            // Convertir rgb(r, g, b) en hex
+            const match = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+\.?\d*))?\)$/);
+            if (match) {
+                const r = parseInt(match[1]);
+                const g = parseInt(match[2]);
+                const b = parseInt(match[3]);
+                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+            }
+            
+            // Par défaut
+            return '#667eea';
+        }
+        
         // ====== INITIALISATION ======
         document.addEventListener('DOMContentLoaded', function() {
             loadUsers();
@@ -3245,6 +3618,27 @@
             });
             document.getElementById('profileSettingsModal')?.addEventListener('click', function(e) { 
                 if (e.target === this) closeProfileSettings(); 
+            });
+            
+            // Fermer les modals en cliquant à l'extérieur
+            document.addEventListener('click', function(e) {
+                // Modal thème
+                const themeModal = document.getElementById('themeModal');
+                if (themeModal && themeModal.classList.contains('show') && e.target === themeModal) {
+                    themeModal.classList.remove('show');
+                }
+                
+                // Modal profil utilisateur
+                const userModal = document.getElementById('userProfileModal');
+                if (userModal && userModal.classList.contains('show') && e.target === userModal) {
+                    closeUserProfileModal();
+                }
+                
+                // Modal import texte
+                const importModal = document.getElementById('importTextModal');
+                if (importModal && importModal.classList.contains('show') && e.target === importModal) {
+                    closeImportTextModal();
+                }
             });
         });
     </script>
