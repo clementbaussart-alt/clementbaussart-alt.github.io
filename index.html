@@ -2170,7 +2170,7 @@
             // Mettre à jour l'avatar
             const avatarDiv = document.getElementById('userAvatar');
             if (currentUser.avatar) {
-                avatarDiv.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.username}">`;
+                avatarDiv.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.username}" style="width:100%;height:100%;object-fit:cover;">`;
             } else {
                 avatarDiv.innerHTML = currentUser.username.charAt(0).toUpperCase();
             }
@@ -2219,7 +2219,7 @@
             
             // Mettre à jour l'avatar preview
             if (currentUser.avatar) {
-                avatarPreview.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.username}">`;
+                avatarPreview.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.username}" style="width:100%;height:100%;object-fit:cover;">`;
             } else {
                 avatarPreview.innerHTML = currentUser.username.charAt(0).toUpperCase();
             }
@@ -2247,7 +2247,7 @@
                 
                 // Mettre à jour l'avatar preview
                 const avatarPreview = document.getElementById('avatarPreview');
-                avatarPreview.innerHTML = `<img src="${avatarData}" alt="Avatar">`;
+                avatarPreview.innerHTML = `<img src="${avatarData}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;">`;
                 
                 // Sauvegarder temporairement
                 currentUser.avatar = avatarData;
@@ -2342,9 +2342,11 @@
             
             if (!searchTerm) return;
             
+            // Filtrer les utilisateurs (exclure l'utilisateur courant et les invités)
             const matchedUsers = Object.keys(allUsers).filter(username => {
                 if (username === currentUser.username) return false;
-                if (!allUsers[username].publicProfile) return false;
+                if (allUsers[username].guest) return false; // Exclure les invités
+                if (!allUsers[username].publicProfile) return false; // Exclure les profils privés
                 return username.toLowerCase().includes(searchTerm);
             });
             
@@ -2353,14 +2355,24 @@
                 return;
             }
             
-            matchedUsers.slice(0, 5).forEach(username => {
+            matchedUsers.slice(0, 10).forEach(username => {
                 const user = allUsers[username];
                 const userDiv = document.createElement('div');
                 userDiv.className = 'user-result';
                 
                 let avatarContent = username.charAt(0).toUpperCase();
                 if (user.avatar) {
-                    avatarContent = `<img src="${user.avatar}" alt="${username}">`;
+                    avatarContent = `<img src="${user.avatar}" alt="${username}" style="width:100%;height:100%;object-fit:cover;">`;
+                }
+                
+                // Compter les cours publics de cet utilisateur
+                let publicCourseCount = 0;
+                if (user.folders) {
+                    Object.values(user.folders).forEach(category => {
+                        Object.values(category).forEach(folder => {
+                            publicCourseCount++;
+                        });
+                    });
                 }
                 
                 userDiv.innerHTML = `
@@ -2368,12 +2380,17 @@
                     <div class="user-result-info">
                         <div class="user-result-name">${username}</div>
                         <div class="user-result-stats">
-                            ${Object.keys(user.folders || {}).length} cours
+                            ${publicCourseCount} cours public${publicCourseCount > 1 ? 's' : ''}
                         </div>
                     </div>
                 `;
                 
-                userDiv.onclick = () => viewUserProfile(username);
+                userDiv.onclick = () => {
+                    document.getElementById('userSearchInput').value = '';
+                    resultsDiv.innerHTML = '';
+                    viewUserProfile(username);
+                };
+                
                 resultsDiv.appendChild(userDiv);
             });
         }
@@ -2386,11 +2403,14 @@
             
             const modal = document.getElementById('userProfileModal');
             document.getElementById('profileUsername').textContent = username;
-            document.getElementById('profileInfo').textContent = `Membre depuis ${new Date(user.createdAt).toLocaleDateString()}`;
+            
+            // Afficher la date d'inscription
+            const joinDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : 'Date inconnue';
+            document.getElementById('profileInfo').textContent = `Membre depuis ${joinDate}`;
             
             const avatarDiv = document.getElementById('profileAvatar');
             if (user.avatar) {
-                avatarDiv.innerHTML = `<img src="${user.avatar}" alt="${username}">`;
+                avatarDiv.innerHTML = `<img src="${user.avatar}" alt="${username}" style="width:100%;height:100%;object-fit:cover;">`;
             } else {
                 avatarDiv.innerHTML = username.charAt(0).toUpperCase();
             }
@@ -2398,41 +2418,55 @@
             const coursesList = document.getElementById('profileCoursesList');
             coursesList.innerHTML = '';
             
-            if (Object.keys(user.folders || {}).length === 0) {
-                coursesList.innerHTML = '<p style="color: var(--text-soft); text-align: center; padding: 20px;">Aucun cours public</p>';
+            if (!user.folders || Object.keys(user.folders).length === 0) {
+                coursesList.innerHTML = '<p style="color: var(--text-soft); text-align: center; padding: 20px;">Cet utilisateur n\'a pas encore créé de cours public</p>';
             } else {
+                // Compter tous les cours publics
+                let totalPublicCourses = 0;
                 Object.keys(user.folders).forEach(categoryName => {
                     const category = user.folders[categoryName];
                     Object.keys(category).forEach(folderName => {
                         const folder = category[folderName];
+                        totalPublicCourses++;
+                        
                         const courseDiv = document.createElement('div');
                         courseDiv.className = 'course-card';
                         courseDiv.style.marginBottom = '10px';
                         
-                        let listCount = 0;
-                        Object.keys(folder).forEach(listName => {
-                            listCount += folder[listName].length;
+                        // Compter les listes et cartes
+                        let listCount = Object.keys(folder).length;
+                        let cardCount = 0;
+                        Object.values(folder).forEach(list => {
+                            cardCount += list.length;
                         });
                         
                         courseDiv.innerHTML = `
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <div style="font-weight: 600;">${folderName}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: var(--primary);">${folderName}</div>
                                     <div style="font-size: 12px; color: var(--text-soft);">
-                                        Catégorie: ${categoryName} • ${Object.keys(folder).length} listes • ${listCount} cartes
+                                        <span>📁 ${categoryName}</span> • 
+                                        <span>📋 ${listCount} liste${listCount > 1 ? 's' : ''}</span> • 
+                                        <span>🎴 ${cardCount} carte${cardCount > 1 ? 's' : ''}</span>
                                     </div>
                                 </div>
-                                <div>
+                                <div style="margin-left: 15px;">
                                     <input type="checkbox" class="course-checkbox" 
                                            data-category="${categoryName}" 
                                            data-folder="${folderName}"
-                                           onchange="toggleCourseSelection(this)">
+                                           onchange="toggleCourseSelection(this)"
+                                           style="transform: scale(1.2);">
                                 </div>
                             </div>
                         `;
                         coursesList.appendChild(courseDiv);
                     });
                 });
+                
+                // Ajouter un en-tête avec le nombre total
+                const header = document.createElement('div');
+                header.innerHTML = `<p style="color: var(--text-soft); margin-bottom: 15px; font-size: 14px;">${totalPublicCourses} cours public${totalPublicCourses > 1 ? 's' : ''} disponibles :</p>`;
+                coursesList.insertBefore(header, coursesList.firstChild);
             }
             
             modal.classList.add('show');
@@ -2971,8 +3005,117 @@
             showNotification('Carte supprimée ✓', 'success');
         }
         
-        // ... (les autres fonctions de gestion des cartes restent inchangées)
-        // Pour des raisons de longueur, je ne les ai pas toutes réécrites
+        // ====== CORRECTION 1: FONCTIONS MANQUANTES POUR L'ACCÈS AUX DOSSIERS ======
+        function loadManageCardsPage() {
+            const cardsList = document.getElementById('cardsList');
+            const cardCount = document.getElementById('cardCount');
+            if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || 
+                !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) {
+                cardsList.innerHTML = '<div class="empty-cards-message">Sélectionnez d\'abord une liste</div>';
+                cardCount.textContent = '0';
+                return;
+            }
+            
+            const cards = categories[currentCategory][currentFolder][currentList];
+            cardCount.textContent = cards.length;
+            
+            if (cards.length === 0) {
+                cardsList.innerHTML = '<div class="empty-cards-message">Aucune carte dans cette liste. Ajoutez-en une !</div>';
+                return;
+            }
+            
+            cardsList.innerHTML = '';
+            cards.forEach((card, idx) => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card-edit-item';
+                cardDiv.dataset.index = idx;
+                cardDiv.innerHTML = `
+                    <div class="card-edit-header">
+                        <div class="card-edit-number">#${idx + 1} <span class="card-importance-badge ${card.importance}">${card.importance}</span></div>
+                        <div>
+                            <button class="btn-edit-card" onclick="editCard(${idx})">✏️</button>
+                            <button class="btn-delete-card" onclick="deleteCard(${idx})">✕</button>
+                        </div>
+                    </div>
+                    <div class="card-edit-content">
+                        <div class="card-edit-text"><span class="card-edit-label">Question:</span> ${card.question}</div>
+                        <div class="card-edit-text"><span class="card-edit-label">Réponse:</span> ${card.answer}</div>
+                    </div>
+                    <div class="card-inline-editor" id="editor-${idx}" style="display:none">
+                        <div class="input-group">
+                            <label>Question:</label>
+                            <div class="editor-content" id="editQuestion-${idx}" contenteditable="true">${card.question}</div>
+                        </div>
+                        <div class="input-group">
+                            <label>Réponse:</label>
+                            <div class="editor-content" id="editAnswer-${idx}" contenteditable="true">${card.answer}</div>
+                        </div>
+                        <div class="input-group">
+                            <label>Importance:</label>
+                            <select id="editImportance-${idx}">
+                                <option value="important" ${card.importance === 'important' ? 'selected' : ''}>Important</option>
+                                <option value="normal" ${card.importance === 'normal' ? 'selected' : ''}>Normal</option>
+                                <option value="pas important" ${card.importance === 'pas important' ? 'selected' : ''}>Pas important</option>
+                                <option value="explication" ${card.importance === 'explication' ? 'selected' : ''}>Explication</option>
+                            </select>
+                        </div>
+                        <div class="actions">
+                            <button class="btn-save-card" onclick="saveCard(${idx})">💾 Enregistrer</button>
+                            <button class="btn-cancel-card" onclick="cancelEdit(${idx})">Annuler</button>
+                        </div>
+                    </div>
+                `;
+                cardsList.appendChild(cardDiv);
+            });
+        }
+
+        function editCard(idx) {
+            const editor = document.getElementById(`editor-${idx}`);
+            editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function saveCard(idx) {
+            const question = document.getElementById(`editQuestion-${idx}`).innerHTML.trim();
+            const answer = document.getElementById(`editAnswer-${idx}`).innerHTML.trim();
+            const importance = document.getElementById(`editImportance-${idx}`).value;
+            
+            if (!question || !answer) {
+                showNotification('Question et réponse requises', 'error');
+                return;
+            }
+            
+            categories[currentCategory][currentFolder][currentList][idx] = {
+                question,
+                answer,
+                importance
+            };
+            
+            saveData();
+            loadManageCardsPage();
+            showNotification('Carte modifiée ✓', 'success');
+        }
+
+        function cancelEdit(idx) {
+            document.getElementById(`editor-${idx}`).style.display = 'none';
+        }
+        
+        // ====== CORRECTION 3: FONCTIONS POUR L'ACCÈS AUX COURS PUBLICS ======
+        function updateImportFolderSelect() {
+            const catSelect = document.getElementById('importCatSelect');
+            const folderSelect = document.getElementById('importFolderSelect');
+            const selectedCat = catSelect.value;
+            
+            folderSelect.innerHTML = '<option value="">Sélectionnez un cours</option>';
+            
+            if (selectedCat && categories[selectedCat]) {
+                Object.keys(categories[selectedCat]).forEach(folderName => {
+                    const option = document.createElement('option');
+                    option.value = folderName;
+                    option.textContent = folderName;
+                    folderSelect.appendChild(option);
+                });
+            }
+        }
         
         // ====== FONCTIONS D'AFFICHAGE ======
         function updateCategoryList() {
@@ -3572,6 +3715,25 @@
             return '#667eea';
         }
         
+        // ====== FONCTIONS MANQUANTES ======
+        function showPage(pageName) {
+            // Cacher toutes les pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Afficher la page demandée
+            const targetPage = document.getElementById(pageName + 'Page');
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+            
+            currentPage = pageName;
+            
+            // Mettre à jour la barre latérale
+            updateCategoryList();
+        }
+        
         // ====== INITIALISATION ======
         document.addEventListener('DOMContentLoaded', function() {
             loadUsers();
@@ -3638,6 +3800,44 @@
                 const importModal = document.getElementById('importTextModal');
                 if (importModal && importModal.classList.contains('show') && e.target === importModal) {
                     closeImportTextModal();
+                }
+            });
+            
+            // Écouteur pour la recherche d'utilisateurs
+            const userSearchInput = document.getElementById('userSearchInput');
+            if (userSearchInput) {
+                let searchTimeout;
+                userSearchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(searchUsers, 300);
+                });
+            }
+            
+            // Écouteur pour fermer les résultats de recherche en cliquant ailleurs
+            document.addEventListener('click', function(e) {
+                const resultsDiv = document.getElementById('userSearchResults');
+                const searchInput = document.getElementById('userSearchInput');
+                
+                if (resultsDiv && searchInput && 
+                    !resultsDiv.contains(e.target) && 
+                    !searchInput.contains(e.target)) {
+                    resultsDiv.innerHTML = '';
+                }
+            });
+            
+            // Initialiser les sélecteurs d'importation
+            updateFolderCategorySelect();
+            
+            // Liens de retour
+            document.getElementById('backToLists')?.addEventListener('click', function() {
+                if (currentCategory && currentFolder) {
+                    showListsPage(currentCategory, currentFolder);
+                }
+            });
+
+            document.getElementById('backToListsStudy')?.addEventListener('click', function() {
+                if (currentCategory && currentFolder) {
+                    showListsPage(currentCategory, currentFolder);
                 }
             });
         });
