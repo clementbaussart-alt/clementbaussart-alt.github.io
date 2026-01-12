@@ -1175,6 +1175,7 @@
             width: 90%;
             height: 80%;
             perspective: 1000px;
+            position: relative;
         }
 
         .fullscreen-card {
@@ -1930,7 +1931,7 @@
         <!-- Mode plein écran pour les fiches -->
         <div id="fullscreenMode" class="fullscreen-mode">
             <button class="fullscreen-close-btn" onclick="exitFullscreen()">✕</button>
-            <div class="fullscreen-card-container">
+            <div class="fullscreen-card-container" id="fullscreenCardContainer">
                 <div class="fullscreen-card" id="fullscreenCard" onclick="flipFullscreenCard()">
                     <div class="fullscreen-card-face fullscreen-card-front">
                         <div class="fullscreen-card-text" id="fullscreenQuestion"></div>
@@ -2850,7 +2851,7 @@
                     document.getElementById('listsTitle').textContent = newName;
                 }
                 closeRenameFolderModal();
-                showNotification('Cours renommé ✓', 'success');
+                showNotification('Cours renommée ✓', 'success');
             }
         }
         
@@ -3030,6 +3031,7 @@
             if (!currentCategory || !currentFolder || !currentList) {
                 document.getElementById('emptyState').style.display = 'block';
                 document.getElementById('cardSection').style.display = 'none';
+                document.getElementById('endSection').style.display = 'none';
                 return;
             }
             
@@ -3037,6 +3039,7 @@
             if (!cards || cards.length === 0) {
                 document.getElementById('emptyState').style.display = 'block';
                 document.getElementById('cardSection').style.display = 'none';
+                document.getElementById('endSection').style.display = 'none';
                 return;
             }
             
@@ -3061,11 +3064,21 @@
             
             // Mettre à jour le titre
             document.getElementById('studyTitle').textContent = currentList;
+            
+            // Cacher l'indicateur de mode révision
+            document.getElementById('studyModeIndicator').style.display = 'none';
         }
 
         function showCard() {
             const cards = categories[currentCategory][currentFolder][currentList];
+            
+            if (!cards || cards.length === 0) {
+                endStudy();
+                return;
+            }
+            
             let currentCard;
+            let total = 0;
             
             if (isReviewMode) {
                 if (reviewIndices.length === 0) {
@@ -3073,12 +3086,14 @@
                     return;
                 }
                 currentCard = cards[reviewIndices[currentIndex]];
+                total = reviewIndices.length;
             } else {
                 if (currentIndex >= cards.length) {
                     endStudy();
                     return;
                 }
                 currentCard = cards[currentIndex];
+                total = cards.length;
             }
             
             document.getElementById('question').innerHTML = currentCard.question;
@@ -3101,7 +3116,6 @@
             card.classList.remove('flipped');
             
             // Mettre à jour la progression
-            const total = isReviewMode ? reviewIndices.length : cards.length;
             const progress = currentIndex + 1;
             document.getElementById('progress-fill').style.width = (progress / total * 100) + '%';
             document.getElementById('stats').textContent = `Carte ${progress}/${total}`;
@@ -3646,12 +3660,33 @@
             }
             
             const card = fullscreenCards[fullscreenIndex];
+            
+            // Afficher la carte
             document.getElementById('fullscreenQuestion').innerHTML = card.question;
             document.getElementById('fullscreenAnswer').innerHTML = card.answer;
             
             // Réinitialiser la rotation de la carte
             const fullscreenCard = document.getElementById('fullscreenCard');
             fullscreenCard.classList.remove('flipped');
+            
+            // Afficher le badge d'importance
+            const cardContainer = document.getElementById('fullscreenCardContainer');
+            let importanceBadge = document.getElementById('fullscreenImportanceBadge');
+            if (!importanceBadge) {
+                importanceBadge = document.createElement('div');
+                importanceBadge.id = 'fullscreenImportanceBadge';
+                importanceBadge.className = 'card-importance-header';
+                importanceBadge.style.position = 'absolute';
+                importanceBadge.style.top = '20px';
+                importanceBadge.style.left = '50%';
+                importanceBadge.style.transform = 'translateX(-50%)';
+                importanceBadge.style.zIndex = '1000';
+                cardContainer.appendChild(importanceBadge);
+            }
+            
+            importanceBadge.className = `card-importance-header ${card.importance.replace(' ', '-')}`;
+            importanceBadge.textContent = card.importance;
+            importanceBadge.style.display = 'block';
         }
 
         function flipFullscreenCard() {
@@ -3660,10 +3695,9 @@
         }
 
         function fullscreenAnswer(type) {
-            // Enregistrer la réponse
             const card = fullscreenCards[fullscreenIndex];
             
-            // Enregistrer dans les résultats si l'utilisateur n'est pas invité
+            // Enregistrer la réponse
             if (currentUser && !currentUser.guest) {
                 if (!results[currentCategory]) results[currentCategory] = {};
                 if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
@@ -3682,6 +3716,12 @@
         function exitFullscreen() {
             document.getElementById('fullscreenMode').classList.remove('active');
             document.body.style.overflow = 'auto';
+            
+            // Réinitialiser l'état
+            fullscreenIndex = 0;
+            fullscreenCards = [];
+            fullscreenReviewMode = false;
+            fullscreenReviewIndices = [];
             
             // Rafraîchir l'affichage normal si on était en mode étude
             if (currentPage === 'study') {
@@ -3789,7 +3829,7 @@
                     '--partial': '#f59e0b',
                     '--unknown': '#ef4444'
                 }
-            }
+            };
         };
         
         function setVar(name, value) {
@@ -4079,6 +4119,22 @@
             document.getElementById('backToListsStudy')?.addEventListener('click', function() {
                 if (currentCategory && currentFolder) {
                     showListsPage(currentCategory, currentFolder);
+                }
+            });
+            
+            // Initialiser le bouton croix du mode plein écran
+            const closeBtn = document.querySelector('.fullscreen-close-btn');
+            if (closeBtn) {
+                closeBtn.onclick = exitFullscreen;
+            }
+            
+            // S'assurer que le mode plein écran peut être fermé avec la touche Échap
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const fullscreenMode = document.getElementById('fullscreenMode');
+                    if (fullscreenMode && fullscreenMode.classList.contains('active')) {
+                        exitFullscreen();
+                    }
                 }
             });
         });
