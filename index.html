@@ -2067,7 +2067,7 @@
             };
             
             localStorage.setItem('current_user', JSON.stringify(currentUser));
-            initializeApp();
+            showApp();
         }
         
         function register() {
@@ -2087,12 +2087,12 @@
             }
             
             if (username.length < 3) {
-                showAuthError('Le nom d\'utilisateur doit faire au moins 3 caractères');
+                showAuthError('Le nom d'utilisateur doit faire au moins 3 caractères');
                 return;
             }
             
             if (allUsers[username]) {
-                showAuthError('Ce nom d\'utilisateur est déjà pris');
+                showAuthError('Ce nom d'utilisateur est déjà pris');
                 return;
             }
             
@@ -2126,7 +2126,7 @@
             allUsers[guestId] = currentUser;
             saveUsers();
             localStorage.setItem('current_user', JSON.stringify(currentUser));
-            initializeApp();
+            showApp();
         }
         
         function checkAuth() {
@@ -2134,16 +2134,23 @@
             if (savedUser) {
                 try {
                     currentUser = JSON.parse(savedUser);
-                    initializeApp();
-                    return;
+                    // Vérifier si l'utilisateur existe toujours dans la base
+                    if (allUsers[currentUser.username]) {
+                        showApp();
+                        return;
+                    } else {
+                        // Utilisateur supprimé, déconnecter
+                        localStorage.removeItem('current_user');
+                    }
                 } catch (e) {
                     // Erreur de parsing
+                    localStorage.removeItem('current_user');
                 }
             }
             document.getElementById('authPage').style.display = 'flex';
         }
         
-        function initializeApp() {
+        function showApp() {
             document.getElementById('authPage').style.display = 'none';
             document.getElementById('appContent').style.display = 'flex';
             
@@ -2159,11 +2166,17 @@
             updateHomeStats();
             
             // Initialiser le comparateur
-            oldTA.value = "Le contrat entre en vigueur le 1er janvier 2024.\nLe prix est de 100€.\nLe client accepte les conditions.";
-            newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 €.\nLe client accepte pleinement les conditions générales.";
+            const oldTA = document.getElementById('oldText');
+            const newTA = document.getElementById('newText');
+            if (oldTA && newTA) {
+                oldTA.value = "Le contrat entre en vigueur le 1er janvier 2024.\nLe prix est de 100€.\nLe client accepte les conditions.";
+                newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 €.\nLe client accepte pleinement les conditions générales.";
+            }
             
             // Bootstrap embed si nécessaire
-            bootstrapEmbedIfAny();
+            if (typeof bootstrapEmbedIfAny === 'function') {
+                bootstrapEmbedIfAny();
+            }
         }
         
         function updateUserDisplay() {
@@ -2273,7 +2286,7 @@
             // Vérifier si le nom d'utilisateur a changé
             if (username !== currentUser.username) {
                 if (allUsers[username] && username !== currentUser.username) {
-                    showNotification('Ce nom d\'utilisateur est déjà pris', 'error');
+                    showNotification('Ce nom d'utilisateur est déjà pris', 'error');
                     return;
                 }
                 
@@ -3284,7 +3297,7 @@
             const cardCount = document.getElementById('cardCount');
             if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || 
                 !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) {
-                cardsList.innerHTML = '<div class="empty-cards-message">Sélectionnez d\'abord une liste</div>';
+                cardsList.innerHTML = '<div class="empty-cards-message">Sélectionnez d'abord une liste</div>';
                 cardCount.textContent = '0';
                 return;
             }
@@ -3613,7 +3626,7 @@
 
         function openFullscreenStudy() {
             if (!currentCategory || !currentFolder || !currentList) {
-                showNotification('Sélectionnez d\'abord une liste', 'error');
+                showNotification('Sélectionnez d'abord une liste', 'error');
                 return;
             }
             
