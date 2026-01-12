@@ -1550,6 +1550,10 @@
                             <button class="btn-fullscreen" onclick="openFullscreenStudy()">⛶ Plein écran</button>
                         </div>
                     </div>
+                    <!-- Barre de progression ajoutée ici -->
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
                     <div id="cardSection">
                         <div class="flip-hint">👆 Clique pour retourner (molette pour scroller)</div>
                         <div class="card-container">
@@ -3005,7 +3009,262 @@
             showNotification('Carte supprimée ✓', 'success');
         }
         
-        // ====== CORRECTION 1: FONCTIONS MANQUANTES POUR L'ACCÈS AUX DOSSIERS ======
+        // ====== FONCTIONS POUR LE MODE ÉTUDE ======
+        function showStudyPage(catName, folderName, listName) {
+            currentCategory = catName;
+            currentFolder = folderName;
+            currentList = listName;
+            currentPage = 'study';
+            
+            // Mettre à jour la barre latérale
+            updateCategoryList();
+            
+            // Charger la page d'étude
+            loadStudyPage();
+            
+            // Afficher la page
+            showPage('study');
+        }
+
+        function loadStudyPage() {
+            if (!currentCategory || !currentFolder || !currentList) {
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('cardSection').style.display = 'none';
+                return;
+            }
+            
+            const cards = categories[currentCategory][currentFolder][currentList];
+            if (!cards || cards.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('cardSection').style.display = 'none';
+                return;
+            }
+            
+            // Réinitialiser les indices
+            currentIndex = 0;
+            isReviewMode = false;
+            reviewIndices = [];
+            
+            // Mélanger les cartes
+            const shuffledCards = shuffleArray([...cards]);
+            
+            // Mettre à jour les statistiques
+            updateStudyStats(cards);
+            
+            // Afficher la première carte
+            showCard();
+            
+            // Afficher les sections
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('cardSection').style.display = 'block';
+            document.getElementById('endSection').style.display = 'none';
+            
+            // Mettre à jour le titre
+            document.getElementById('studyTitle').textContent = currentList;
+        }
+
+        function showCard() {
+            const cards = categories[currentCategory][currentFolder][currentList];
+            let currentCard;
+            
+            if (isReviewMode) {
+                if (reviewIndices.length === 0) {
+                    endStudy();
+                    return;
+                }
+                currentCard = cards[reviewIndices[currentIndex]];
+            } else {
+                if (currentIndex >= cards.length) {
+                    endStudy();
+                    return;
+                }
+                currentCard = cards[currentIndex];
+            }
+            
+            document.getElementById('question').innerHTML = currentCard.question;
+            document.getElementById('answer').innerHTML = currentCard.answer;
+            
+            // Ajouter le badge d'importance
+            let importanceBadge = document.getElementById('importanceBadge');
+            if (!importanceBadge) {
+                importanceBadge = document.createElement('div');
+                importanceBadge.id = 'importanceBadge';
+                importanceBadge.className = 'card-importance-header';
+                document.getElementById('question').parentElement.appendChild(importanceBadge);
+            }
+            
+            importanceBadge.className = `card-importance-header ${currentCard.importance.replace(' ', '-')}`;
+            importanceBadge.textContent = currentCard.importance;
+            
+            // Réinitialiser la rotation de la carte
+            const card = document.getElementById('flashcard');
+            card.classList.remove('flipped');
+            
+            // Mettre à jour la progression
+            const total = isReviewMode ? reviewIndices.length : cards.length;
+            const progress = currentIndex + 1;
+            document.getElementById('progress-fill').style.width = (progress / total * 100) + '%';
+            document.getElementById('stats').textContent = `Carte ${progress}/${total}`;
+            
+            // Mettre à jour le bouton d'édition
+            document.getElementById('btnEditCurrent').onclick = function() {
+                editCurrentCard();
+            };
+        }
+
+        function answer(type) {
+            const cards = categories[currentCategory][currentFolder][currentList];
+            
+            // Enregistrer le résultat
+            if (isReviewMode) {
+                const actualIndex = reviewIndices[currentIndex];
+                if (!results[currentCategory]) results[currentCategory] = {};
+                if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
+                if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
+                results[currentCategory][currentFolder][currentList][actualIndex] = type;
+                saveResults();
+            } else {
+                if (!results[currentCategory]) results[currentCategory] = {};
+                if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
+                if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
+                results[currentCategory][currentFolder][currentList][currentIndex] = type;
+                saveResults();
+            }
+            
+            // Passer à la carte suivante
+            currentIndex++;
+            
+            // Si on est en mode normal et qu'on a terminé, vérifier s'il faut passer en mode révision
+            if (!isReviewMode && currentIndex >= cards.length) {
+                // Vérifier s'il y a des cartes à réviser
+                reviewIndices = [];
+                for (let i = 0; i < cards.length; i++) {
+                    const result = results[currentCategory]?.[currentFolder]?.[currentList]?.[i];
+                    if (result === 'partial' || result === 'unknown') {
+                        reviewIndices.push(i);
+                    }
+                }
+                
+                if (reviewIndices.length > 0) {
+                    isReviewMode = true;
+                    currentIndex = 0;
+                    document.getElementById('studyModeIndicator').style.display = 'inline';
+                }
+            }
+            
+            showCard();
+        }
+
+        function flipCard() {
+            const card = document.getElementById('flashcard');
+            card.classList.toggle('flipped');
+        }
+
+        function endStudy() {
+            document.getElementById('cardSection').style.display = 'none';
+            document.getElementById('endSection').style.display = 'block';
+            
+            const cards = categories[currentCategory][currentFolder][currentList];
+            const listResults = results[currentCategory]?.[currentFolder]?.[currentList] || {};
+            
+            let known = 0, partial = 0, unknown = 0;
+            
+            for (let i = 0; i < cards.length; i++) {
+                const result = listResults[i] || 'unknown';
+                if (result === 'known') known++;
+                else if (result === 'partial') partial++;
+                else unknown++;
+            }
+            
+            const total = cards.length;
+            
+            document.getElementById('legendKnown').textContent = `Connu: ${known} (${Math.round(known/total*100)}%)`;
+            document.getElementById('legendPartial').textContent = `Partiel: ${partial} (${Math.round(partial/total*100)}%)`;
+            document.getElementById('legendUnknown').textContent = `Pas connu: ${unknown} (${Math.round(unknown/total*100)}%)`;
+            
+            document.getElementById('barKnown').style.width = (known/total*100) + '%';
+            document.getElementById('barPartial').style.width = (partial/total*100) + '%';
+            document.getElementById('barUnknown').style.width = (unknown/total*100) + '%';
+            
+            // Afficher un GIF si tout est connu
+            if (known === total) {
+                document.getElementById('resultGifImg').src = GIF_KNOWN_URL;
+                document.getElementById('resultGif').classList.add('show');
+            }
+        }
+
+        function editCurrentCard() {
+            const cards = categories[currentCategory][currentFolder][currentList];
+            let cardIndex;
+            
+            if (isReviewMode && reviewIndices.length > 0) {
+                cardIndex = reviewIndices[currentIndex];
+            } else {
+                cardIndex = currentIndex;
+            }
+            
+            if (cardIndex >= 0 && cardIndex < cards.length) {
+                // Sauvegarder l'état actuel
+                const currentCardState = {
+                    question: cards[cardIndex].question,
+                    answer: cards[cardIndex].answer,
+                    importance: cards[cardIndex].importance
+                };
+                
+                // Demander les modifications via des prompts
+                const newQuestion = prompt("Modifier la question:", currentCardState.question);
+                if (newQuestion === null) return; // Annulé
+                
+                const newAnswer = prompt("Modifier la réponse:", currentCardState.answer);
+                if (newAnswer === null) return; // Annulé
+                
+                const importanceOptions = ["important", "normal", "pas important", "explication"];
+                const currentImportanceIndex = importanceOptions.indexOf(currentCardState.importance);
+                const newImportance = prompt(
+                    "Importance (important, normal, pas important, explication):", 
+                    currentCardState.importance
+                );
+                
+                if (newImportance && importanceOptions.includes(newImportance.toLowerCase())) {
+                    cards[cardIndex] = {
+                        question: newQuestion,
+                        answer: newAnswer,
+                        importance: newImportance.toLowerCase()
+                    };
+                    
+                    saveData();
+                    showCard(); // Recharger la carte
+                    showNotification('Carte modifiée ✓', 'success');
+                } else if (newImportance === null) {
+                    return; // Annulé
+                } else {
+                    showNotification('Importance non reconnue. Utilisez: important, normal, pas important, explication', 'error');
+                }
+            }
+        }
+
+        // Fonction pour mélanger un tableau
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function updateStudyStats(cards) {
+            // Cette fonction peut être étendue pour afficher des statistiques détaillées
+            const total = cards.length;
+            const reviewed = Object.keys(results[currentCategory]?.[currentFolder]?.[currentList] || {}).length;
+            
+            if (total > 0) {
+                const progressPercent = Math.round((reviewed / total) * 100);
+                document.getElementById('stats').textContent = `${reviewed}/${total} révisées (${progressPercent}%)`;
+            }
+        }
+        
+        // ====== FONCTIONS POUR LE MODE GESTION DES CARTES ======
         function loadManageCardsPage() {
             const cardsList = document.getElementById('cardsList');
             const cardCount = document.getElementById('cardCount');
@@ -3097,24 +3356,6 @@
 
         function cancelEdit(idx) {
             document.getElementById(`editor-${idx}`).style.display = 'none';
-        }
-        
-        // ====== CORRECTION 3: FONCTIONS POUR L'ACCÈS AUX COURS PUBLICS ======
-        function updateImportFolderSelect() {
-            const catSelect = document.getElementById('importCatSelect');
-            const folderSelect = document.getElementById('importFolderSelect');
-            const selectedCat = catSelect.value;
-            
-            folderSelect.innerHTML = '<option value="">Sélectionnez un cours</option>';
-            
-            if (selectedCat && categories[selectedCat]) {
-                Object.keys(categories[selectedCat]).forEach(folderName => {
-                    const option = document.createElement('option');
-                    option.value = folderName;
-                    option.textContent = folderName;
-                    folderSelect.appendChild(option);
-                });
-            }
         }
         
         // ====== FONCTIONS D'AFFICHAGE ======
