@@ -1300,7 +1300,7 @@
         }
     </style>
 </head>
-<body>
+<body onload="checkAuth()">
     <!-- PAGE D'AUTHENTIFICATION -->
     <div id="authPage" class="auth-page">
         <div class="auth-container">
@@ -1986,37 +1986,29 @@
                 return;
             }
             
-            // Charge les utilisateurs depuis le localStorage
             loadUsers();
             
-            // Vérifie si l'utilisateur existe
             if (!allUsers[username]) {
                 showAuthError('Utilisateur non trouvé');
                 return;
             }
             
-            // Vérifie le mot de passe (stocké en clair dans cet exemple simplifié)
             if (allUsers[username].password !== password) {
                 showAuthError('Mot de passe incorrect');
                 return;
             }
             
-            // Connexion réussie
             currentUser = {
                 username: username,
                 ...allUsers[username]
             };
             
             localStorage.setItem('current_user', JSON.stringify(currentUser));
-            
-            // Cache la page d'authentification et montre l'application
             showApp();
-            
             showNotification('Connexion réussie !', 'success');
         }
 
         function loginAsGuest() {
-            // Crée un utilisateur invité
             const guestId = 'guest_' + Date.now();
             currentUser = {
                 username: guestId,
@@ -2025,13 +2017,10 @@
             };
             
             localStorage.setItem('current_user', JSON.stringify(currentUser));
-            
-            // Charge les utilisateurs existants
             loadUsers();
             
-            // Ajoute l'utilisateur invité
             allUsers[guestId] = {
-                password: 'guest', // Mot de passe par défaut pour les invités
+                password: 'guest',
                 guest: true,
                 createdAt: currentUser.createdAt,
                 publicProfile: false,
@@ -2047,10 +2036,7 @@
                 }
             };
             
-            // Sauvegarde les utilisateurs
             localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
-            
-            // Cache la page d'authentification et montre l'application
             showApp();
             showNotification('Connecté en tant qu\'invité', 'success');
         }
@@ -2086,16 +2072,13 @@
                 return;
             }
             
-            // Charge les utilisateurs existants
             loadUsers();
             
-            // Vérifie si l'utilisateur existe déjà
             if (allUsers[username]) {
                 showAuthError('Ce nom d\'utilisateur est déjà pris');
                 return;
             }
             
-            // Crée le nouvel utilisateur
             allUsers[username] = {
                 password: password,
                 email: email || '',
@@ -2104,18 +2087,13 @@
                 folders: {}
             };
             
-            // Sauvegarde les utilisateurs
             localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
-            
-            // Connecte automatiquement l'utilisateur
             currentUser = {
                 username: username,
                 ...allUsers[username]
             };
             
             localStorage.setItem('current_user', JSON.stringify(currentUser));
-            
-            // Cache la page d'authentification et montre l'application
             showApp();
             showNotification('Compte créé avec succès !', 'success');
         }
@@ -2154,7 +2132,6 @@
                 }
             }
             
-            // Créer un utilisateur admin par défaut s'il n'existe pas
             if (!allUsers['admin']) {
                 allUsers['admin'] = {
                     password: 'admin123',
@@ -2179,8 +2156,6 @@
         function showApp() {
             document.getElementById('authPage').style.display = 'none';
             document.getElementById('appContent').style.display = 'flex';
-            
-            // Charge les données de l'utilisateur
             loadUserData();
         }
 
@@ -2190,19 +2165,16 @@
                 try {
                     currentUser = JSON.parse(savedUser);
                     
-                    // Mettre à jour l'affichage du nom d'utilisateur
                     const userNameElement = document.getElementById('userName');
                     if (userNameElement && currentUser.username) {
                         userNameElement.textContent = currentUser.username;
                     }
                     
-                    // Mettre à jour le statut
                     const userStatusElement = document.getElementById('userStatus');
                     if (userStatusElement) {
                         userStatusElement.textContent = currentUser.guest ? 'Invité' : 'Membre';
                     }
                     
-                    // Mettre à jour l'avatar
                     const avatarDiv = document.getElementById('userAvatar');
                     if (avatarDiv) {
                         if (currentUser.avatar) {
@@ -2212,7 +2184,6 @@
                         }
                     }
                     
-                    // Initialiser l'application
                     initApp();
                     
                 } catch (e) {
@@ -2222,38 +2193,27 @@
         }
 
         function initApp() {
-            // Initialise l'application après connexion
             loadData();
             updateCategoryList();
             updateHomeStats();
             loadTheme();
-            
-            // Affiche la page d'accueil
             showPage('home');
         }
 
         function checkAuth() {
-            // Charge d'abord les utilisateurs
             loadUsers();
-            
-            // Vérifie si un utilisateur est déjà connecté
             const savedUser = localStorage.getItem('current_user');
             if (savedUser) {
                 try {
                     const user = JSON.parse(savedUser);
-                    // Vérifie si l'utilisateur existe dans la base
                     if (allUsers[user.username]) {
-                        // Utilisateur valide, montre l'application
                         currentUser = user;
                         showApp();
                         return;
                     }
-                } catch (e) {
-                    // Erreur de parsing, affiche la page d'authentification
-                }
+                } catch (e) {}
             }
             
-            // Aucun utilisateur connecté, montre la page d'authentification
             document.getElementById('authPage').style.display = 'flex';
         }
 
@@ -2275,14 +2235,12 @@
 
         // ====== FONCTIONS DE GESTION DES DONNÉES ======
         function loadData() {
-            // Charger les données de l'utilisateur courant
             if (currentUser && currentUser.folders) {
                 categories = currentUser.folders;
             } else {
                 categories = {};
             }
             
-            // Charger les résultats spécifiques à l'utilisateur
             const userResultsKey = `flashcards_results_${currentUser.username}`;
             const resData = localStorage.getItem(userResultsKey);
             if (resData) {
@@ -2293,7 +2251,6 @@
                 }
             }
             
-            // Charger les catégories ouvertes
             const openData = localStorage.getItem(`flashcards_open_${currentUser.username}`);
             if (openData) {
                 try {
@@ -2303,7 +2260,6 @@
                 }
             }
             
-            // Si pas de données, créer des exemples
             if (Object.keys(categories).length === 0 && !currentUser.guest) {
                 categories = {
                     '📚 Mes cours': {
@@ -2327,8 +2283,6 @@
                 currentUser.folders = categories;
                 allUsers[currentUser.username] = currentUser;
                 localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
-                
-                // Sauvegarder les catégories ouvertes
                 localStorage.setItem(`flashcards_open_${currentUser.username}`, JSON.stringify(openCategories));
             }
             
@@ -2354,20 +2308,16 @@
         }
 
         function showPage(pageName) {
-            // Cacher toutes les pages
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.remove('active');
             });
             
-            // Afficher la page demandée
             const targetPage = document.getElementById(pageName + 'Page');
             if (targetPage) {
                 targetPage.classList.add('active');
             }
             
             currentPage = pageName;
-            
-            // Mettre à jour la barre latérale
             updateCategoryList();
         }
 
@@ -2712,6 +2662,11 @@
         }
 
         // ====== FONCTIONS D'AFFICHAGE ======
+        function escapeHtml(text) { 
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }; 
+            return text.replace(/[&<>"']/g, m => map[m]); 
+        }
+        
         function updateCategoryList() {
             const container = document.getElementById('categoryList');
             container.innerHTML = '';
@@ -2808,11 +2763,6 @@
             });
         }
         
-        function escapeHtml(text) { 
-            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }; 
-            return text.replace(/[&<>"']/g, m => map[m]); 
-        }
-        
         function updateHomeStats() { 
             let totalCourses = 0; 
             let totalCards = 0; 
@@ -2852,20 +2802,14 @@
             currentCategory = catName;
             currentFolder = folderName;
             currentPage = 'lists';
-            
-            // Mettre à jour la barre latérale
             updateCategoryList();
             
-            // Mettre à jour le titre
             const title = document.getElementById('listsTitle');
             if (title) {
                 title.textContent = folderName;
             }
             
-            // Charger les listes
             loadListsPage();
-            
-            // Afficher la page
             showPage('lists');
         }
         
@@ -2922,7 +2866,7 @@
             });
         }
 
-        // ====== FONCTIONS MANQUANTES SIMPLIFIÉES ======
+        // ====== FONCTIONS DE GESTION DES CARTES ======
         function addCard() {
             const q = document.getElementById('newQuestion').innerHTML.trim();
             const a = document.getElementById('newAnswer').innerHTML.trim();
@@ -2955,20 +2899,14 @@
             currentFolder = folderName;
             currentList = listName;
             currentPage = 'manage';
-            
-            // Mettre à jour la barre latérale
             updateCategoryList();
             
-            // Mettre à jour le titre
             const title = document.getElementById('manageTitle');
             if (title) {
                 title.textContent = listName;
             }
             
-            // Charger les cartes
             loadManageCardsPage();
-            
-            // Afficher la page
             showPage('manage');
         }
 
@@ -3022,8 +2960,61 @@
         }
 
         function editCard(idx) {
-            // Fonction simplifiée pour l'instant
-            showNotification('Fonction d\'édition à implémenter', 'info');
+            const cards = categories[currentCategory][currentFolder][currentList];
+            if (idx < 0 || idx >= cards.length) return;
+            
+            const card = cards[idx];
+            
+            const editorDiv = document.createElement('div');
+            editorDiv.className = 'card-inline-editor';
+            editorDiv.innerHTML = `
+                <div class="input-group">
+                    <label>Question:</label>
+                    <div class="editor-content" id="editQuestion${idx}" contenteditable="true">${card.question}</div>
+                </div>
+                <div class="input-group">
+                    <label>Réponse:</label>
+                    <div class="editor-content" id="editAnswer${idx}" contenteditable="true">${card.answer}</div>
+                </div>
+                <div class="input-group">
+                    <label>Importance:</label>
+                    <select id="editImportance${idx}">
+                        <option value="important" ${card.importance === 'important' ? 'selected' : ''}>Important</option>
+                        <option value="normal" ${card.importance === 'normal' ? 'selected' : ''}>Normal</option>
+                        <option value="pas important" ${card.importance === 'pas important' ? 'selected' : ''}>Pas important</option>
+                        <option value="explication" ${card.importance === 'explication' ? 'selected' : ''}>Explication</option>
+                    </select>
+                </div>
+                <div class="actions">
+                    <button class="btn-save-card" onclick="saveEditedCard(${idx})">💾 Enregistrer</button>
+                    <button class="btn-cancel-card" onclick="cancelEditCard(${idx})">✕ Annuler</button>
+                </div>
+            `;
+            
+            const cardElement = document.querySelector(`.card-edit-item[data-index="${idx}"]`);
+            cardElement.innerHTML = '';
+            cardElement.appendChild(editorDiv);
+        }
+
+        function saveEditedCard(idx) {
+            const cards = categories[currentCategory][currentFolder][currentList];
+            const question = document.getElementById(`editQuestion${idx}`).innerHTML.trim();
+            const answer = document.getElementById(`editAnswer${idx}`).innerHTML.trim();
+            const importance = document.getElementById(`editImportance${idx}`).value;
+            
+            if (!question || !answer) {
+                showNotification('Veuillez remplir la question et la réponse.', 'error');
+                return;
+            }
+            
+            cards[idx] = { question, answer, importance };
+            saveData();
+            loadManageCardsPage();
+            showNotification('Carte modifiée ✓', 'success');
+        }
+
+        function cancelEditCard(idx) {
+            loadManageCardsPage();
         }
 
         // ====== FONCTIONS POUR LE MODE ÉTUDE ======
@@ -3032,14 +3023,8 @@
             currentFolder = folderName;
             currentList = listName;
             currentPage = 'study';
-            
-            // Mettre à jour la barre latérale
             updateCategoryList();
-            
-            // Charger la page d'étude
             loadStudyPage();
-            
-            // Afficher la page
             showPage('study');
         }
 
@@ -3059,26 +3044,16 @@
                 return;
             }
             
-            // Réinitialiser les indices
             currentIndex = 0;
             isReviewMode = false;
             reviewIndices = [];
-            
-            // Mettre à jour les statistiques
             updateStudyStats(cards);
-            
-            // Afficher la première carte
             showCard();
             
-            // Afficher les sections
             document.getElementById('emptyState').style.display = 'none';
             document.getElementById('cardSection').style.display = 'block';
             document.getElementById('endSection').style.display = 'none';
-            
-            // Mettre à jour le titre
             document.getElementById('studyTitle').textContent = currentList;
-            
-            // Cacher l'indicateur de mode révision
             document.getElementById('studyModeIndicator').style.display = 'none';
         }
 
@@ -3112,16 +3087,13 @@
             document.getElementById('question').innerHTML = currentCard.question;
             document.getElementById('answer').innerHTML = currentCard.answer;
             
-            // Réinitialiser la rotation de la carte
             const card = document.getElementById('flashcard');
             card.classList.remove('flipped');
             
-            // Mettre à jour la progression
             const progress = currentIndex + 1;
             document.getElementById('progress-fill').style.width = (progress / total * 100) + '%';
             document.getElementById('stats').textContent = `Carte ${progress}/${total}`;
             
-            // Mettre à jour le bouton d'édition
             document.getElementById('btnEditCurrent').onclick = function() {
                 editCurrentCard();
             };
@@ -3135,7 +3107,6 @@
         function answer(type) {
             const cards = categories[currentCategory][currentFolder][currentList];
             
-            // Enregistrer le résultat
             if (isReviewMode) {
                 const actualIndex = reviewIndices[currentIndex];
                 if (!results[currentCategory]) results[currentCategory] = {};
@@ -3151,12 +3122,9 @@
                 saveResults();
             }
             
-            // Passer à la carte suivante
             currentIndex++;
             
-            // Si on est en mode normal et qu'on a terminé, vérifier s'il faut passer en mode révision
             if (!isReviewMode && currentIndex >= cards.length) {
-                // Vérifier s'il y a des cartes à réviser
                 reviewIndices = [];
                 for (let i = 0; i < cards.length; i++) {
                     const result = results[currentCategory]?.[currentFolder]?.[currentList]?.[i];
@@ -3201,7 +3169,6 @@
             document.getElementById('barPartial').style.width = (partial/total*100) + '%';
             document.getElementById('barUnknown').style.width = (unknown/total*100) + '%';
             
-            // Afficher un GIF si tout est connu
             if (known === total) {
                 document.getElementById('resultGifImg').src = GIF_KNOWN_URL;
                 document.getElementById('resultGif').classList.add('show');
@@ -3219,19 +3186,17 @@
             }
             
             if (cardIndex >= 0 && cardIndex < cards.length) {
-                // Sauvegarder l'état actuel
                 const currentCardState = {
                     question: cards[cardIndex].question,
                     answer: cards[cardIndex].answer,
                     importance: cards[cardIndex].importance
                 };
                 
-                // Demander les modifications via des prompts
                 const newQuestion = prompt("Modifier la question:", currentCardState.question);
-                if (newQuestion === null) return; // Annulé
+                if (newQuestion === null) return;
                 
                 const newAnswer = prompt("Modifier la réponse:", currentCardState.answer);
-                if (newAnswer === null) return; // Annulé
+                if (newAnswer === null) return;
                 
                 const importanceOptions = ["important", "normal", "pas important", "explication"];
                 const currentImportanceIndex = importanceOptions.indexOf(currentCardState.importance);
@@ -3248,10 +3213,10 @@
                     };
                     
                     saveData();
-                    showCard(); // Recharger la carte
+                    showCard();
                     showNotification('Carte modifiée ✓', 'success');
                 } else if (newImportance === null) {
-                    return; // Annulé
+                    return;
                 } else {
                     showNotification('Importance non reconnue. Utilisez: important, normal, pas important, explication', 'error');
                 }
@@ -3270,15 +3235,15 @@
 
         // ====== FONCTIONS DU THÈME ======
         const THEME_KEY = 'flashcards_theme_v2';
-        
+
         function setVar(name, value) {
             document.documentElement.style.setProperty(name, value);
         }
-        
+
         function getComputedVar(name) {
             return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
         }
-        
+
         function openThemeModal() {
             const modal = document.getElementById('themeModal');
             if (!modal) {
@@ -3287,11 +3252,11 @@
             }
             modal.classList.add('show');
         }
-        
+
         function closeThemeModal() {
             document.getElementById('themeModal').classList.remove('show');
         }
-        
+
         function loadTheme() {
             try {
                 const saved = localStorage.getItem(THEME_KEY);
@@ -3319,7 +3284,7 @@
             document.body.style.overflow = 'auto';
         }
 
-        // ====== FONCTIONS MANQUANTES (PLACEHOLDERS) ======
+        // ====== FONCTIONS MANQUANTES IMPLÉMENTÉES ======
         function logout() {
             if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
                 localStorage.removeItem('current_user');
@@ -3339,27 +3304,447 @@
         }
 
         function openProfileSettings() {
-            showNotification('Paramètres du profil - à implémenter', 'info');
+            if (!currentUser) return;
+            
+            document.getElementById('profileSettingsModal').classList.add('show');
+            document.getElementById('settingsUsername').value = currentUser.username;
+            document.getElementById('settingsEmail').value = currentUser.email || '';
+            document.getElementById('settingsBio').value = currentUser.bio || '';
+            
+            const avatarPreview = document.getElementById('avatarPreview');
+            if (avatarPreview) {
+                if (currentUser.avatar) {
+                    avatarPreview.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.username}" style="width:100%;height:100%;object-fit:cover;">`;
+                } else {
+                    avatarPreview.innerHTML = currentUser.username.charAt(0).toUpperCase();
+                }
+            }
+        }
+
+        function closeProfileSettings() {
+            document.getElementById('profileSettingsModal').classList.remove('show');
+        }
+
+        function saveProfileSettings() {
+            if (!currentUser) return;
+            
+            const username = document.getElementById('settingsUsername').value.trim();
+            const email = document.getElementById('settingsEmail').value.trim();
+            const bio = document.getElementById('settingsBio').value.trim();
+            const currentPassword = document.getElementById('settingsCurrentPassword').value;
+            const newPassword = document.getElementById('settingsNewPassword').value;
+            const confirmPassword = document.getElementById('settingsConfirmPassword').value;
+            
+            if (!username) {
+                showNotification('Le nom d\'utilisateur est requis', 'error');
+                return;
+            }
+            
+            if (newPassword && newPassword !== confirmPassword) {
+                showNotification('Les mots de passe ne correspondent pas', 'error');
+                return;
+            }
+            
+            if (newPassword && !currentPassword && currentUser.password !== 'guest') {
+                showNotification('Veuillez entrer votre mot de passe actuel', 'error');
+                return;
+            }
+            
+            if (newPassword && currentUser.password !== currentPassword && currentUser.password !== 'guest') {
+                showNotification('Mot de passe actuel incorrect', 'error');
+                return;
+            }
+            
+            currentUser.username = username;
+            currentUser.email = email;
+            currentUser.bio = bio;
+            
+            if (newPassword) {
+                currentUser.password = newPassword;
+            }
+            
+            allUsers[currentUser.username] = currentUser;
+            localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
+            localStorage.setItem('current_user', JSON.stringify(currentUser));
+            
+            showNotification('Profil mis à jour ✓', 'success');
+            closeProfileSettings();
+            loadUserData();
         }
 
         function searchUsers() {
-            // Fonction à implémenter
+            const query = document.getElementById('userSearchInput').value.trim().toLowerCase();
+            const resultsDiv = document.getElementById('userSearchResults');
+            resultsDiv.innerHTML = '';
+            
+            if (!query) return;
+            
+            const filteredUsers = Object.entries(allUsers)
+                .filter(([username, user]) => 
+                    username.toLowerCase().includes(query) && 
+                    user.publicProfile && 
+                    username !== currentUser.username
+                )
+                .slice(0, 10);
+            
+            if (filteredUsers.length === 0) {
+                resultsDiv.innerHTML = '<div class="user-result">Aucun utilisateur trouvé</div>';
+                return;
+            }
+            
+            filteredUsers.forEach(([username, user]) => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'user-result';
+                resultDiv.onclick = () => viewUserProfile(username);
+                
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'user-result-avatar';
+                if (user.avatar) {
+                    avatarDiv.innerHTML = `<img src="${user.avatar}" alt="${username}">`;
+                } else {
+                    avatarDiv.textContent = username.charAt(0).toUpperCase();
+                }
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'user-result-info';
+                infoDiv.innerHTML = `
+                    <div class="user-result-name">${username}</div>
+                    <div class="user-result-stats">${Object.keys(user.folders || {}).length} cours</div>
+                `;
+                
+                resultDiv.appendChild(avatarDiv);
+                resultDiv.appendChild(infoDiv);
+                resultsDiv.appendChild(resultDiv);
+            });
+        }
+
+        function viewUserProfile(username) {
+            const user = allUsers[username];
+            if (!user) return;
+            
+            document.getElementById('userProfileModal').classList.add('show');
+            document.getElementById('profileUsername').textContent = username;
+            document.getElementById('profileInfo').textContent = user.email || 'Membre';
+            
+            const avatarDiv = document.getElementById('profileAvatar');
+            if (avatarDiv) {
+                if (user.avatar) {
+                    avatarDiv.innerHTML = `<img src="${user.avatar}" alt="${username}" style="width:100%;height:100%;object-fit:cover;">`;
+                } else {
+                    avatarDiv.innerHTML = username.charAt(0).toUpperCase();
+                }
+            }
+            
+            const coursesList = document.getElementById('profileCoursesList');
+            coursesList.innerHTML = '';
+            
+            if (!user.folders || Object.keys(user.folders).length === 0) {
+                coursesList.innerHTML = '<p style="color:#999;text-align:center;padding:20px">Aucun cours public</p>';
+                return;
+            }
+            
+            Object.entries(user.folders).forEach(([catName, category]) => {
+                Object.entries(category).forEach(([folderName, folder]) => {
+                    const courseDiv = document.createElement('div');
+                    courseDiv.className = 'course-card';
+                    courseDiv.style.marginBottom = '10px';
+                    courseDiv.innerHTML = `
+                        <div class="course-card-left">
+                            <div class="course-card-title">${folderName}</div>
+                            <div class="course-card-info">${Object.keys(folder).length} listes</div>
+                        </div>
+                        <div class="course-card-arrow">→</div>
+                    `;
+                    courseDiv.onclick = () => importFromUser(username, catName, folderName);
+                    coursesList.appendChild(courseDiv);
+                });
+            });
+        }
+
+        function closeUserProfileModal() {
+            document.getElementById('userProfileModal').classList.remove('show');
+        }
+
+        function importFromUser(username, catName, folderName) {
+            const user = allUsers[username];
+            if (!user || !user.folders[catName] || !user.folders[catName][folderName]) return;
+            
+            const sourceFolder = user.folders[catName][folderName];
+            
+            const targetCat = prompt("Nom de la catégorie pour l'importation:", catName);
+            if (!targetCat) return;
+            
+            const targetFolder = prompt("Nom du cours pour l'importation:", folderName);
+            if (!targetFolder) return;
+            
+            if (!categories[targetCat]) {
+                categories[targetCat] = {};
+            }
+            
+            if (!categories[targetCat][targetFolder]) {
+                categories[targetCat][targetFolder] = {};
+            }
+            
+            Object.entries(sourceFolder).forEach(([listName, cards]) => {
+                categories[targetCat][targetFolder][listName] = [...cards];
+            });
+            
+            saveData();
+            updateCategoryList();
+            closeUserProfileModal();
+            showNotification('Cours importé avec succès ✓', 'success');
         }
 
         function importCards() {
-            showNotification('Importation - à implémenter', 'info');
+            const fileInput = document.getElementById('fileInput');
+            fileInput.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        
+                        if (data.categories) {
+                            categories = data.categories;
+                        } else if (data.folders) {
+                            currentUser.folders = data.folders;
+                            categories = data.folders;
+                        } else if (Array.isArray(data)) {
+                            const catName = prompt("Nom de la catégorie:", "Import");
+                            const folderName = prompt("Nom du cours:", "Importé");
+                            const listName = prompt("Nom de la liste:", "Liste importée");
+                            
+                            if (!catName || !folderName || !listName) return;
+                            
+                            if (!categories[catName]) categories[catName] = {};
+                            if (!categories[catName][folderName]) categories[catName][folderName] = {};
+                            categories[catName][folderName][listName] = data;
+                        }
+                        
+                        currentUser.folders = categories;
+                        allUsers[currentUser.username] = currentUser;
+                        localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
+                        saveData();
+                        updateCategoryList();
+                        showNotification('Données importées avec succès ✓', 'success');
+                    } catch (error) {
+                        showNotification('Erreur lors de l\'importation: ' + error.message, 'error');
+                    }
+                    fileInput.value = '';
+                };
+                reader.readAsText(file);
+            };
+            fileInput.click();
         }
 
         function exportAll() {
-            showNotification('Exportation - à implémenter', 'info');
+            const data = {
+                categories: categories,
+                results: results,
+                exportedAt: new Date().toISOString(),
+                user: currentUser.username
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `flashcards_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Exportation réussie ✓', 'success');
+        }
+
+        function exportCards() {
+            if (!currentCategory || !currentFolder || !currentList) {
+                showNotification('Sélectionnez d\'abord une liste', 'error');
+                return;
+            }
+            
+            const cards = categories[currentCategory][currentFolder][currentList];
+            const data = {
+                cards: cards,
+                metadata: {
+                    category: currentCategory,
+                    folder: currentFolder,
+                    list: currentList,
+                    exportedAt: new Date().toISOString()
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `flashcards_${currentFolder}_${currentList}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Cartes exportées ✓', 'success');
         }
 
         function showImportTextModal() {
-            showNotification('Importation texte - à implémenter', 'info');
+            document.getElementById('importTextModal').classList.add('show');
+            
+            const catSelect = document.getElementById('importCatSelect');
+            catSelect.innerHTML = '';
+            Object.keys(categories).forEach(catName => {
+                const option = document.createElement('option');
+                option.value = catName;
+                option.textContent = catName;
+                catSelect.appendChild(option);
+            });
+            
+            updateImportFolderSelect();
+        }
+
+        function closeImportTextModal() {
+            document.getElementById('importTextModal').classList.remove('show');
+        }
+
+        function updateImportFolderSelect() {
+            const catSelect = document.getElementById('importCatSelect');
+            const folderSelect = document.getElementById('importFolderSelect');
+            const selectedCat = catSelect.value;
+            
+            folderSelect.innerHTML = '';
+            if (categories[selectedCat]) {
+                Object.keys(categories[selectedCat]).forEach(folderName => {
+                    const option = document.createElement('option');
+                    option.value = folderName;
+                    option.textContent = folderName;
+                    folderSelect.appendChild(option);
+                });
+            }
+            
+            const newFolderOption = document.createElement('option');
+            newFolderOption.value = '__new__';
+            newFolderOption.textContent = '-- Nouveau cours --';
+            folderSelect.appendChild(newFolderOption);
+        }
+
+        function performTextImport() {
+            const catSelect = document.getElementById('importCatSelect');
+            const folderSelect = document.getElementById('importFolderSelect');
+            const listNameInput = document.getElementById('importListName');
+            const separatorSelect = document.getElementById('importSeparator');
+            const textContent = document.getElementById('importTextContent').value.trim();
+            
+            const catName = catSelect.value;
+            const folderName = folderSelect.value;
+            const listName = listNameInput.value.trim();
+            const separatorValue = separatorSelect.value;
+            
+            if (!catName) {
+                showNotification('Sélectionnez une catégorie', 'error');
+                return;
+            }
+            
+            if (!listName) {
+                showNotification('Entrez un nom pour la liste', 'error');
+                return;
+            }
+            
+            if (!textContent) {
+                showNotification('Collez du texte à importer', 'error');
+                return;
+            }
+            
+            let actualFolderName = folderName;
+            if (folderName === '__new__') {
+                actualFolderName = prompt('Nom du nouveau cours:', 'Nouveau cours');
+                if (!actualFolderName) return;
+            }
+            
+            if (!categories[catName]) {
+                categories[catName] = {};
+            }
+            
+            if (!categories[catName][actualFolderName]) {
+                categories[catName][actualFolderName] = {};
+            }
+            
+            if (categories[catName][actualFolderName][listName]) {
+                if (!confirm(`La liste "${listName}" existe déjà. Remplacer ?`)) return;
+            }
+            
+            let separator;
+            switch (separatorValue) {
+                case 'tab': separator = /\t/; break;
+                case ',': separator = /,/; break;
+                case ';': separator = /;/; break;
+                case ':': separator = /:/; break;
+                case '-': separator = /-/; break;
+                case '|': separator = /\|/; break;
+                default: separator = /\t/;
+            }
+            
+            const lines = textContent.split('\n').filter(line => line.trim());
+            const cards = [];
+            
+            lines.forEach(line => {
+                const parts = line.split(separator).map(part => part.trim());
+                if (parts.length >= 2) {
+                    cards.push({
+                        question: parts[0],
+                        answer: parts.slice(1).join(separatorValue === 'tab' ? '\t' : separatorValue),
+                        importance: 'normal'
+                    });
+                }
+            });
+            
+            categories[catName][actualFolderName][listName] = cards;
+            saveData();
+            updateCategoryList();
+            closeImportTextModal();
+            showNotification(`${cards.length} cartes importées avec succès ✓`, 'success');
         }
 
         function openFullscreenStudy() {
-            showNotification('Mode plein écran - à implémenter', 'info');
+            const cards = categories[currentCategory][currentFolder][currentList];
+            if (!cards || cards.length === 0) {
+                showNotification('Aucune carte à étudier', 'error');
+                return;
+            }
+            
+            const fullscreenMode = document.getElementById('fullscreenMode');
+            const fullscreenCard = document.getElementById('fullscreenCard');
+            const fullscreenQuestion = document.getElementById('fullscreenQuestion');
+            const fullscreenAnswer = document.getElementById('fullscreenAnswer');
+            
+            fullscreenMode.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            let currentFullscreenIndex = isReviewMode && reviewIndices.length > 0 ? reviewIndices[currentIndex] : currentIndex;
+            if (currentFullscreenIndex >= cards.length) currentFullscreenIndex = 0;
+            
+            const card = cards[currentFullscreenIndex];
+            fullscreenQuestion.innerHTML = card.question;
+            fullscreenAnswer.innerHTML = card.answer;
+            fullscreenCard.classList.remove('flipped');
+        }
+
+        function exitFullscreen() {
+            const fullscreenMode = document.getElementById('fullscreenMode');
+            fullscreenMode.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function flipFullscreenCard() {
+            const fullscreenCard = document.getElementById('fullscreenCard');
+            fullscreenCard.classList.toggle('flipped');
+        }
+
+        function fullscreenAnswer(type) {
+            answer(type);
+            exitFullscreen();
         }
 
         function execFormatCommand(cmd) {
@@ -3371,21 +3756,191 @@
         }
 
         function insertImage() {
-            const imgUrl = prompt("Entrez l'URL de l'image:");
-            if (imgUrl) {
-                document.execCommand('insertHTML', false, `<img src="${imgUrl}" style="max-width:100%;height:auto;">`);
-            }
+            const fileInput = document.getElementById('imageInput');
+            fileInput.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                if (!file.type.startsWith('image/')) {
+                    showNotification('Veuillez sélectionner une image', 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imgUrl = event.target.result;
+                    document.execCommand('insertHTML', false, `<img src="${imgUrl}" style="max-width:100%;height:auto;border-radius:8px;">`);
+                };
+                reader.readAsDataURL(file);
+                fileInput.value = '';
+            };
+            fileInput.click();
         }
 
         function clearFormatNow() {
             document.execCommand('removeFormat', false, null);
         }
 
+        function clearCurrentList() {
+            if (!currentCategory || !currentFolder || !currentList) {
+                showNotification('Sélectionnez d\'abord une liste', 'error');
+                return;
+            }
+            
+            if (!confirm(`Vider toutes les cartes de la liste "${currentList}" ?`)) return;
+            
+            categories[currentCategory][currentFolder][currentList] = [];
+            saveData();
+            loadManageCardsPage();
+            showNotification('Liste vidée ✓', 'success');
+        }
+
+        function copyFolderEmbed() {
+            if (!currentCategory || !currentFolder) {
+                showNotification('Sélectionnez d\'abord un cours', 'error');
+                return;
+            }
+            
+            const embedCode = `<iframe src="${window.location.origin}?embed=${currentUser.username}:${currentCategory}:${currentFolder}" width="800" height="600" frameborder="0"></iframe>`;
+            
+            navigator.clipboard.writeText(embedCode)
+                .then(() => showNotification('Code d\'intégration copié ✓', 'success'))
+                .catch(() => {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = embedCode;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showNotification('Code d\'intégration copié ✓', 'success');
+                });
+        }
+
+        function copyListEmbed(listName) {
+            if (!currentCategory || !currentFolder || !listName) {
+                showNotification('Sélectionnez d\'abord une liste', 'error');
+                return;
+            }
+            
+            const embedCode = `<iframe src="${window.location.origin}?embed=${currentUser.username}:${currentCategory}:${currentFolder}:${listName}" width="800" height="600" frameborder="0"></iframe>`;
+            
+            navigator.clipboard.writeText(embedCode)
+                .then(() => showNotification('Code d\'intégration copié ✓', 'success'))
+                .catch(() => {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = embedCode;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showNotification('Code d\'intégration copié ✓', 'success');
+                });
+        }
+
+        function deleteAccount() {
+            if (!confirm('⚠️ ATTENTION: Cette action est irréversible. Toutes vos données seront supprimées. Continuer ?')) return;
+            
+            if (!currentUser) return;
+            
+            delete allUsers[currentUser.username];
+            localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
+            
+            const userResultsKey = `flashcards_results_${currentUser.username}`;
+            localStorage.removeItem(userResultsKey);
+            
+            const openDataKey = `flashcards_open_${currentUser.username}`;
+            localStorage.removeItem(openDataKey);
+            
+            localStorage.removeItem('current_user');
+            location.reload();
+        }
+
         // ====== INITIALISATION ======
         document.addEventListener('DOMContentLoaded', function() {
-            // Les écouteurs d'événements sont déjà définis dans les fonctions
-            // Le chargement de l'authentification se fait via onload="checkAuth()" dans le body
+            // Initialiser le comparateur
+            document.getElementById('compareBtn').addEventListener('click', function() {
+                const oldText = document.getElementById('oldText').value;
+                const newText = document.getElementById('newText').value;
+                
+                if (!oldText || !newText) {
+                    showNotification('Veuillez entrer les deux textes à comparer', 'error');
+                    return;
+                }
+                
+                const diff = Diff.diffWords(oldText, newText);
+                let output = '';
+                let insCount = 0;
+                let delCount = 0;
+                let repCount = 0;
+                
+                diff.forEach(part => {
+                    if (part.added) {
+                        output += `<mark class="ins">${part.value}</mark>`;
+                        insCount++;
+                    } else if (part.removed) {
+                        output += `<mark class="del">${part.value}</mark>`;
+                        delCount++;
+                    } else {
+                        output += part.value;
+                    }
+                });
+                
+                document.getElementById('diffOutput').innerHTML = output;
+                document.getElementById('insCount').textContent = insCount;
+                document.getElementById('delCount').textContent = delCount;
+                document.getElementById('repCount').textContent = Math.min(insCount, delCount);
+            });
+            
+            document.getElementById('copyBtn').addEventListener('click', function() {
+                const diffOutput = document.getElementById('diffOutput').innerHTML;
+                navigator.clipboard.writeText(diffOutput)
+                    .then(() => showNotification('Comparaison copiée ✓', 'success'))
+                    .catch(() => showNotification('Erreur lors de la copie', 'error'));
+            });
+            
+            // Initialiser les événements des boutons de retour
+            document.getElementById('backToLists').addEventListener('click', function() {
+                showPage('lists');
+            });
+            
+            document.getElementById('backToListsStudy').addEventListener('click', function() {
+                showPage('lists');
+            });
+            
+            // Initialiser l'upload d'avatar
+            document.getElementById('avatarInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                if (!file.type.startsWith('image/')) {
+                    showNotification('Veuillez sélectionner une image', 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentUser.avatar = event.target.result;
+                    allUsers[currentUser.username] = currentUser;
+                    localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
+                    localStorage.setItem('current_user', JSON.stringify(currentUser));
+                    
+                    const avatarPreview = document.getElementById('avatarPreview');
+                    if (avatarPreview) {
+                        avatarPreview.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.username}" style="width:100%;height:100%;object-fit:cover;">`;
+                    }
+                    
+                    const userAvatar = document.getElementById('userAvatar');
+                    if (userAvatar) {
+                        userAvatar.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.username}" style="width:100%;height:100%;object-fit:cover;">`;
+                    }
+                    
+                    showNotification('Photo de profil mise à jour ✓', 'success');
+                };
+                reader.readAsDataURL(file);
+            });
         });
+
+        // Démarrer l'authentification via onload dans le body
     </script>
 </body>
 </html>
