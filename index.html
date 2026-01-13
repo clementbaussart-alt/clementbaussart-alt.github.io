@@ -3730,16 +3730,10 @@
         }
 
         function exitFullscreen() {
-  // Ferme ton overlay "plein écran" (div)
   			const fullscreenMode = document.getElementById('fullscreenMode');
   			if (fullscreenMode) fullscreenMode.classList.remove('active');
   			document.body.style.overflow = 'auto';
-
-  // Ne tente la Fullscreen API que si elle est active
-  			if (document.fullscreenElement) {
-    		document.exitFullscreen().catch(() => {});
- 		 }
-		}  
+		}
 
         function flipFullscreenCard() {
             const fullscreenCard = document.getElementById('fullscreenCard');
