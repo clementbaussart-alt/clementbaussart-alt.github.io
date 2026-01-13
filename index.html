@@ -3730,10 +3730,16 @@
         }
 
         function exitFullscreen() {
-            const fullscreenMode = document.getElementById('fullscreenMode');
-            fullscreenMode.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
+	// 1) fermer TON overlay "plein écran"
+	const fullscreenMode = document.getElementById('fullscreenMode');
+	if (fullscreenMode) fullscreenMode.classList.remove('active');
+	document.body.style.overflow = 'auto';
+
+	// 2) si (et seulement si) le navigateur est réellement en Fullscreen API
+	if (document.fullscreenElement) {
+		document.exitFullscreen().catch(() => {});
+	}
+}    
 
         function flipFullscreenCard() {
             const fullscreenCard = document.getElementById('fullscreenCard');
