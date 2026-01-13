@@ -1175,6 +1175,7 @@
             width: 90%;
             height: 80%;
             perspective: 1000px;
+            position: relative;
         }
 
         .fullscreen-card {
@@ -1930,7 +1931,7 @@
         <!-- Mode plein écran pour les fiches -->
         <div id="fullscreenMode" class="fullscreen-mode">
             <button class="fullscreen-close-btn" onclick="exitFullscreen()">✕</button>
-            <div class="fullscreen-card-container">
+            <div class="fullscreen-card-container" id="fullscreenCardContainer">
                 <div class="fullscreen-card" id="fullscreenCard" onclick="flipFullscreenCard()">
                     <div class="fullscreen-card-face fullscreen-card-front">
                         <div class="fullscreen-card-text" id="fullscreenQuestion"></div>
@@ -1953,7 +1954,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js"></script>
     <script>
-        // ====== SYSTÈME D'AUTHENTIFICATION ======
+        // ====== VARIABLES GLOBALES ======
         let currentUser = null;
         let allUsers = {};
         let categories = {};
@@ -1976,70 +1977,6 @@
         const GIF_KNOWN_URL = 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif';
         
         // ====== FONCTIONS D'AUTHENTIFICATION ======
-        function loadUsers() {
-            const usersData = localStorage.getItem('flashcards_users');
-            if (usersData) {
-                try {
-                    allUsers = JSON.parse(usersData);
-                } catch (e) {
-                    allUsers = {};
-                }
-            }
-            
-            // Créer un utilisateur admin par défaut s'il n'existe pas
-            if (!allUsers['admin']) {
-                allUsers['admin'] = {
-                    password: btoa('admin123'),
-                    email: 'admin@example.com',
-                    createdAt: new Date().toISOString(),
-                    publicProfile: true,
-                    folders: {
-                        '📚 Exemples': {
-                            'Droit Administratif': {
-                                'Chapitre 1': [
-                                    {question: "Qu'est-ce que le principe de légalité ?", answer: "Le principe selon lequel l'administration doit agir conformément aux règles de droit.", importance: 'important'},
-                                    {question: "Qu'est-ce que la théorie du service public ?", answer: "Une théorie développée par Léon Duguit selon laquelle l'État doit assurer certains services essentiels à la population.", importance: 'normal'}
-                                ]
-                            }
-                        }
-                    }
-                };
-                saveUsers();
-            }
-        }
-        
-        function saveUsers() {
-            localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
-        }
-        
-        function showAuthError(message) {
-            const errorDiv = document.getElementById('authError');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
-        
-        function showAuthSuccess(message) {
-            const successDiv = document.getElementById('authSuccess');
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-            setTimeout(() => {
-                successDiv.style.display = 'none';
-            }, 3000);
-        }
-        
-        function showRegister() {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('registerForm').style.display = 'block';
-        }
-        
-        function showLogin() {
-            document.getElementById('registerForm').style.display = 'none';
-            document.getElementById('loginForm').style.display = 'block';
-        }
-        
         function login() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
@@ -2049,12 +1986,17 @@
                 return;
             }
             
+            // Charge les utilisateurs depuis le localStorage
+            loadUsers();
+            
+            // Vérifie si l'utilisateur existe
             if (!allUsers[username]) {
                 showAuthError('Utilisateur non trouvé');
                 return;
             }
             
-            if (allUsers[username].password !== btoa(password)) {
+            // Vérifie le mot de passe (stocké en clair dans cet exemple simplifié)
+            if (allUsers[username].password !== password) {
                 showAuthError('Mot de passe incorrect');
                 return;
             }
@@ -2066,9 +2008,63 @@
             };
             
             localStorage.setItem('current_user', JSON.stringify(currentUser));
-            initializeApp();
+            
+            // Cache la page d'authentification et montre l'application
+            showApp();
+            
+            showNotification('Connexion réussie !', 'success');
         }
-        
+
+        function loginAsGuest() {
+            // Crée un utilisateur invité
+            const guestId = 'guest_' + Date.now();
+            currentUser = {
+                username: guestId,
+                guest: true,
+                createdAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem('current_user', JSON.stringify(currentUser));
+            
+            // Charge les utilisateurs existants
+            loadUsers();
+            
+            // Ajoute l'utilisateur invité
+            allUsers[guestId] = {
+                password: 'guest', // Mot de passe par défaut pour les invités
+                guest: true,
+                createdAt: currentUser.createdAt,
+                publicProfile: false,
+                folders: {
+                    '📚 Exemples': {
+                        'Droit Administratif': {
+                            'Chapitre 1': [
+                                {question: "Qu'est-ce que le principe de légalité ?", answer: "Le principe selon lequel l'administration doit agir conformément aux règles de droit.", importance: 'important'},
+                                {question: "Qu'est-ce que la théorie du service public ?", answer: "Une théorie développée par Léon Duguit selon laquelle l'État doit assurer certains services essentiels à la population.", importance: 'normal'}
+                            ]
+                        }
+                    }
+                }
+            };
+            
+            // Sauvegarde les utilisateurs
+            localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
+            
+            // Cache la page d'authentification et montre l'application
+            showApp();
+            showNotification('Connecté en tant qu\'invité', 'success');
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+        }
+
         function register() {
             const username = document.getElementById('registerUsername').value.trim();
             const email = document.getElementById('registerEmail').value.trim();
@@ -2090,119 +2086,185 @@
                 return;
             }
             
+            // Charge les utilisateurs existants
+            loadUsers();
+            
+            // Vérifie si l'utilisateur existe déjà
             if (allUsers[username]) {
                 showAuthError('Ce nom d\'utilisateur est déjà pris');
                 return;
             }
             
-            // Créer le nouvel utilisateur
+            // Crée le nouvel utilisateur
             allUsers[username] = {
-                password: btoa(password),
+                password: password,
                 email: email || '',
                 createdAt: new Date().toISOString(),
                 publicProfile: true,
                 folders: {}
             };
             
-            saveUsers();
-            showAuthSuccess('Compte créé avec succès !');
-            showLogin();
+            // Sauvegarde les utilisateurs
+            localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
             
-            document.getElementById('loginUsername').value = username;
-            document.getElementById('loginPassword').value = '';
-        }
-        
-        function loginAsGuest() {
-            const guestId = 'guest_' + Math.random().toString(36).substr(2, 9);
+            // Connecte automatiquement l'utilisateur
             currentUser = {
-                username: guestId,
-                guest: true,
-                publicProfile: false,
-                folders: {},
-                createdAt: new Date().toISOString()
+                username: username,
+                ...allUsers[username]
             };
             
-            allUsers[guestId] = currentUser;
-            saveUsers();
             localStorage.setItem('current_user', JSON.stringify(currentUser));
-            initializeApp();
+            
+            // Cache la page d'authentification et montre l'application
+            showApp();
+            showNotification('Compte créé avec succès !', 'success');
         }
-        
-        function checkAuth() {
+
+        function showAuthError(message) {
+            const errorDiv = document.getElementById('authError');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 5000);
+            } else {
+                alert(message);
+            }
+        }
+
+        function showAuthSuccess(message) {
+            const successDiv = document.getElementById('authSuccess');
+            if (successDiv) {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                setTimeout(() => {
+                    successDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        function loadUsers() {
+            const usersData = localStorage.getItem('flashcards_users');
+            if (usersData) {
+                try {
+                    allUsers = JSON.parse(usersData);
+                } catch (e) {
+                    allUsers = {};
+                }
+            }
+            
+            // Créer un utilisateur admin par défaut s'il n'existe pas
+            if (!allUsers['admin']) {
+                allUsers['admin'] = {
+                    password: 'admin123',
+                    email: 'admin@example.com',
+                    createdAt: new Date().toISOString(),
+                    publicProfile: true,
+                    folders: {
+                        '📚 Exemples': {
+                            'Droit Administratif': {
+                                'Chapitre 1': [
+                                    {question: "Qu'est-ce que le principe de légalité ?", answer: "Le principe selon lequel l'administration doit agir conformément aux règles de droit.", importance: 'important'},
+                                    {question: "Qu'est-ce que la théorie du service public ?", answer: "Une théorie développée par Léon Duguit selon laquelle l'État doit assurer certains services essentiels à la population.", importance: 'normal'}
+                                ]
+                            }
+                        }
+                    }
+                };
+                localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
+            }
+        }
+
+        function showApp() {
+            document.getElementById('authPage').style.display = 'none';
+            document.getElementById('appContent').style.display = 'flex';
+            
+            // Charge les données de l'utilisateur
+            loadUserData();
+        }
+
+        function loadUserData() {
             const savedUser = localStorage.getItem('current_user');
             if (savedUser) {
                 try {
                     currentUser = JSON.parse(savedUser);
-                    initializeApp();
-                    return;
+                    
+                    // Mettre à jour l'affichage du nom d'utilisateur
+                    const userNameElement = document.getElementById('userName');
+                    if (userNameElement && currentUser.username) {
+                        userNameElement.textContent = currentUser.username;
+                    }
+                    
+                    // Mettre à jour le statut
+                    const userStatusElement = document.getElementById('userStatus');
+                    if (userStatusElement) {
+                        userStatusElement.textContent = currentUser.guest ? 'Invité' : 'Membre';
+                    }
+                    
+                    // Mettre à jour l'avatar
+                    const avatarDiv = document.getElementById('userAvatar');
+                    if (avatarDiv) {
+                        if (currentUser.avatar) {
+                            avatarDiv.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.username}" style="width:100%;height:100%;object-fit:cover;">`;
+                        } else {
+                            avatarDiv.innerHTML = currentUser.username.charAt(0).toUpperCase();
+                        }
+                    }
+                    
+                    // Initialiser l'application
+                    initApp();
+                    
                 } catch (e) {
-                    // Erreur de parsing
+                    console.error('Erreur lors du chargement des données utilisateur:', e);
                 }
             }
-            document.getElementById('authPage').style.display = 'flex';
         }
-        
-        function initializeApp() {
-            document.getElementById('authPage').style.display = 'none';
-            document.getElementById('appContent').style.display = 'flex';
-            
-            // Mettre à jour l'affichage de l'utilisateur
-            updateUserDisplay();
-            
-            // Charger les données
+
+        function initApp() {
+            // Initialise l'application après connexion
             loadData();
-            loadTheme();
-            
-            // Initialiser l'application
             updateCategoryList();
             updateHomeStats();
+            loadTheme();
             
-            // Initialiser le comparateur
-            oldTA.value = "Le contrat entre en vigueur le 1er janvier 2024.\nLe prix est de 100€.\nLe client accepte les conditions.";
-            newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 €.\nLe client accepte pleinement les conditions générales.";
-            
-            // Bootstrap embed si nécessaire
-            bootstrapEmbedIfAny();
+            // Affiche la page d'accueil
+            showPage('home');
         }
-        
-        function updateUserDisplay() {
-            if (!currentUser) return;
+
+        function checkAuth() {
+            // Charge d'abord les utilisateurs
+            loadUsers();
             
-            document.getElementById('userName').textContent = currentUser.username;
-            document.getElementById('userStatus').textContent = currentUser.guest ? 'Invité' : 'Membre';
-            
-            // Mettre à jour l'avatar
-            const avatarDiv = document.getElementById('userAvatar');
-            if (currentUser.avatar) {
-                avatarDiv.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.username}" style="width:100%;height:100%;object-fit:cover;">`;
-            } else {
-                avatarDiv.innerHTML = currentUser.username.charAt(0).toUpperCase();
+            // Vérifie si un utilisateur est déjà connecté
+            const savedUser = localStorage.getItem('current_user');
+            if (savedUser) {
+                try {
+                    const user = JSON.parse(savedUser);
+                    // Vérifie si l'utilisateur existe dans la base
+                    if (allUsers[user.username]) {
+                        // Utilisateur valide, montre l'application
+                        currentUser = user;
+                        showApp();
+                        return;
+                    }
+                } catch (e) {
+                    // Erreur de parsing, affiche la page d'authentification
+                }
             }
             
-            document.getElementById('publicProfileToggle').checked = currentUser.publicProfile || false;
+            // Aucun utilisateur connecté, montre la page d'authentification
+            document.getElementById('authPage').style.display = 'flex';
         }
-        
-        function logout() {
-            if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
-                localStorage.removeItem('current_user');
-                location.reload();
-            }
-        }
-        
-        function togglePublicProfile() {
-            if (!currentUser) return;
-            
-            const isPublic = document.getElementById('publicProfileToggle').checked;
-            currentUser.publicProfile = isPublic;
-            allUsers[currentUser.username] = currentUser;
-            saveUsers();
-            
-            showNotification('Profil ' + (isPublic ? 'public' : 'privé') + ' ✓', 'success');
-        }
-        
+
         // ====== NOTIFICATIONS ======
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
+            if (!notification) {
+                console.error('Element notification non trouvé');
+                return;
+            }
+            
             notification.textContent = message;
             notification.className = `notification ${type} show`;
             
@@ -2210,348 +2272,7 @@
                 notification.classList.remove('show');
             }, 3000);
         }
-        
-        // ====== GESTION DES PARAMÈTRES PROFIL ======
-        function openProfileSettings() {
-            const modal = document.getElementById('profileSettingsModal');
-            const avatarPreview = document.getElementById('avatarPreview');
-            
-            // Remplir les champs
-            document.getElementById('settingsUsername').value = currentUser.username;
-            document.getElementById('settingsEmail').value = currentUser.email || '';
-            document.getElementById('settingsBio').value = currentUser.bio || '';
-            
-            // Mettre à jour l'avatar preview
-            if (currentUser.avatar) {
-                avatarPreview.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.username}" style="width:100%;height:100%;object-fit:cover;">`;
-            } else {
-                avatarPreview.innerHTML = currentUser.username.charAt(0).toUpperCase();
-            }
-            
-            // Réinitialiser les champs de mot de passe
-            document.getElementById('settingsCurrentPassword').value = '';
-            document.getElementById('settingsNewPassword').value = '';
-            document.getElementById('settingsConfirmPassword').value = '';
-            
-            modal.classList.add('show');
-        }
-        
-        function closeProfileSettings() {
-            document.getElementById('profileSettingsModal').classList.remove('show');
-        }
-        
-        // Gestion du changement d'avatar
-        document.getElementById('avatarInput').addEventListener('change', function(e) {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const avatarData = event.target.result;
-                
-                // Mettre à jour l'avatar preview
-                const avatarPreview = document.getElementById('avatarPreview');
-                avatarPreview.innerHTML = `<img src="${avatarData}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;">`;
-                
-                // Sauvegarder temporairement
-                currentUser.avatar = avatarData;
-                
-                showNotification('Photo de profil mise à jour ✓', 'success');
-            };
-            reader.readAsDataURL(file);
-        });
-        
-        function saveProfileSettings() {
-            const username = document.getElementById('settingsUsername').value.trim();
-            const email = document.getElementById('settingsEmail').value.trim();
-            const bio = document.getElementById('settingsBio').value.trim();
-            const currentPassword = document.getElementById('settingsCurrentPassword').value.trim();
-            const newPassword = document.getElementById('settingsNewPassword').value.trim();
-            const confirmPassword = document.getElementById('settingsConfirmPassword').value.trim();
-            
-            // Vérifier si le nom d'utilisateur a changé
-            if (username !== currentUser.username) {
-                if (allUsers[username] && username !== currentUser.username) {
-                    showNotification('Ce nom d\'utilisateur est déjà pris', 'error');
-                    return;
-                }
-                
-                // Mettre à jour le nom d'utilisateur
-                delete allUsers[currentUser.username];
-                currentUser.username = username;
-            }
-            
-            // Vérifier le mot de passe si on veut le changer
-            if (newPassword) {
-                if (newPassword !== confirmPassword) {
-                    showNotification('Les mots de passe ne correspondent pas', 'error');
-                    return;
-                }
-                
-                if (currentPassword && allUsers[currentUser.username].password !== btoa(currentPassword)) {
-                    showNotification('Mot de passe actuel incorrect', 'error');
-                    return;
-                }
-                
-                currentUser.password = btoa(newPassword);
-            }
-            
-            // Mettre à jour les autres infos
-            currentUser.email = email;
-            currentUser.bio = bio;
-            
-            // Sauvegarder l'utilisateur
-            allUsers[currentUser.username] = currentUser;
-            saveUsers();
-            
-            // Mettre à jour l'affichage
-            updateUserDisplay();
-            
-            // Fermer le modal
-            closeProfileSettings();
-            
-            showNotification('Paramètres enregistrés avec succès ✓', 'success');
-        }
-        
-        function deleteAccount() {
-            if (!confirm('⚠️ ATTENTION : Cette action supprimera définitivement votre compte et toutes vos données. Êtes-vous sûr ?')) {
-                return;
-            }
-            
-            if (confirm('Pour confirmer, tapez "SUPPRIMER" :')) {
-                const confirmation = prompt('Tapez "SUPPRIMER" pour confirmer la suppression :');
-                if (confirmation === 'SUPPRIMER') {
-                    // Supprimer l'utilisateur
-                    delete allUsers[currentUser.username];
-                    saveUsers();
-                    
-                    // Supprimer les données locales
-                    localStorage.removeItem('current_user');
-                    localStorage.removeItem(`flashcards_results_${currentUser.username}`);
-                    localStorage.removeItem(`flashcards_open_${currentUser.username}`);
-                    
-                    // Rediriger vers la page d'authentification
-                    location.reload();
-                }
-            }
-        }
-        
-        // ====== GESTION DES UTILISATEURS ======
-        let selectedUserCourses = [];
-        
-        function searchUsers() {
-            const searchTerm = document.getElementById('userSearchInput').value.toLowerCase().trim();
-            const resultsDiv = document.getElementById('userSearchResults');
-            resultsDiv.innerHTML = '';
-            
-            if (!searchTerm) return;
-            
-            // Filtrer les utilisateurs (exclure l'utilisateur courant et les invités)
-            const matchedUsers = Object.keys(allUsers).filter(username => {
-                if (username === currentUser.username) return false;
-                if (allUsers[username].guest) return false; // Exclure les invités
-                if (!allUsers[username].publicProfile) return false; // Exclure les profils privés
-                return username.toLowerCase().includes(searchTerm);
-            });
-            
-            if (matchedUsers.length === 0) {
-                resultsDiv.innerHTML = '<div style="color: var(--text-soft); padding: 10px; text-align: center;">Aucun utilisateur trouvé</div>';
-                return;
-            }
-            
-            matchedUsers.slice(0, 10).forEach(username => {
-                const user = allUsers[username];
-                const userDiv = document.createElement('div');
-                userDiv.className = 'user-result';
-                
-                let avatarContent = username.charAt(0).toUpperCase();
-                if (user.avatar) {
-                    avatarContent = `<img src="${user.avatar}" alt="${username}" style="width:100%;height:100%;object-fit:cover;">`;
-                }
-                
-                // Compter les cours publics de cet utilisateur
-                let publicCourseCount = 0;
-                if (user.folders) {
-                    Object.values(user.folders).forEach(category => {
-                        Object.values(category).forEach(folder => {
-                            publicCourseCount++;
-                        });
-                    });
-                }
-                
-                userDiv.innerHTML = `
-                    <div class="user-result-avatar">${avatarContent}</div>
-                    <div class="user-result-info">
-                        <div class="user-result-name">${username}</div>
-                        <div class="user-result-stats">
-                            ${publicCourseCount} cours public${publicCourseCount > 1 ? 's' : ''}
-                        </div>
-                    </div>
-                `;
-                
-                userDiv.onclick = () => {
-                    document.getElementById('userSearchInput').value = '';
-                    resultsDiv.innerHTML = '';
-                    viewUserProfile(username);
-                };
-                
-                resultsDiv.appendChild(userDiv);
-            });
-        }
-        
-        function viewUserProfile(username) {
-            const user = allUsers[username];
-            if (!user) return;
-            
-            selectedUserCourses = [];
-            
-            const modal = document.getElementById('userProfileModal');
-            document.getElementById('profileUsername').textContent = username;
-            
-            // Afficher la date d'inscription
-            const joinDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : 'Date inconnue';
-            document.getElementById('profileInfo').textContent = `Membre depuis ${joinDate}`;
-            
-            const avatarDiv = document.getElementById('profileAvatar');
-            if (user.avatar) {
-                avatarDiv.innerHTML = `<img src="${user.avatar}" alt="${username}" style="width:100%;height:100%;object-fit:cover;">`;
-            } else {
-                avatarDiv.innerHTML = username.charAt(0).toUpperCase();
-            }
-            
-            const coursesList = document.getElementById('profileCoursesList');
-            coursesList.innerHTML = '';
-            
-            if (!user.folders || Object.keys(user.folders).length === 0) {
-                coursesList.innerHTML = '<p style="color: var(--text-soft); text-align: center; padding: 20px;">Cet utilisateur n\'a pas encore créé de cours public</p>';
-            } else {
-                // Compter tous les cours publics
-                let totalPublicCourses = 0;
-                Object.keys(user.folders).forEach(categoryName => {
-                    const category = user.folders[categoryName];
-                    Object.keys(category).forEach(folderName => {
-                        const folder = category[folderName];
-                        totalPublicCourses++;
-                        
-                        const courseDiv = document.createElement('div');
-                        courseDiv.className = 'course-card';
-                        courseDiv.style.marginBottom = '10px';
-                        
-                        // Compter les listes et cartes
-                        let listCount = Object.keys(folder).length;
-                        let cardCount = 0;
-                        Object.values(folder).forEach(list => {
-                            cardCount += list.length;
-                        });
-                        
-                        courseDiv.innerHTML = `
-                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 600; color: var(--primary);">${folderName}</div>
-                                    <div style="font-size: 12px; color: var(--text-soft);">
-                                        <span>📁 ${categoryName}</span> • 
-                                        <span>📋 ${listCount} liste${listCount > 1 ? 's' : ''}</span> • 
-                                        <span>🎴 ${cardCount} carte${cardCount > 1 ? 's' : ''}</span>
-                                    </div>
-                                </div>
-                                <div style="margin-left: 15px;">
-                                    <input type="checkbox" class="course-checkbox" 
-                                           data-category="${categoryName}" 
-                                           data-folder="${folderName}"
-                                           onchange="toggleCourseSelection(this)"
-                                           style="transform: scale(1.2);">
-                                </div>
-                            </div>
-                        `;
-                        coursesList.appendChild(courseDiv);
-                    });
-                });
-                
-                // Ajouter un en-tête avec le nombre total
-                const header = document.createElement('div');
-                header.innerHTML = `<p style="color: var(--text-soft); margin-bottom: 15px; font-size: 14px;">${totalPublicCourses} cours public${totalPublicCourses > 1 ? 's' : ''} disponibles :</p>`;
-                coursesList.insertBefore(header, coursesList.firstChild);
-            }
-            
-            modal.classList.add('show');
-        }
-        
-        function closeUserProfileModal() {
-            document.getElementById('userProfileModal').classList.remove('show');
-        }
-        
-        function toggleCourseSelection(checkbox) {
-            const category = checkbox.dataset.category;
-            const folder = checkbox.dataset.folder;
-            
-            if (checkbox.checked) {
-                selectedUserCourses.push({ category, folder });
-            } else {
-                const index = selectedUserCourses.findIndex(c => 
-                    c.category === category && c.folder === folder);
-                if (index > -1) {
-                    selectedUserCourses.splice(index, 1);
-                }
-            }
-        }
-        
-        function importFromUser() {
-            if (selectedUserCourses.length === 0) {
-                showNotification('Sélectionnez au moins un cours à importer', 'error');
-                return;
-            }
-            
-            const sourceUsername = document.getElementById('profileUsername').textContent;
-            const sourceUser = allUsers[sourceUsername];
-            
-            if (!sourceUser) {
-                showNotification('Utilisateur source introuvable', 'error');
-                return;
-            }
-            
-            let importedCount = 0;
-            selectedUserCourses.forEach(({ category, folder }) => {
-                if (sourceUser.folders[category] && sourceUser.folders[category][folder]) {
-                    // Créer une copie profonde
-                    const importedData = JSON.parse(JSON.stringify(sourceUser.folders[category][folder]));
-                    
-                    // Vérifier si la catégorie existe déjà
-                    if (!currentUser.folders[category]) {
-                        currentUser.folders[category] = {};
-                    }
-                    
-                    // Vérifier si le cours existe déjà
-                    let finalFolderName = folder;
-                    let counter = 1;
-                    while (currentUser.folders[category][finalFolderName]) {
-                        finalFolderName = `${folder} (${counter})`;
-                        counter++;
-                    }
-                    
-                    currentUser.folders[category][finalFolderName] = importedData;
-                    importedCount++;
-                }
-            });
-            
-            if (importedCount > 0) {
-                // Sauvegarder
-                allUsers[currentUser.username] = currentUser;
-                saveUsers();
-                
-                // Mettre à jour les données locales
-                categories = currentUser.folders;
-                
-                // Fermer le modal et rafraîchir
-                closeUserProfileModal();
-                updateCategoryList();
-                updateHomeStats();
-                
-                showNotification(`${importedCount} cours importés avec succès !`, 'success');
-            } else {
-                showNotification('Aucun cours importé', 'error');
-            }
-        }
-        
+
         // ====== FONCTIONS DE GESTION DES DONNÉES ======
         function loadData() {
             // Charger les données de l'utilisateur courant
@@ -2583,7 +2304,7 @@
             }
             
             // Si pas de données, créer des exemples
-            if (Object.keys(categories).length === 0) {
+            if (Object.keys(categories).length === 0 && !currentUser.guest) {
                 categories = {
                     '📚 Mes cours': {
                         'Droit Administratif': {
@@ -2597,7 +2318,7 @@
                 openCategories['📚 Mes cours'] = true;
                 currentUser.folders = categories;
                 allUsers[currentUser.username] = currentUser;
-                saveUsers();
+                localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
             }
         }
         
@@ -2605,7 +2326,7 @@
             if (currentUser) {
                 currentUser.folders = categories;
                 allUsers[currentUser.username] = currentUser;
-                saveUsers();
+                localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
                 
                 // Sauvegarder les catégories ouvertes
                 localStorage.setItem(`flashcards_open_${currentUser.username}`, JSON.stringify(openCategories));
@@ -2620,7 +2341,36 @@
                 localStorage.setItem(userResultsKey, JSON.stringify(results));
             }
         }
-        
+
+        // ====== FONCTIONS DE GESTION DE L'APPLICATION ======
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const toggleBtn = document.getElementById('toggleSidebarBtn');
+            
+            sidebar.classList.toggle('hidden');
+            mainContent.classList.toggle('sidebar-hidden');
+            toggleBtn.classList.toggle('sidebar-hidden');
+        }
+
+        function showPage(pageName) {
+            // Cacher toutes les pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Afficher la page demandée
+            const targetPage = document.getElementById(pageName + 'Page');
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+            
+            currentPage = pageName;
+            
+            // Mettre à jour la barre latérale
+            updateCategoryList();
+        }
+
         // ====== FONCTIONS DE GESTION DES CATÉGORIES ET DOSSIERS ======
         function toggleCategory(catName) {
             openCategories[catName] = !openCategories[catName];
@@ -2850,7 +2600,7 @@
                     document.getElementById('listsTitle').textContent = newName;
                 }
                 closeRenameFolderModal();
-                showNotification('Cours renommé ✓', 'success');
+                showNotification('Cours renommée ✓', 'success');
             }
         }
         
@@ -2960,404 +2710,7 @@
                 showNotification('Liste renommée ✓', 'success');
             }
         }
-        
-        // ====== FONCTIONS DE GESTION DES CARTES ======
-        function addCard() {
-            const q = document.getElementById('newQuestion').innerHTML.trim();
-            const a = document.getElementById('newAnswer').innerHTML.trim();
-            const impEl = document.getElementById('importanceSelect');
-            const importance = impEl ? (impEl.value || 'normal') : 'normal';
-            if (!q || !a || q === '<br>' || a === '<br>') {
-                showNotification('Veuillez remplir la question et la réponse.', 'error');
-                return;
-            }
-            if (!currentCategory || !currentFolder || !currentList) {
-                showNotification("Sélectionne d'abord une liste.", 'error');
-                return;
-            }
-            categories[currentCategory][currentFolder][currentList].push({
-                question: q,
-                answer: a,
-                importance: importance
-            });
-            saveData();
-            document.getElementById('newQuestion').innerHTML = '';
-            document.getElementById('newAnswer').innerHTML = '';
-            if (impEl) impEl.value = 'normal';
-            updateCategoryList();
-            if (currentPage === 'manage') loadManageCardsPage();
-            showNotification('Carte ajoutée avec succès ✓', 'success');
-        }
-        
-        function deleteCard(idx) { 
-            if (!confirm('Supprimer cette carte ?')) return; 
-            categories[currentCategory][currentFolder][currentList].splice(idx, 1); 
-            if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][currentList]) { 
-                delete results[currentCategory][currentFolder][currentList][idx]; 
-                const newResults = {}; 
-                Object.keys(results[currentCategory][currentFolder][currentList]).forEach(key => { 
-                    const i = parseInt(key); 
-                    if (i > idx) newResults[i - 1] = results[currentCategory][currentFolder][currentList][key]; 
-                    else if (i < idx) newResults[i] = results[currentCategory][currentFolder][currentList][key]; 
-                }); 
-                results[currentCategory][currentFolder][currentList] = newResults; 
-                saveResults(); 
-            } 
-            saveData(); 
-            updateCategoryList(); 
-            if (currentPage === 'manage') loadManageCardsPage();
-            showNotification('Carte supprimée ✓', 'success');
-        }
-        
-        // ====== FONCTIONS POUR LE MODE ÉTUDE ======
-        function showStudyPage(catName, folderName, listName) {
-            currentCategory = catName;
-            currentFolder = folderName;
-            currentList = listName;
-            currentPage = 'study';
-            
-            // Mettre à jour la barre latérale
-            updateCategoryList();
-            
-            // Charger la page d'étude
-            loadStudyPage();
-            
-            // Afficher la page
-            showPage('study');
-        }
 
-        function loadStudyPage() {
-            if (!currentCategory || !currentFolder || !currentList) {
-                document.getElementById('emptyState').style.display = 'block';
-                document.getElementById('cardSection').style.display = 'none';
-                return;
-            }
-            
-            const cards = categories[currentCategory][currentFolder][currentList];
-            if (!cards || cards.length === 0) {
-                document.getElementById('emptyState').style.display = 'block';
-                document.getElementById('cardSection').style.display = 'none';
-                return;
-            }
-            
-            // Réinitialiser les indices
-            currentIndex = 0;
-            isReviewMode = false;
-            reviewIndices = [];
-            
-            // Mélanger les cartes
-            const shuffledCards = shuffleArray([...cards]);
-            
-            // Mettre à jour les statistiques
-            updateStudyStats(cards);
-            
-            // Afficher la première carte
-            showCard();
-            
-            // Afficher les sections
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('cardSection').style.display = 'block';
-            document.getElementById('endSection').style.display = 'none';
-            
-            // Mettre à jour le titre
-            document.getElementById('studyTitle').textContent = currentList;
-        }
-
-        function showCard() {
-            const cards = categories[currentCategory][currentFolder][currentList];
-            let currentCard;
-            
-            if (isReviewMode) {
-                if (reviewIndices.length === 0) {
-                    endStudy();
-                    return;
-                }
-                currentCard = cards[reviewIndices[currentIndex]];
-            } else {
-                if (currentIndex >= cards.length) {
-                    endStudy();
-                    return;
-                }
-                currentCard = cards[currentIndex];
-            }
-            
-            document.getElementById('question').innerHTML = currentCard.question;
-            document.getElementById('answer').innerHTML = currentCard.answer;
-            
-            // Ajouter le badge d'importance
-            let importanceBadge = document.getElementById('importanceBadge');
-            if (!importanceBadge) {
-                importanceBadge = document.createElement('div');
-                importanceBadge.id = 'importanceBadge';
-                importanceBadge.className = 'card-importance-header';
-                document.getElementById('question').parentElement.appendChild(importanceBadge);
-            }
-            
-            importanceBadge.className = `card-importance-header ${currentCard.importance.replace(' ', '-')}`;
-            importanceBadge.textContent = currentCard.importance;
-            
-            // Réinitialiser la rotation de la carte
-            const card = document.getElementById('flashcard');
-            card.classList.remove('flipped');
-            
-            // Mettre à jour la progression
-            const total = isReviewMode ? reviewIndices.length : cards.length;
-            const progress = currentIndex + 1;
-            document.getElementById('progress-fill').style.width = (progress / total * 100) + '%';
-            document.getElementById('stats').textContent = `Carte ${progress}/${total}`;
-            
-            // Mettre à jour le bouton d'édition
-            document.getElementById('btnEditCurrent').onclick = function() {
-                editCurrentCard();
-            };
-        }
-
-        function answer(type) {
-            const cards = categories[currentCategory][currentFolder][currentList];
-            
-            // Enregistrer le résultat
-            if (isReviewMode) {
-                const actualIndex = reviewIndices[currentIndex];
-                if (!results[currentCategory]) results[currentCategory] = {};
-                if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
-                if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
-                results[currentCategory][currentFolder][currentList][actualIndex] = type;
-                saveResults();
-            } else {
-                if (!results[currentCategory]) results[currentCategory] = {};
-                if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
-                if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
-                results[currentCategory][currentFolder][currentList][currentIndex] = type;
-                saveResults();
-            }
-            
-            // Passer à la carte suivante
-            currentIndex++;
-            
-            // Si on est en mode normal et qu'on a terminé, vérifier s'il faut passer en mode révision
-            if (!isReviewMode && currentIndex >= cards.length) {
-                // Vérifier s'il y a des cartes à réviser
-                reviewIndices = [];
-                for (let i = 0; i < cards.length; i++) {
-                    const result = results[currentCategory]?.[currentFolder]?.[currentList]?.[i];
-                    if (result === 'partial' || result === 'unknown') {
-                        reviewIndices.push(i);
-                    }
-                }
-                
-                if (reviewIndices.length > 0) {
-                    isReviewMode = true;
-                    currentIndex = 0;
-                    document.getElementById('studyModeIndicator').style.display = 'inline';
-                }
-            }
-            
-            showCard();
-        }
-
-        function flipCard() {
-            const card = document.getElementById('flashcard');
-            card.classList.toggle('flipped');
-        }
-
-        function endStudy() {
-            document.getElementById('cardSection').style.display = 'none';
-            document.getElementById('endSection').style.display = 'block';
-            
-            const cards = categories[currentCategory][currentFolder][currentList];
-            const listResults = results[currentCategory]?.[currentFolder]?.[currentList] || {};
-            
-            let known = 0, partial = 0, unknown = 0;
-            
-            for (let i = 0; i < cards.length; i++) {
-                const result = listResults[i] || 'unknown';
-                if (result === 'known') known++;
-                else if (result === 'partial') partial++;
-                else unknown++;
-            }
-            
-            const total = cards.length;
-            
-            document.getElementById('legendKnown').textContent = `Connu: ${known} (${Math.round(known/total*100)}%)`;
-            document.getElementById('legendPartial').textContent = `Partiel: ${partial} (${Math.round(partial/total*100)}%)`;
-            document.getElementById('legendUnknown').textContent = `Pas connu: ${unknown} (${Math.round(unknown/total*100)}%)`;
-            
-            document.getElementById('barKnown').style.width = (known/total*100) + '%';
-            document.getElementById('barPartial').style.width = (partial/total*100) + '%';
-            document.getElementById('barUnknown').style.width = (unknown/total*100) + '%';
-            
-            // Afficher un GIF si tout est connu
-            if (known === total) {
-                document.getElementById('resultGifImg').src = GIF_KNOWN_URL;
-                document.getElementById('resultGif').classList.add('show');
-            }
-        }
-
-        function editCurrentCard() {
-            const cards = categories[currentCategory][currentFolder][currentList];
-            let cardIndex;
-            
-            if (isReviewMode && reviewIndices.length > 0) {
-                cardIndex = reviewIndices[currentIndex];
-            } else {
-                cardIndex = currentIndex;
-            }
-            
-            if (cardIndex >= 0 && cardIndex < cards.length) {
-                // Sauvegarder l'état actuel
-                const currentCardState = {
-                    question: cards[cardIndex].question,
-                    answer: cards[cardIndex].answer,
-                    importance: cards[cardIndex].importance
-                };
-                
-                // Demander les modifications via des prompts
-                const newQuestion = prompt("Modifier la question:", currentCardState.question);
-                if (newQuestion === null) return; // Annulé
-                
-                const newAnswer = prompt("Modifier la réponse:", currentCardState.answer);
-                if (newAnswer === null) return; // Annulé
-                
-                const importanceOptions = ["important", "normal", "pas important", "explication"];
-                const currentImportanceIndex = importanceOptions.indexOf(currentCardState.importance);
-                const newImportance = prompt(
-                    "Importance (important, normal, pas important, explication):", 
-                    currentCardState.importance
-                );
-                
-                if (newImportance && importanceOptions.includes(newImportance.toLowerCase())) {
-                    cards[cardIndex] = {
-                        question: newQuestion,
-                        answer: newAnswer,
-                        importance: newImportance.toLowerCase()
-                    };
-                    
-                    saveData();
-                    showCard(); // Recharger la carte
-                    showNotification('Carte modifiée ✓', 'success');
-                } else if (newImportance === null) {
-                    return; // Annulé
-                } else {
-                    showNotification('Importance non reconnue. Utilisez: important, normal, pas important, explication', 'error');
-                }
-            }
-        }
-
-        // Fonction pour mélanger un tableau
-        function shuffleArray(array) {
-            const newArray = [...array];
-            for (let i = newArray.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-            }
-            return newArray;
-        }
-
-        function updateStudyStats(cards) {
-            // Cette fonction peut être étendue pour afficher des statistiques détaillées
-            const total = cards.length;
-            const reviewed = Object.keys(results[currentCategory]?.[currentFolder]?.[currentList] || {}).length;
-            
-            if (total > 0) {
-                const progressPercent = Math.round((reviewed / total) * 100);
-                document.getElementById('stats').textContent = `${reviewed}/${total} révisées (${progressPercent}%)`;
-            }
-        }
-        
-        // ====== FONCTIONS POUR LE MODE GESTION DES CARTES ======
-        function loadManageCardsPage() {
-            const cardsList = document.getElementById('cardsList');
-            const cardCount = document.getElementById('cardCount');
-            if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || 
-                !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) {
-                cardsList.innerHTML = '<div class="empty-cards-message">Sélectionnez d\'abord une liste</div>';
-                cardCount.textContent = '0';
-                return;
-            }
-            
-            const cards = categories[currentCategory][currentFolder][currentList];
-            cardCount.textContent = cards.length;
-            
-            if (cards.length === 0) {
-                cardsList.innerHTML = '<div class="empty-cards-message">Aucune carte dans cette liste. Ajoutez-en une !</div>';
-                return;
-            }
-            
-            cardsList.innerHTML = '';
-            cards.forEach((card, idx) => {
-                const cardDiv = document.createElement('div');
-                cardDiv.className = 'card-edit-item';
-                cardDiv.dataset.index = idx;
-                cardDiv.innerHTML = `
-                    <div class="card-edit-header">
-                        <div class="card-edit-number">#${idx + 1} <span class="card-importance-badge ${card.importance}">${card.importance}</span></div>
-                        <div>
-                            <button class="btn-edit-card" onclick="editCard(${idx})">✏️</button>
-                            <button class="btn-delete-card" onclick="deleteCard(${idx})">✕</button>
-                        </div>
-                    </div>
-                    <div class="card-edit-content">
-                        <div class="card-edit-text"><span class="card-edit-label">Question:</span> ${card.question}</div>
-                        <div class="card-edit-text"><span class="card-edit-label">Réponse:</span> ${card.answer}</div>
-                    </div>
-                    <div class="card-inline-editor" id="editor-${idx}" style="display:none">
-                        <div class="input-group">
-                            <label>Question:</label>
-                            <div class="editor-content" id="editQuestion-${idx}" contenteditable="true">${card.question}</div>
-                        </div>
-                        <div class="input-group">
-                            <label>Réponse:</label>
-                            <div class="editor-content" id="editAnswer-${idx}" contenteditable="true">${card.answer}</div>
-                        </div>
-                        <div class="input-group">
-                            <label>Importance:</label>
-                            <select id="editImportance-${idx}">
-                                <option value="important" ${card.importance === 'important' ? 'selected' : ''}>Important</option>
-                                <option value="normal" ${card.importance === 'normal' ? 'selected' : ''}>Normal</option>
-                                <option value="pas important" ${card.importance === 'pas important' ? 'selected' : ''}>Pas important</option>
-                                <option value="explication" ${card.importance === 'explication' ? 'selected' : ''}>Explication</option>
-                            </select>
-                        </div>
-                        <div class="actions">
-                            <button class="btn-save-card" onclick="saveCard(${idx})">💾 Enregistrer</button>
-                            <button class="btn-cancel-card" onclick="cancelEdit(${idx})">Annuler</button>
-                        </div>
-                    </div>
-                `;
-                cardsList.appendChild(cardDiv);
-            });
-        }
-
-        function editCard(idx) {
-            const editor = document.getElementById(`editor-${idx}`);
-            editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function saveCard(idx) {
-            const question = document.getElementById(`editQuestion-${idx}`).innerHTML.trim();
-            const answer = document.getElementById(`editAnswer-${idx}`).innerHTML.trim();
-            const importance = document.getElementById(`editImportance-${idx}`).value;
-            
-            if (!question || !answer) {
-                showNotification('Question et réponse requises', 'error');
-                return;
-            }
-            
-            categories[currentCategory][currentFolder][currentList][idx] = {
-                question,
-                answer,
-                importance
-            };
-            
-            saveData();
-            loadManageCardsPage();
-            showNotification('Carte modifiée ✓', 'success');
-        }
-
-        function cancelEdit(idx) {
-            document.getElementById(`editor-${idx}`).style.display = 'none';
-        }
-        
         // ====== FONCTIONS D'AFFICHAGE ======
         function updateCategoryList() {
             const container = document.getElementById('categoryList');
@@ -3568,7 +2921,35 @@
                 container.appendChild(card);
             });
         }
-        
+
+        // ====== FONCTIONS MANQUANTES SIMPLIFIÉES ======
+        function addCard() {
+            const q = document.getElementById('newQuestion').innerHTML.trim();
+            const a = document.getElementById('newAnswer').innerHTML.trim();
+            const impEl = document.getElementById('importanceSelect');
+            const importance = impEl ? (impEl.value || 'normal') : 'normal';
+            if (!q || !a || q === '<br>' || a === '<br>') {
+                showNotification('Veuillez remplir la question et la réponse.', 'error');
+                return;
+            }
+            if (!currentCategory || !currentFolder || !currentList) {
+                showNotification("Sélectionne d'abord une liste.", 'error');
+                return;
+            }
+            categories[currentCategory][currentFolder][currentList].push({
+                question: q,
+                answer: a,
+                importance: importance
+            });
+            saveData();
+            document.getElementById('newQuestion').innerHTML = '';
+            document.getElementById('newAnswer').innerHTML = '';
+            if (impEl) impEl.value = 'normal';
+            updateCategoryList();
+            if (currentPage === 'manage') loadManageCardsPage();
+            showNotification('Carte ajoutée avec succès ✓', 'success');
+        }
+
         function showManageCardsPage(catName, folderName, listName) {
             currentCategory = catName;
             currentFolder = folderName;
@@ -3590,207 +2971,305 @@
             // Afficher la page
             showPage('manage');
         }
-        
-        // ====== FONCTIONS DU MODE PLEIN ÉCRAN ======
-        let fullscreenIndex = 0;
-        let fullscreenCards = [];
-        let fullscreenReviewMode = false;
-        let fullscreenReviewIndices = [];
 
-        function openFullscreenStudy() {
+        function loadManageCardsPage() {
+            const cardsList = document.getElementById('cardsList');
+            const cardCount = document.getElementById('cardCount');
+            if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] || 
+                !categories[currentCategory][currentFolder] || !categories[currentCategory][currentFolder][currentList]) {
+                cardsList.innerHTML = '<div class="empty-cards-message">Sélectionnez d\'abord une liste</div>';
+                cardCount.textContent = '0';
+                return;
+            }
+            
+            const cards = categories[currentCategory][currentFolder][currentList];
+            cardCount.textContent = cards.length;
+            
+            if (cards.length === 0) {
+                cardsList.innerHTML = '<div class="empty-cards-message">Aucune carte dans cette liste. Ajoutez-en une !</div>';
+                return;
+            }
+            
+            cardsList.innerHTML = '';
+            cards.forEach((card, idx) => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card-edit-item';
+                cardDiv.dataset.index = idx;
+                cardDiv.innerHTML = `
+                    <div class="card-edit-header">
+                        <div class="card-edit-number">#${idx + 1} <span class="card-importance-badge ${card.importance}">${card.importance}</span></div>
+                        <div>
+                            <button class="btn-edit-card" onclick="editCard(${idx})">✏️</button>
+                            <button class="btn-delete-card" onclick="deleteCard(${idx})">✕</button>
+                        </div>
+                    </div>
+                    <div class="card-edit-content">
+                        <div class="card-edit-text"><span class="card-edit-label">Question:</span> ${card.question}</div>
+                        <div class="card-edit-text"><span class="card-edit-label">Réponse:</span> ${card.answer}</div>
+                    </div>
+                `;
+                cardsList.appendChild(cardDiv);
+            });
+        }
+
+        function deleteCard(idx) { 
+            if (!confirm('Supprimer cette carte ?')) return; 
+            categories[currentCategory][currentFolder][currentList].splice(idx, 1); 
+            saveData(); 
+            updateCategoryList(); 
+            if (currentPage === 'manage') loadManageCardsPage();
+            showNotification('Carte supprimée ✓', 'success');
+        }
+
+        function editCard(idx) {
+            // Fonction simplifiée pour l'instant
+            showNotification('Fonction d\'édition à implémenter', 'info');
+        }
+
+        // ====== FONCTIONS POUR LE MODE ÉTUDE ======
+        function showStudyPage(catName, folderName, listName) {
+            currentCategory = catName;
+            currentFolder = folderName;
+            currentList = listName;
+            currentPage = 'study';
+            
+            // Mettre à jour la barre latérale
+            updateCategoryList();
+            
+            // Charger la page d'étude
+            loadStudyPage();
+            
+            // Afficher la page
+            showPage('study');
+        }
+
+        function loadStudyPage() {
             if (!currentCategory || !currentFolder || !currentList) {
-                showNotification('Sélectionnez d\'abord une liste', 'error');
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('cardSection').style.display = 'none';
+                document.getElementById('endSection').style.display = 'none';
                 return;
             }
             
             const cards = categories[currentCategory][currentFolder][currentList];
             if (!cards || cards.length === 0) {
-                showNotification('Cette liste est vide', 'error');
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('cardSection').style.display = 'none';
+                document.getElementById('endSection').style.display = 'none';
                 return;
             }
             
-            // Filtrer les cartes si un filtre d'importance est actif
-            if (window.activeImportanceFilter && window.activeImportanceFilter.length > 0) {
-                fullscreenCards = cards.filter(card => 
-                    window.activeImportanceFilter.includes(card.importance)
-                );
-            } else {
-                fullscreenCards = [...cards];
-            }
+            // Réinitialiser les indices
+            currentIndex = 0;
+            isReviewMode = false;
+            reviewIndices = [];
             
-            if (fullscreenCards.length === 0) {
-                showNotification('Aucune carte ne correspond au filtre', 'error');
-                return;
-            }
-            
-            // Mélanger les cartes
-            fullscreenCards = shuffleArray([...fullscreenCards]);
-            
-            // Réinitialiser l'index
-            fullscreenIndex = 0;
+            // Mettre à jour les statistiques
+            updateStudyStats(cards);
             
             // Afficher la première carte
-            showFullscreenCard();
+            showCard();
             
-            // Activer le mode plein écran
-            document.getElementById('fullscreenMode').classList.add('active');
-            document.body.style.overflow = 'hidden';
+            // Afficher les sections
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('cardSection').style.display = 'block';
+            document.getElementById('endSection').style.display = 'none';
+            
+            // Mettre à jour le titre
+            document.getElementById('studyTitle').textContent = currentList;
+            
+            // Cacher l'indicateur de mode révision
+            document.getElementById('studyModeIndicator').style.display = 'none';
         }
 
-        function showFullscreenCard() {
-            if (fullscreenIndex >= fullscreenCards.length) {
-                // Fin de la session
-                exitFullscreen();
-                showNotification('Session terminée !', 'success');
+        function showCard() {
+            const cards = categories[currentCategory][currentFolder][currentList];
+            
+            if (!cards || cards.length === 0) {
+                endStudy();
                 return;
             }
             
-            const card = fullscreenCards[fullscreenIndex];
-            document.getElementById('fullscreenQuestion').innerHTML = card.question;
-            document.getElementById('fullscreenAnswer').innerHTML = card.answer;
+            let currentCard;
+            let total = 0;
+            
+            if (isReviewMode) {
+                if (reviewIndices.length === 0) {
+                    endStudy();
+                    return;
+                }
+                currentCard = cards[reviewIndices[currentIndex]];
+                total = reviewIndices.length;
+            } else {
+                if (currentIndex >= cards.length) {
+                    endStudy();
+                    return;
+                }
+                currentCard = cards[currentIndex];
+                total = cards.length;
+            }
+            
+            document.getElementById('question').innerHTML = currentCard.question;
+            document.getElementById('answer').innerHTML = currentCard.answer;
             
             // Réinitialiser la rotation de la carte
-            const fullscreenCard = document.getElementById('fullscreenCard');
-            fullscreenCard.classList.remove('flipped');
+            const card = document.getElementById('flashcard');
+            card.classList.remove('flipped');
+            
+            // Mettre à jour la progression
+            const progress = currentIndex + 1;
+            document.getElementById('progress-fill').style.width = (progress / total * 100) + '%';
+            document.getElementById('stats').textContent = `Carte ${progress}/${total}`;
+            
+            // Mettre à jour le bouton d'édition
+            document.getElementById('btnEditCurrent').onclick = function() {
+                editCurrentCard();
+            };
         }
 
-        function flipFullscreenCard() {
-            const card = document.getElementById('fullscreenCard');
+        function flipCard() {
+            const card = document.getElementById('flashcard');
             card.classList.toggle('flipped');
         }
 
-        function fullscreenAnswer(type) {
-            // Enregistrer la réponse
-            const card = fullscreenCards[fullscreenIndex];
+        function answer(type) {
+            const cards = categories[currentCategory][currentFolder][currentList];
             
-            // Enregistrer dans les résultats si l'utilisateur n'est pas invité
-            if (currentUser && !currentUser.guest) {
+            // Enregistrer le résultat
+            if (isReviewMode) {
+                const actualIndex = reviewIndices[currentIndex];
                 if (!results[currentCategory]) results[currentCategory] = {};
                 if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
                 if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
-                results[currentCategory][currentFolder][currentList][fullscreenIndex] = type;
+                results[currentCategory][currentFolder][currentList][actualIndex] = type;
+                saveResults();
+            } else {
+                if (!results[currentCategory]) results[currentCategory] = {};
+                if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
+                if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
+                results[currentCategory][currentFolder][currentList][currentIndex] = type;
                 saveResults();
             }
             
             // Passer à la carte suivante
-            fullscreenIndex++;
+            currentIndex++;
             
-            // Afficher la prochaine carte
-            showFullscreenCard();
+            // Si on est en mode normal et qu'on a terminé, vérifier s'il faut passer en mode révision
+            if (!isReviewMode && currentIndex >= cards.length) {
+                // Vérifier s'il y a des cartes à réviser
+                reviewIndices = [];
+                for (let i = 0; i < cards.length; i++) {
+                    const result = results[currentCategory]?.[currentFolder]?.[currentList]?.[i];
+                    if (result === 'partial' || result === 'unknown') {
+                        reviewIndices.push(i);
+                    }
+                }
+                
+                if (reviewIndices.length > 0) {
+                    isReviewMode = true;
+                    currentIndex = 0;
+                    document.getElementById('studyModeIndicator').style.display = 'inline';
+                }
+            }
+            
+            showCard();
         }
 
-        function exitFullscreen() {
-            document.getElementById('fullscreenMode').classList.remove('active');
-            document.body.style.overflow = 'auto';
+        function endStudy() {
+            document.getElementById('cardSection').style.display = 'none';
+            document.getElementById('endSection').style.display = 'block';
             
-            // Rafraîchir l'affichage normal si on était en mode étude
-            if (currentPage === 'study') {
-                loadStudyPage();
+            const cards = categories[currentCategory][currentFolder][currentList];
+            const listResults = results[currentCategory]?.[currentFolder]?.[currentList] || {};
+            
+            let known = 0, partial = 0, unknown = 0;
+            
+            for (let i = 0; i < cards.length; i++) {
+                const result = listResults[i] || 'unknown';
+                if (result === 'known') known++;
+                else if (result === 'partial') partial++;
+                else unknown++;
+            }
+            
+            const total = cards.length;
+            
+            document.getElementById('legendKnown').textContent = `Connu: ${known} (${Math.round(known/total*100)}%)`;
+            document.getElementById('legendPartial').textContent = `Partiel: ${partial} (${Math.round(partial/total*100)}%)`;
+            document.getElementById('legendUnknown').textContent = `Pas connu: ${unknown} (${Math.round(unknown/total*100)}%)`;
+            
+            document.getElementById('barKnown').style.width = (known/total*100) + '%';
+            document.getElementById('barPartial').style.width = (partial/total*100) + '%';
+            document.getElementById('barUnknown').style.width = (unknown/total*100) + '%';
+            
+            // Afficher un GIF si tout est connu
+            if (known === total) {
+                document.getElementById('resultGifImg').src = GIF_KNOWN_URL;
+                document.getElementById('resultGif').classList.add('show');
             }
         }
-        
-        // ====== FONCTIONS DU COMPARATEUR ======
-        let showContext = false;
-        let lastFocusedId = null;
-        let showOnlyDeletions = false;
-        let lastFocusedType = null;
-        let lastSelectedBtn = null;
-        const $ = sel => document.querySelector(sel);
-        const oldTA = $("#oldText");
-        const newTA = $("#newText");
-        const outComp = $("#diffOutput");
-        const changesListComp = $("#changesList");
-        const insCountComp = $("#insCount");
-        const delCountComp = $("#delCount");
-        const repCountComp = $("#repCount");
-        const hintComp = $("#hint");
-        const copyBtnComp = $("#copyBtn");
-        const toggleContextBtnComp = $("#toggleContext");
-        const backBtn = $("#backToSelected");
-        const onlyDelBtn = document.getElementById("toggleOnlyDeletions");
-        
-        function openComparator() {
-            document.getElementById('comparatorModal').classList.add('show');
-            document.body.style.overflow = 'hidden';
+
+        function editCurrentCard() {
+            const cards = categories[currentCategory][currentFolder][currentList];
+            let cardIndex;
+            
+            if (isReviewMode && reviewIndices.length > 0) {
+                cardIndex = reviewIndices[currentIndex];
+            } else {
+                cardIndex = currentIndex;
+            }
+            
+            if (cardIndex >= 0 && cardIndex < cards.length) {
+                // Sauvegarder l'état actuel
+                const currentCardState = {
+                    question: cards[cardIndex].question,
+                    answer: cards[cardIndex].answer,
+                    importance: cards[cardIndex].importance
+                };
+                
+                // Demander les modifications via des prompts
+                const newQuestion = prompt("Modifier la question:", currentCardState.question);
+                if (newQuestion === null) return; // Annulé
+                
+                const newAnswer = prompt("Modifier la réponse:", currentCardState.answer);
+                if (newAnswer === null) return; // Annulé
+                
+                const importanceOptions = ["important", "normal", "pas important", "explication"];
+                const currentImportanceIndex = importanceOptions.indexOf(currentCardState.importance);
+                const newImportance = prompt(
+                    "Importance (important, normal, pas important, explication):", 
+                    currentCardState.importance
+                );
+                
+                if (newImportance && importanceOptions.includes(newImportance.toLowerCase())) {
+                    cards[cardIndex] = {
+                        question: newQuestion,
+                        answer: newAnswer,
+                        importance: newImportance.toLowerCase()
+                    };
+                    
+                    saveData();
+                    showCard(); // Recharger la carte
+                    showNotification('Carte modifiée ✓', 'success');
+                } else if (newImportance === null) {
+                    return; // Annulé
+                } else {
+                    showNotification('Importance non reconnue. Utilisez: important, normal, pas important, explication', 'error');
+                }
+            }
         }
-        
-        function closeComparator() {
-            document.getElementById('comparatorModal').classList.remove('show');
-            document.body.style.overflow = 'auto';
+
+        function updateStudyStats(cards) {
+            const total = cards.length;
+            const reviewed = Object.keys(results[currentCategory]?.[currentFolder]?.[currentList] || {}).length;
+            
+            if (total > 0) {
+                const progressPercent = Math.round((reviewed / total) * 100);
+                document.getElementById('stats').textContent = `${reviewed}/${total} révisées (${progressPercent}%)`;
+            }
         }
-        
+
         // ====== FONCTIONS DU THÈME ======
         const THEME_KEY = 'flashcards_theme_v2';
-        const themeConfig = {
-            sections: {
-                'primary': {
-                    title: '🎨 Couleurs principales',
-                    colors: [
-                        { var: '--primary', label: 'Primaire', description: 'Boutons principaux, liens' },
-                        { var: '--primary-2', label: 'Primaire 2', description: 'Dégradé des boutons' },
-                        { var: '--accent', label: 'Accent', description: 'Éléments secondaires' },
-                        { var: '--accent-2', label: 'Accent 2', description: 'Dégradé des accents' }
-                    ]
-                },
-                'interface': {
-                    title: '📝 Interface et texte',
-                    colors: [
-                        { var: '--bg-gradient-from', label: 'Fond départ', description: 'Début du dégradé' },
-                        { var: '--bg-gradient-to', label: 'Fond fin', description: 'Fin du dégradé' },
-                        { var: '--text', label: 'Texte', description: 'Texte principal' },
-                        { var: '--text-soft', label: 'Texte secondaire', description: 'Texte atténué' },
-                        { var: '--panel', label: 'Panneau', description: 'Fond des cartes' },
-                        { var: '--panel-muted', label: 'Panneau atténué', description: 'Fond secondaire' },
-                        { var: '--border', label: 'Bordures', description: 'Bordures et séparateurs' },
-                        { var: '--card-bg', label: 'Cartes étude', description: 'Fond des flashcards' }
-                    ]
-                },
-                'progress': {
-                    title: '📊 Couleurs de progression',
-                    colors: [
-                        { var: '--known', label: 'Connu', description: 'Cartes connues' },
-                        { var: '--partial', label: 'Partiel', description: 'Cartes partiellement connues' },
-                        { var: '--unknown', label: 'Pas connu', description: 'Cartes non connues' }
-                    ]
-                }
-            },
-            presets: {
-                'Classique': {
-                    '--bg-gradient-from': '#667eea',
-                    '--bg-gradient-to': '#764ba2',
-                    '--primary': '#667eea',
-                    '--primary-2': '#764ba2',
-                    '--accent': '#11998e',
-                    '--accent-2': '#38ef7d',
-                    '--text': '#333333',
-                    '--text-soft': '#666666',
-                    '--panel': '#ffffff',
-                    '--panel-muted': '#f5f7fa',
-                    '--border': '#e0e0e0',
-                    '--card-bg': '#ffffff',
-                    '--known': '#38ef7d',
-                    '--partial': '#f5a623',
-                    '--unknown': '#ff6b6b'
-                },
-                'Sombre': {
-                    '--bg-gradient-from': '#0f172a',
-                    '--bg-gradient-to': '#1f2937',
-                    '--primary': '#4f46e5',
-                    '--primary-2': '#7c3aed',
-                    '--accent': '#10b981',
-                    '--accent-2': '#34d399',
-                    '--text': '#e5e7eb',
-                    '--text-soft': '#9ca3af',
-                    '--panel': '#111827',
-                    '--panel-muted': '#0b1220',
-                    '--border': '#374151',
-                    '--card-bg': '#0b1220',
-                    '--known': '#22c55e',
-                    '--partial': '#f59e0b',
-                    '--unknown': '#ef4444'
-                }
-            }
-        };
         
         function setVar(name, value) {
             document.documentElement.style.setProperty(name, value);
@@ -3807,113 +3286,16 @@
                 return;
             }
             modal.classList.add('show');
-            
-            // Initialiser les couleurs
-            const presetsContainer = document.getElementById('themePresets');
-            if (presetsContainer) {
-                presetsContainer.innerHTML = '';
-                
-                Object.entries(themeConfig.presets).forEach(([name, colors]) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'preset-btn';
-                    btn.innerHTML = `
-                        <div class="preset-preview" style="background: linear-gradient(135deg, ${colors['--bg-gradient-from']} 0%, ${colors['--bg-gradient-to']} 100%);"></div>
-                        <span>${name}</span>
-                    `;
-                    btn.onclick = () => applyPreset(name);
-                    presetsContainer.appendChild(btn);
-                });
-            }
-            
-            // Initialiser les sélecteurs de couleur
-            Object.entries(themeConfig.sections).forEach(([sectionId, section]) => {
-                const container = document.getElementById(sectionId + 'Colors');
-                if (!container) return;
-                
-                container.innerHTML = '';
-                section.colors.forEach(color => {
-                    const currentValue = getComputedVar(color.var);
-                    const hexValue = rgbToHex(currentValue);
-                    
-                    const colorOption = document.createElement('div');
-                    colorOption.className = 'color-option';
-                    colorOption.innerHTML = `
-                        <div class="color-label">
-                            <span>${color.label}</span>
-                            <small>${color.description}</small>
-                        </div>
-                        <div class="color-input-wrapper">
-                            <div class="color-preview" style="background: ${currentValue}" 
-                                 onclick="document.getElementById('${color.var}').click()"></div>
-                            <input type="color" id="${color.var}" value="${hexValue}" 
-                                   oninput="updateColor('${color.var}', this.value)">
-                            <input type="text" value="${hexValue}" 
-                                   oninput="updateColor('${color.var}', this.value)">
-                        </div>
-                    `;
-                    container.appendChild(colorOption);
-                });
-            });
         }
         
-        function updateColor(varName, value) {
-            if (!value.startsWith('#')) value = '#' + value;
-            if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value)) {
-                setVar(varName, value);
-                
-                const preview = document.querySelector(`#${varName}`).parentElement.querySelector('.color-preview');
-                preview.style.background = value;
-                
-                const textInput = document.querySelector(`#${varName}`).nextElementSibling;
-                textInput.value = value;
-            }
-        }
-        
-        function applyPreset(name) {
-            const preset = themeConfig.presets[name];
-            if (!preset) return;
-            
-            Object.entries(preset).forEach(([varName, value]) => {
-                setVar(varName, value);
-                
-                const colorInput = document.getElementById(varName);
-                const textInput = colorInput?.nextElementSibling;
-                const preview = colorInput?.parentElement?.querySelector('.color-preview');
-                
-                if (colorInput) colorInput.value = value;
-                if (textInput) textInput.value = value;
-                if (preview) preview.style.background = value;
-            });
-            
-            document.querySelectorAll('.preset-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.includes(name)) {
-                    btn.classList.add('active');
-                }
-            });
-        }
-        
-        function saveTheme() {
-            const theme = {};
-            
-            Object.values(themeConfig.sections).forEach(section => {
-                section.colors.forEach(color => {
-                    const input = document.getElementById(color.var);
-                    if (input && input.value) {
-                        theme[color.var] = input.value;
-                    }
-                });
-            });
-            
-            localStorage.setItem(THEME_KEY, JSON.stringify(theme));
-            showNotification('✅ Thème enregistré !', 'success');
+        function closeThemeModal() {
+            document.getElementById('themeModal').classList.remove('show');
         }
         
         function loadTheme() {
             try {
                 const saved = localStorage.getItem(THEME_KEY);
                 if (!saved) {
-                    applyPreset('Classique');
                     return;
                 }
                 
@@ -3923,164 +3305,86 @@
                 });
             } catch (e) {
                 console.warn('Erreur chargement thème:', e);
-                applyPreset('Classique');
             }
         }
+
+        // ====== FONCTIONS DU COMPARATEUR ======
+        function openComparator() {
+            document.getElementById('comparatorModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
         
-        function resetTheme() {
-            if (confirm('Êtes-vous sûr de vouloir réinitialiser le thème ?')) {
-                localStorage.removeItem(THEME_KEY);
-                applyPreset('Classique');
-                showNotification('🔄 Thème réinitialisé !', 'success');
+        function closeComparator() {
+            document.getElementById('comparatorModal').classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+        // ====== FONCTIONS MANQUANTES (PLACEHOLDERS) ======
+        function logout() {
+            if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+                localStorage.removeItem('current_user');
+                location.reload();
             }
         }
-        
-        function closeThemeModal() {
-            document.getElementById('themeModal').classList.remove('show');
-        }
-        
-        function rgbToHex(rgb) {
-            // Si c'est déjà en hex, retourner la valeur
-            if (rgb.startsWith('#')) return rgb;
+
+        function togglePublicProfile() {
+            if (!currentUser) return;
             
-            // Convertir rgb(r, g, b) en hex
-            const match = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+\.?\d*))?\)$/);
-            if (match) {
-                const r = parseInt(match[1]);
-                const g = parseInt(match[2]);
-                const b = parseInt(match[3]);
-                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+            const isPublic = document.getElementById('publicProfileToggle').checked;
+            currentUser.publicProfile = isPublic;
+            allUsers[currentUser.username] = currentUser;
+            localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
+            
+            showNotification('Profil ' + (isPublic ? 'public' : 'privé') + ' ✓', 'success');
+        }
+
+        function openProfileSettings() {
+            showNotification('Paramètres du profil - à implémenter', 'info');
+        }
+
+        function searchUsers() {
+            // Fonction à implémenter
+        }
+
+        function importCards() {
+            showNotification('Importation - à implémenter', 'info');
+        }
+
+        function exportAll() {
+            showNotification('Exportation - à implémenter', 'info');
+        }
+
+        function showImportTextModal() {
+            showNotification('Importation texte - à implémenter', 'info');
+        }
+
+        function openFullscreenStudy() {
+            showNotification('Mode plein écran - à implémenter', 'info');
+        }
+
+        function execFormatCommand(cmd) {
+            document.execCommand(cmd, false, null);
+        }
+
+        function applyColorToSelection(cmd, color) {
+            document.execCommand(cmd, false, color);
+        }
+
+        function insertImage() {
+            const imgUrl = prompt("Entrez l'URL de l'image:");
+            if (imgUrl) {
+                document.execCommand('insertHTML', false, `<img src="${imgUrl}" style="max-width:100%;height:auto;">`);
             }
-            
-            // Par défaut
-            return '#667eea';
         }
-        
-        // ====== FONCTIONS MANQUANTES ======
-        function showPage(pageName) {
-            // Cacher toutes les pages
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
-            
-            // Afficher la page demandée
-            const targetPage = document.getElementById(pageName + 'Page');
-            if (targetPage) {
-                targetPage.classList.add('active');
-            }
-            
-            currentPage = pageName;
-            
-            // Mettre à jour la barre latérale
-            updateCategoryList();
+
+        function clearFormatNow() {
+            document.execCommand('removeFormat', false, null);
         }
-        
+
         // ====== INITIALISATION ======
         document.addEventListener('DOMContentLoaded', function() {
-            loadUsers();
-            checkAuth();
-            
-            // Ajouter les écouteurs d'événements pour les modals
-            document.getElementById('categoryNameInput')?.addEventListener('keypress', function(e) { 
-                if (e.key === 'Enter') createCategory(); 
-            });
-            document.getElementById('folderNameInput')?.addEventListener('keypress', function(e) { 
-                if (e.key === 'Enter') createFolder(); 
-            });
-            document.getElementById('listNameInput')?.addEventListener('keypress', function(e) { 
-                if (e.key === 'Enter') createList(); 
-            });
-            document.getElementById('renameCategoryInput')?.addEventListener('keypress', function(e) { 
-                if (e.key === 'Enter') renameCategory(); 
-            });
-            document.getElementById('renameFolderInput')?.addEventListener('keypress', function(e) { 
-                if (e.key === 'Enter') renameFolder(); 
-            });
-            document.getElementById('renameListInput')?.addEventListener('keypress', function(e) { 
-                if (e.key === 'Enter') renameList(); 
-            });
-            
-            // Fermer les modals en cliquant à l'extérieur
-            document.getElementById('newCategoryModal')?.addEventListener('click', function(e) { 
-                if (e.target === this) closeNewCategoryModal(); 
-            });
-            document.getElementById('newFolderModal')?.addEventListener('click', function(e) { 
-                if (e.target === this) closeNewFolderModal(); 
-            });
-            document.getElementById('newListModal')?.addEventListener('click', function(e) { 
-                if (e.target === this) closeNewListModal(); 
-            });
-            document.getElementById('renameCategoryModal')?.addEventListener('click', function(e) { 
-                if (e.target === this) closeRenameCategoryModal(); 
-            });
-            document.getElementById('renameFolderModal')?.addEventListener('click', function(e) { 
-                if (e.target === this) closeRenameFolderModal(); 
-            });
-            document.getElementById('renameListModal')?.addEventListener('click', function(e) { 
-                if (e.target === this) closeRenameListModal(); 
-            });
-            document.getElementById('profileSettingsModal')?.addEventListener('click', function(e) { 
-                if (e.target === this) closeProfileSettings(); 
-            });
-            
-            // Fermer les modals en cliquant à l'extérieur
-            document.addEventListener('click', function(e) {
-                // Modal thème
-                const themeModal = document.getElementById('themeModal');
-                if (themeModal && themeModal.classList.contains('show') && e.target === themeModal) {
-                    themeModal.classList.remove('show');
-                }
-                
-                // Modal profil utilisateur
-                const userModal = document.getElementById('userProfileModal');
-                if (userModal && userModal.classList.contains('show') && e.target === userModal) {
-                    closeUserProfileModal();
-                }
-                
-                // Modal import texte
-                const importModal = document.getElementById('importTextModal');
-                if (importModal && importModal.classList.contains('show') && e.target === importModal) {
-                    closeImportTextModal();
-                }
-            });
-            
-            // Écouteur pour la recherche d'utilisateurs
-            const userSearchInput = document.getElementById('userSearchInput');
-            if (userSearchInput) {
-                let searchTimeout;
-                userSearchInput.addEventListener('input', function() {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(searchUsers, 300);
-                });
-            }
-            
-            // Écouteur pour fermer les résultats de recherche en cliquant ailleurs
-            document.addEventListener('click', function(e) {
-                const resultsDiv = document.getElementById('userSearchResults');
-                const searchInput = document.getElementById('userSearchInput');
-                
-                if (resultsDiv && searchInput && 
-                    !resultsDiv.contains(e.target) && 
-                    !searchInput.contains(e.target)) {
-                    resultsDiv.innerHTML = '';
-                }
-            });
-            
-            // Initialiser les sélecteurs d'importation
-            updateFolderCategorySelect();
-            
-            // Liens de retour
-            document.getElementById('backToLists')?.addEventListener('click', function() {
-                if (currentCategory && currentFolder) {
-                    showListsPage(currentCategory, currentFolder);
-                }
-            });
-
-            document.getElementById('backToListsStudy')?.addEventListener('click', function() {
-                if (currentCategory && currentFolder) {
-                    showListsPage(currentCategory, currentFolder);
-                }
-            });
+            // Les écouteurs d'événements sont déjà définis dans les fonctions
+            // Le chargement de l'authentification se fait via onload="checkAuth()" dans le body
         });
     </script>
 </body>
