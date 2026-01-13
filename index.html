@@ -2859,7 +2859,7 @@
                     </div>
                     <div class="list-card-actions">
                         <button class="btn-list-action btn-study" onclick="showStudyPage('${escapeHtml(currentCategory)}','${escapeHtml(currentFolder)}','${escapeHtml(listName)}')">📖 Réviser</button>
-                        <button class="btn-list-action btn-manage" onclick="showManageCardsPage('${escapeHtml(currentCategory)}','${escapeHtml(currentFolder)}','${escapeHtml(listName)}')">✏️ Gérer</button>
+                        <button class="btn-list-action btn-manage" onclick="showManagePage('${escapeHtml(currentCategory)}','${escapeHtml(currentFolder)}','${escapeHtml(listName)}')">✏️ Gérer</button>
                     </div>
                 `;
                 card.appendChild(buttonsDiv);
@@ -2891,11 +2891,11 @@
             document.getElementById('newAnswer').innerHTML = '';
             if (impEl) impEl.value = 'normal';
             updateCategoryList();
-            if (currentPage === 'manage') loadManageCardsPage();
+            if (currentPage === 'manage') loadManagePage();
             showNotification('Carte ajoutée avec succès ✓', 'success');
         }
 
-        function showManageCardsPage(catName, folderName, listName) {
+        function showManagePage(catName, folderName, listName) {
             currentCategory = catName;
             currentFolder = folderName;
             currentList = listName;
@@ -2907,11 +2907,11 @@
                 title.textContent = listName;
             }
 
-            loadManageCardsPage();
+            loadManagePage();
             showPage('manage');
         }
 
-        function loadManageCardsPage() {
+        function loadManagePage() {
             const cardsList = document.getElementById('cardsList');
             const cardCount = document.getElementById('cardCount');
             if (!currentCategory || !currentFolder || !currentList || !categories[currentCategory] ||
@@ -2956,7 +2956,7 @@
             categories[currentCategory][currentFolder][currentList].splice(idx, 1);
             saveData();
             updateCategoryList();
-            if (currentPage === 'manage') loadManageCardsPage();
+            if (currentPage === 'manage') loadManagePage();
             showNotification('Carte supprimée ✓', 'success');
         }
 
@@ -3010,12 +3010,12 @@
 
             cards[idx] = { question, answer, importance };
             saveData();
-            loadManageCardsPage();
+            loadManagePage();
             showNotification('Carte modifiée ✓', 'success');
         }
 
         function cancelEditCard(idx) {
-            loadManageCardsPage();
+            loadManagePage();
         }
 
         // ====== FONCTIONS POUR LE MODE ÉTUDE ======
@@ -3792,7 +3792,7 @@
 
             categories[currentCategory][currentFolder][currentList] = [];
             saveData();
-            loadManageCardsPage();
+            loadManagePage();
             showNotification('Liste vidée ✓', 'success');
         }
 
