@@ -3145,17 +3145,13 @@
                 if (!results[currentCategory]) results[currentCategory] = {};
                 if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
                 if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
-                const actualIndex = isReviewMode
-  					? reviewIndices[currentIndex]
-  					: studyIndices[currentIndex];
+                results[currentCategory][currentFolder][currentList][actualIndex] = type;
                 saveResults();
             } else {
                 if (!results[currentCategory]) results[currentCategory] = {};
                 if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
                 if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
-                const actualIndex = isReviewMode
-  					? reviewIndices[currentIndex]
-  					: studyIndices[currentIndex];
+                results[currentCategory][currentFolder][currentList][actualIndex] = type;
                 saveResults();
             }
 
