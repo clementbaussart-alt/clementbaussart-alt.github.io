@@ -1928,7 +1928,7 @@
 
         <!-- Mode plein écran pour les fiches -->
         <div id="fullscreenMode" class="fullscreen-mode">
-            <button class="fullscreen-close-btn" onclick="event.stopPropagation(); exitFullscreen()">✕</button>
+            <button class="fullscreen-close-btn" onclick="event.stopPropagation(); closeFullscreenOverlay()">✕</button>
             <div class="fullscreen-card-container" id="fullscreenCardContainer">
                 <div class="fullscreen-card" id="fullscreenCard" onclick="flipFullscreenCard()">
                     <div class="fullscreen-card-face fullscreen-card-front">
@@ -3729,7 +3729,7 @@
             fullscreenCard.classList.remove('flipped');
         }
 
-        function exitFullscreen() {
+        function closeFullscreenOverlay() {
   			const fullscreenMode = document.getElementById('fullscreenMode');
   			if (fullscreenMode) fullscreenMode.classList.remove('active');
   			document.body.style.overflow = 'auto';
@@ -3742,7 +3742,7 @@
 
         function fullscreenAnswer(type) {
             answer(type);
-            exitFullscreen();
+            closeFullscreenOverlay() ;
         }
 
         function execFormatCommand(cmd) {
