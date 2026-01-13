@@ -379,7 +379,7 @@
         .card-text img { max-width: 100%; height: auto; display: inline-block; margin: 5px; border-radius: 8px; vertical-align: middle; }
 
         .buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
-        .button { padding: 15px 30px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; color: white; flex: 1; min-width: 150px; }
+        button { padding: 15px 30px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; color: white; flex: 1; min-width: 150px; }
         .btn-known { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); }
         .btn-partial { background: linear-gradient(135deg, var(--partial) 0%, #f7b733 100%); }
         .btn-unknown { background: linear-gradient(135deg, var(--danger) 0%, #ee5a6f 100%); }
@@ -3058,46 +3058,46 @@
         }
 
         function showCard() {
-            const cards = categories[currentCategory][currentFolder][currentList];
+    const cards = categories[currentCategory][currentFolder][currentList];
 
-            if (!cards || cards.length === 0) {
-                endStudy();
-                return;
-            }
+    if (!cards || cards.length === 0) {
+        endStudy();
+        return;
+    }
 
-            let currentCard;
-            let total = 0;
+    let currentCard;
+    let total = 0;
 
-            if (isReviewMode) {
-                if (reviewIndices.length === 0) {
-                    endStudy();
-                    return;
-                }
-                currentCard = cards[reviewIndices[currentIndex]];
-                total = reviewIndices.length;
-            } else {
-                if (currentIndex >= cards.length) {
-                    endStudy();
-                    return;
-                }
-                currentCard = cards[currentIndex];
-                total = cards.length;
-            }
-
-            document.getElementById('question').innerHTML = currentCard.question;
-            document.getElementById('answer').innerHTML = currentCard.answer;
-
-            const card = document.getElementById('flashcard');
-            card.classList.remove('flipped');
-
-            const progress = currentIndex + 1;
-            document.getElementById('progress-fill').style.width = (progress / total * 100) + '%';
-            document.getElementById('stats').textContent = `Carte ${progress}/${total}`;
-
-            document.getElementById('btnEditCurrent').onclick = function() {
-                editCurrentCard();
-            };
+    if (isReviewMode) {
+        if (reviewIndices.length === 0) {
+            endStudy();
+            return;
         }
+        currentCard = cards[reviewIndices[currentIndex]];
+        total = reviewIndices.length;
+    } else {
+        if (currentIndex >= cards.length) {
+            endStudy();
+            return;
+        }
+        currentCard = cards[currentIndex];
+        total = cards.length;
+    }
+
+    document.getElementById('question').innerHTML = currentCard.question;
+    document.getElementById('answer').innerHTML = currentCard.answer;
+
+    const card = document.getElementById('flashcard');
+    card.classList.remove('flipped');
+
+    const progress = isReviewMode ? currentIndex + 1 : currentIndex + 1;
+    document.getElementById('progress-fill').style.width = (progress / total * 100) + '%';
+    document.getElementById('stats').textContent = `Carte ${progress}/${total}`;
+
+    document.getElementById('btnEditCurrent').onclick = function() {
+        editCurrentCard();
+    };
+}
 
         function flipCard() {
             const card = document.getElementById('flashcard');
@@ -3105,43 +3105,51 @@
         }
 
         function answer(type) {
-            const cards = categories[currentCategory][currentFolder][currentList];
+    const cards = categories[currentCategory][currentFolder][currentList];
 
-            if (isReviewMode) {
-                const actualIndex = reviewIndices[currentIndex];
-                if (!results[currentCategory]) results[currentCategory] = {};
-                if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
-                if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
-                results[currentCategory][currentFolder][currentList][actualIndex] = type;
-                saveResults();
-            } else {
-                if (!results[currentCategory]) results[currentCategory] = {};
-                if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
-                if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
-                results[currentCategory][currentFolder][currentList][currentIndex] = type;
-                saveResults();
+    if (isReviewMode) {
+        const actualIndex = reviewIndices[currentIndex];
+        if (!results[currentCategory]) results[currentCategory] = {};
+        if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
+        if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
+        results[currentCategory][currentFolder][currentList][actualIndex] = type;
+        saveResults();
+    } else {
+        if (!results[currentCategory]) results[currentCategory] = {};
+        if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
+        if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
+        results[currentCategory][currentFolder][currentList][currentIndex] = type;
+        saveResults();
+    }
+
+    currentIndex++;
+
+    if (!isReviewMode && currentIndex >= cards.length) {
+        reviewIndices = [];
+        for (let i = 0; i < cards.length; i++) {
+            const result = results[currentCategory]?.[currentFolder]?.[currentList]?.[i];
+            if (result === 'partial' || result === 'unknown') {
+                reviewIndices.push(i);
             }
-
-            currentIndex++;
-
-            if (!isReviewMode && currentIndex >= cards.length) {
-                reviewIndices = [];
-                for (let i = 0; i < cards.length; i++) {
-                    const result = results[currentCategory]?.[currentFolder]?.[currentList]?.[i];
-                    if (result === 'partial' || result === 'unknown') {
-                        reviewIndices.push(i);
-                    }
-                }
-
-                if (reviewIndices.length > 0) {
-                    isReviewMode = true;
-                    currentIndex = 0;
-                    document.getElementById('studyModeIndicator').style.display = 'inline';
-                }
-            }
-
-            showCard();
         }
+
+        if (reviewIndices.length > 0) {
+            isReviewMode = true;
+            currentIndex = 0;
+            document.getElementById('studyModeIndicator').style.display = 'inline';
+        } else {
+            endStudy();
+            return;
+        }
+    }
+
+    if (isReviewMode && currentIndex >= reviewIndices.length) {
+        endStudy();
+        return;
+    }
+
+    showCard();
+}
 
         function endStudy() {
             document.getElementById('cardSection').style.display = 'none';
@@ -3744,7 +3752,18 @@
 
         function fullscreenAnswer(type) {
             answer(type);
+            const cards = categories[currentCategory][currentFolder][currentList];
+            let currentFullscreenIndex = isReviewMode && reviewIndices.length > 0 ? reviewIndices[currentIndex] : currentIndex;
+
+        if (currentFullscreenIndex >= cards.length) {
             exitFullscreen();
+            return;
+        }
+
+            const card = cards[currentFullscreenIndex];
+            document.getElementById('fullscreenQuestion').innerHTML = card.question;
+            document.getElementById('fullscreenAnswer').innerHTML = card.answer;
+            document.getElementById('fullscreenCard').classList.remove('flipped');
         }
 
         function execFormatCommand(cmd) {
