@@ -1928,7 +1928,7 @@
 
         <!-- Mode plein écran pour les fiches -->
         <div id="fullscreenMode" class="fullscreen-mode">
-            <button class="fullscreen-close-btn" onclick="exitFullscreen()">✕</button>
+            <button class="fullscreen-close-btn" onclick="event.stopPropagation(); exitFullscreen()">✕</button>
             <div class="fullscreen-card-container" id="fullscreenCardContainer">
                 <div class="fullscreen-card" id="fullscreenCard" onclick="flipFullscreenCard()">
                     <div class="fullscreen-card-face fullscreen-card-front">
