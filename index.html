@@ -3741,9 +3741,10 @@
         }
 
         function fullscreenAnswer(type) {
-            answer(type);
-            closeFullscreenOverlay() ;
-        }
+    		answer(type);          // avance à la carte suivante
+    		openFullscreenStudy(); // recharge la carte courante en plein écran
+   		 // surtout ne pas appeler exitFullscreen() ici
+		}
 
         function execFormatCommand(cmd) {
             document.execCommand(cmd, false, null);
