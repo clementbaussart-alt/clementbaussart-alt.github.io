@@ -1552,6 +1552,16 @@
                     <!-- Barre de progression ajoutée ici -->
                     <div class="progress-bar">
                         <div class="progress-fill" id="progress-fill"></div>
+						<div class="review-options" id="importanceFilterUI">
+  							<h4>🎯 Filtrer par importance</h4>
+  							<div class="filter-buttons" style="justify-content:flex-start">
+   								<label class="filter-btn important"><input type="checkbox" id="filterImpImportant" checked> Important</label>
+    							<label class="filter-btn normal"><input type="checkbox" id="filterImpNormal" checked> Normal</label>
+    							<label class="filter-btn pas-important"><input type="checkbox" id="filterImpPasImportant" checked> Pas important</label>
+    							<label class="filter-btn explication"><input type="checkbox" id="filterImpExplication" checked> Explication</label>
+    							<button class="btn-action btn-action-secondary" onclick="applyImportanceFilter()">Appliquer</button>
+  							</div>
+						</div>
                     </div>
                     <div id="cardSection">
                         <div class="flip-hint">👆 Clique pour retourner (molette pour scroller)</div>
@@ -1973,6 +1983,8 @@
         let stats = {known: 0, partial: 0, unknown: 0};
         let currentEditingSide = null;
         let renameTarget = null;
+		let studyIndices = [];
+		let importanceFilter = ['important','normal','pas important','explication'];
         window.activeImportanceFilter = [];
         window.currentImportance = 'normal';
 
@@ -3045,6 +3057,17 @@
                 document.getElementById('endSection').style.display = 'none';
                 return;
             }
+			studyIndices = cards
+  				.map((_, i) => i)
+  				.filter(i => importanceFilter.includes((cards[i].importance || 'normal').toLowerCase()));
+
+			if (studyIndices.length === 0) {
+  				showNotification("Aucune carte ne correspond au filtre d'importance", "error");
+  				document.getElementById('emptyState').style.display = 'block';
+  				document.getElementById('cardSection').style.display = 'none';
+  				document.getElementById('endSection').style.display = 'none';
+  				return;
+			}
 
             currentIndex = 0;
             isReviewMode = false;
@@ -3082,8 +3105,8 @@
                     endStudy();
                     return;
                 }
-                currentCard = cards[currentIndex];
-                total = cards.length;
+                currentCard = cards[studyIndices[currentIndex]];
+				total = studyIndices.length;
             }
 
             document.getElementById('question').innerHTML = currentCard.question;
@@ -3114,19 +3137,25 @@
 
         function answer(type) {
             const cards = categories[currentCategory][currentFolder][currentList];
+			const actualIndex = isReviewMode ? reviewIndices[currentIndex] : studyIndices[currentIndex];
+			results[currentCategory][currentFolder][currentList][actualIndex] = type;
 
             if (isReviewMode) {
                 const actualIndex = reviewIndices[currentIndex];
                 if (!results[currentCategory]) results[currentCategory] = {};
                 if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
                 if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
-                results[currentCategory][currentFolder][currentList][actualIndex] = type;
+                const actualIndex = isReviewMode
+  					? reviewIndices[currentIndex]
+  					: studyIndices[currentIndex];
                 saveResults();
             } else {
                 if (!results[currentCategory]) results[currentCategory] = {};
                 if (!results[currentCategory][currentFolder]) results[currentCategory][currentFolder] = {};
                 if (!results[currentCategory][currentFolder][currentList]) results[currentCategory][currentFolder][currentList] = {};
-                results[currentCategory][currentFolder][currentList][currentIndex] = type;
+                const actualIndex = isReviewMode
+  					? reviewIndices[currentIndex]
+  					: studyIndices[currentIndex];
                 saveResults();
             }
 
@@ -3240,6 +3269,23 @@
                 document.getElementById('stats').textContent = `${reviewed}/${total} révisées (${progressPercent}%)`;
             }
         }
+
+		function applyImportanceFilter() {
+ 			const f = [];
+  			if (document.getElementById('filterImpImportant')?.checked) f.push('important');
+  			if (document.getElementById('filterImpNormal')?.checked) f.push('normal');
+  			if (document.getElementById('filterImpPasImportant')?.checked) f.push('pas important');
+  			if (document.getElementById('filterImpExplication')?.checked) f.push('explication');
+
+  			if (f.length === 0) {
+    			showNotification("Sélectionne au moins une importance", "error");
+    			return;
+  			}
+
+  			importanceFilter = f;
+  			loadStudyPage();
+  			showNotification("Filtre appliqué ✓", "success");
+			}
 
         // ====== FONCTIONS DU THÈME ======
         const THEME_KEY = 'flashcards_theme_v2';
