@@ -3069,6 +3069,20 @@
   				return;
 			}
 
+			const ui = document.getElementById("importanceFilterUI");
+			if (ui) {
+  			   ui.innerHTML = `
+    			<h4>🎯 Filtrer par importance</h4>
+    			<div class="filter-buttons" style="justify-content:flex-start; gap:8px; flex-wrap:wrap">
+      				<label class="filter-btn important"><input type="checkbox" id="filterImpImportant" checked> Important</label>
+      				<label class="filter-btn normal"><input type="checkbox" id="filterImpNormal" checked> Normal</label>
+      				<label class="filter-btn pas-important"><input type="checkbox" id="filterImpPasImportant" checked> Pas important</label>
+      				<label class="filter-btn explication"><input type="checkbox" id="filterImpExplication" checked> Explication</label>
+      				<button class="btn-action btn-action-secondary" style="padding:8px 12px; font-size:13px" onclick="applyImportanceFilter()">Appliquer</button>
+    			</div>
+  			`;
+			}
+
             currentIndex = 0;
             isReviewMode = false;
             reviewIndices = [];
