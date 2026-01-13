@@ -1557,7 +1557,10 @@
                         <div class="flip-hint">👆 Clique pour retourner (molette pour scroller)</div>
                         <div class="card-container">
                             <div class="card" id="flashcard" onclick="flipCard()">
-                                <div class="card-face card-front"><div class="card-text" id="question"></div></div>
+                                <div class="card-face card-front">
+  									<div class="card-importance-header" id="importanceBadge"></div>
+  									<div class="card-text" id="question"></div>
+							</div>
                                 <div class="card-face card-back"><div class="card-text" id="answer"></div></div>
                             </div>
                         </div>
@@ -1932,8 +1935,9 @@
             <div class="fullscreen-card-container" id="fullscreenCardContainer">
                 <div class="fullscreen-card" id="fullscreenCard" onclick="flipFullscreenCard()">
                     <div class="fullscreen-card-face fullscreen-card-front">
-                        <div class="fullscreen-card-text" id="fullscreenQuestion"></div>
-                    </div>
+  						<div class="card-importance-header" id="fullscreenImportanceBadge"></div>
+  						<div class="fullscreen-card-text" id="fullscreenQuestion"></div>
+					</div>
                     <div class="fullscreen-card-face fullscreen-card-back">
                         <div class="fullscreen-card-text" id="fullscreenAnswer"></div>
                     </div>
@@ -3095,6 +3099,12 @@
             document.getElementById('btnEditCurrent').onclick = function() {
                 editCurrentCard();
             };
+			const badge = document.getElementById('importanceBadge');
+			if (badge) {
+  				const imp = (currentCard.importance || 'normal').toLowerCase();
+  				badge.className = 'card-importance-header ' + (imp === 'pas important' ? 'pas-important' : imp);
+  				badge.textContent = imp;
+			}
         }
 
         function flipCard() {
@@ -3727,6 +3737,13 @@
             fullscreenQuestion.innerHTML = card.question;
             fullscreenAnswer.innerHTML = card.answer;
             fullscreenCard.classList.remove('flipped');
+
+			const fullscreenBadge = document.getElementById('fullscreenImportanceBadge');
+			if (fullscreenBadge) {
+  				const imp = (card.importance || 'normal').toLowerCase();
+  				fullscreenBadge.className = 'card-importance-header ' + (imp === 'pas important' ? 'pas-important' : imp);
+  				fullscreenBadge.textContent = imp;
+			}
         }
 
         function closeFullscreenOverlay() {
