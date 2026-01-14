@@ -3803,8 +3803,16 @@
             fullscreenMode.classList.add('active');
             document.body.style.overflow = 'hidden';
 
-            let currentFullscreenIndex = isReviewMode && reviewIndices.length > 0 ? reviewIndices[currentIndex] : currentIndex;
-            if (currentFullscreenIndex >= cards.length) currentFullscreenIndex = 0;
+        	let currentFullscreenIndex = isReviewMode && reviewIndices.length > 0
+  				? reviewIndices[currentIndex]
+  				: studyIndices[currentIndex];
+
+			// ✅ Si on est à la fin : résultats + sortie plein écran
+			if (currentFullscreenIndex === undefined || currentFullscreenIndex >= cards.length) {
+  			endStudy();
+  			closeFullscreenOverlay();
+  			return;
+		}
 
             const card = cards[currentFullscreenIndex];
             fullscreenQuestion.innerHTML = card.question;
