@@ -3114,7 +3114,6 @@
 			const ui = document.getElementById("importanceFilterUI");
 			if (ui) {
   			   ui.innerHTML = `
-    			document.getElementById("importanceFilterUI").innerHTML = `
   					<h4>🎯 Filtrer par importance</h4>
  					<div class="filter-buttons" style="justify-content:flex-start; gap:8px; flex-wrap:wrap">
     					<label class="filter-btn important">
@@ -3142,7 +3141,7 @@
       						Appliquer
     					</button>
   					</div>
-				;
+				`;
 			}
 
             currentIndex = 0;
