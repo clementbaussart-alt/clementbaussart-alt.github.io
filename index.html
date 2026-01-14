@@ -1298,6 +1298,27 @@
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
+		.card-top-actions{
+  			display:flex;
+  			justify-content:center;
+  			gap:8px;
+ 			margin:6px 0 12px 0;
+		}
+		.btn-top-mini{
+ 			padding:6px 10px;
+  			border:1px solid rgba(0,0,0,0.08);
+  			border-radius:12px;
+  			background:rgba(255,255,255,0.65);
+  			color:var(--text);
+  			font-weight:700;
+  			font-size:12px;
+  			cursor:pointer;
+  			line-height:1;
+		}
+		.btn-top-mini:hover{
+  		transform:translateY(-1px);
+  		background:rgba(255,255,255,0.85);
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -1544,7 +1565,8 @@
                             <h2 id="studyTitle" style="display:inline">Liste</h2>
                             <span id="studyModeIndicator" class="study-mode-indicator" style="display:none">🔄 Mode révision</span>
                         </div>
-                        <div>
+						<div></div>
+                    <div>
                             <button class="btn-edit-current" id="btnEditCurrent" onclick="editCurrentCard()">✏️ Éditer cette carte</button>
                             <button class="btn-fullscreen" onclick="openFullscreenStudy()">⛶ Plein écran</button>
                         </div>
@@ -1565,6 +1587,10 @@
 						</div>
                     </div>
                     <div id="cardSection">
+						<div class="card-top-actions">
+  						<button class="btn-top-mini" id="btnEditCurrent" onclick="editCurrentCard()">✏️ Éditer</button>
+  						<button class="btn-top-mini" onclick="openFullscreenStudy()">⛶ Plein écran</button>
+					</div>
                         <div class="flip-hint">👆 Clique pour retourner (molette pour scroller)</div>
                         <div class="card-container">
                             <div class="card" id="flashcard" onclick="flipCard()">
