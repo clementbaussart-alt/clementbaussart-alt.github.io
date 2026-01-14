@@ -3197,23 +3197,14 @@
 
             currentIndex++;
 
-            if (!isReviewMode && currentIndex >= cards.length) {
-                reviewIndices = [];
-                for (let i = 0; i < cards.length; i++) {
-                    const result = results[currentCategory]?.[currentFolder]?.[currentList]?.[i];
-                    if (result === 'partial' || result === 'unknown') {
-                        reviewIndices.push(i);
-                    }
-                }
+            // ✅ Fin de session : toujours afficher les résultats
+			const totalToStudy = isReviewMode ? reviewIndices.length : studyIndices.length;
+			if (currentIndex >= totalToStudy) {
+  				endStudy();
+ 				return;
+			}
 
-                if (reviewIndices.length > 0) {
-                    isReviewMode = true;
-                    currentIndex = 0;
-                    document.getElementById('studyModeIndicator').style.display = 'inline';
-                }
-            }
-
-            showCard();
+			showCard();
         }
 
         function endStudy() {
