@@ -1605,7 +1605,6 @@
   						<button class="btn-top-mini" id="btnEditCurrent" onclick="editCurrentCard()">✏️ Éditer</button>
   						<button class="btn-top-mini" onclick="openFullscreenStudy()">⛶ Plein écran</button>
 					</div>
-                        <div class="flip-hint">👆 Clique pour retourner (molette pour scroller)</div>
                         <div class="card-container">
                             <div class="card" id="flashcard" onclick="flipCard()">
                                 <div class="card-face card-front">
@@ -3189,9 +3188,14 @@
             const card = document.getElementById('flashcard');
             card.classList.remove('flipped');
 
-            const progress = currentIndex + 1;
-            document.getElementById('progress-fill').style.width = (progress / total * 100) + '%';
-            document.getElementById('stats').textContent = `Carte ${progress}/${total}`;
+            // Barre de progression : 0% sur la 1ère fiche
+			const progressFill = document.getElementById('progress-fill');
+			if (progressFill) {
+				progressFill.style.width = ((currentIndex / total) * 100) + '%';
+			}
+
+			// Texte : garde "Carte 1/total" sur la 1ère fiche
+			document.getElementById('stats').textContent = `Carte ${currentIndex + 1}/${total}`;
 
             document.getElementById('btnEditCurrent').onclick = function() {
                 editCurrentCard();
