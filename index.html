@@ -2084,8 +2084,6 @@
             allUsers[guestId] = currentUser;
             localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
             localStorage.setItem('current_user', JSON.stringify(currentUser));
-			localStorage.setItem("flashcards_open_active_key", openKey);
-
 
             showApp();
             showNotification('Connecté en tant qu\'invité', 'success');
@@ -3087,80 +3085,53 @@
         }
 
         function loadStudyPage() {
-            if (!currentCategory || !currentFolder || !currentList) {
-                document.getElementById('emptyState').style.display = 'block';
-                document.getElementById('cardSection').style.display = 'none';
-                document.getElementById('endSection').style.display = 'none';
-                return;
-            }
+    		if (!currentCategory || !currentFolder || !currentList) {
+        	document.getElementById('emptyState').style.display = 'block';
+        	document.getElementById('cardSection').style.display = 'none';
+        	document.getElementById('endSection').style.display = 'none';
+        	return;
+    	}
 
-            const cards = categories[currentCategory][currentFolder][currentList];
-			updateImportanceCounts(cards);
-            if (!cards || cards.length === 0) {
-                document.getElementById('emptyState').style.display = 'block';
-                document.getElementById('cardSection').style.display = 'none';
-                document.getElementById('endSection').style.display = 'none';
-                return;
-            }
-			studyIndices = cards
-  				.map((_, i) => i)
-  				.filter(i => importanceFilter.includes((cards[i].importance || 'normal').toLowerCase()));
+    		const cards = categories[currentCategory][currentFolder][currentList];
 
-			if (studyIndices.length === 0) {
-  				showNotification("Aucune carte ne correspond au filtre d'importance", "error");
-  				document.getElementById('emptyState').style.display = 'block';
-  				document.getElementById('cardSection').style.display = 'none';
-  				document.getElementById('endSection').style.display = 'none';
-  				return;
-			}
+    		// ✅ Met à jour les compteurs du filtre (Important/Normal/Pas important/Explication)
+    		updateImportanceCounts(cards);
 
-			const ui = document.getElementById("importanceFilterUI");
-			if (ui) {
-  			   ui.innerHTML = `
-  					<h4>🎯 Filtrer par importance</h4>
- 					<div class="filter-buttons" style="justify-content:flex-start; gap:8px; flex-wrap:wrap">
-    					<label class="filter-btn important">
-      						<input type="checkbox" id="filterImportant" checked>
-      						Important (<span id="countImpImportant">0</span>)
-    					</label>
+    		if (!cards || cards.length === 0) {
+        		document.getElementById('emptyState').style.display = 'block';
+        		document.getElementById('cardSection').style.display = 'none';
+        		document.getElementById('endSection').style.display = 'none';
+        		return;
+    		}
 
-    					<label class="filter-btn normal">
-      						<input type="checkbox" id="filterNormal" checked>
-      						Normal (<span id="countImpNormal">0</span>)
-    					</label>
+    		// ✅ Construit la liste des indices à étudier selon le filtre d’importance
+    		studyIndices = cards
+        		.map((_, i) => i)
+        		.filter(i => importanceFilter.includes((cards[i].importance || 'normal').toLowerCase()));
 
-    					<label class="filter-btn pas-important">
-      						<input type="checkbox" id="filterNotImportant" checked>
-     						Pas important (<span id="countImpNotImportant">0</span>)
-    					</label>
+    		if (studyIndices.length === 0) {
+        		showNotification("Aucune carte ne correspond au filtre d'importance", "error");
+       			document.getElementById('emptyState').style.display = 'block';
+        		document.getElementById('cardSection').style.display = 'none';
+        		document.getElementById('endSection').style.display = 'none';
+        		return;
+    		}
 
-    					<label class="filter-btn explication">
-      						<input type="checkbox" id="filterExplanation" checked>
-      						Explication (<span id="countImpExplanation">0</span>)
-					    </label>
+    		// ✅ Reset session
+    		currentIndex = 0;
+    		isReviewMode = false;
+    		reviewIndices = [];
 
-    					<button class="btn-action btn-action-secondary" style="padding:8px 12px; font-size:13px;"
-      						onclick="applyImportanceFilter()">
-      						Appliquer
-    					</button>
-  					</div>
-				`;
-				updateImportanceCounts(getActiveCards());
-			}
+    		updateStudyStats(cards);
+    		showCard();
 
-            currentIndex = 0;
-            isReviewMode = false;
-            reviewIndices = [];
-            updateStudyStats(cards);
-            showCard();
-
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('cardSection').style.display = 'block';
-            document.getElementById('endSection').style.display = 'none';
-            document.getElementById('studyTitle').textContent = currentList;
-            document.getElementById('studyModeIndicator').style.display = 'none';
-        }
-
+    		document.getElementById('emptyState').style.display = 'none';
+    		document.getElementById('cardSection').style.display = 'block';
+   			document.getElementById('endSection').style.display = 'none';
+    		document.getElementById('studyTitle').textContent = currentList;
+    		document.getElementById('studyModeIndicator').style.display = 'none';
+		}
+		
 		function normalizeImportance(v) {
 			return (v || 'normal').toLowerCase().trim();
 		}
