@@ -377,17 +377,11 @@
 			line-height: 0;
 		}
 
-		.progress-fill {
-			background: linear-gradient(90deg, var(--primary), var(--primary-2));
-			height: 100%;
-			width: 0%;
-			display: block;
-			border-radius: inherit;
-			transition: width 0.3s ease;
-			font-size: 0;
-			line-height: 0;
-			overflow: hidden;
-			white-space: nowrap;
+		.progress-fill{
+			display:block;
+			height:100%;
+			margin:0;
+			padding:0;
 		}
 
         .card-container { perspective: 1000px; margin-bottom: 30px; }
@@ -3212,6 +3206,7 @@
 			const progressFill = document.getElementById('progress-fill');
 			if (progressFill) {
 				progressFill.style.width = ((currentIndex / total) * 100) + '%';
+				progressFill.textContent = '';   // <- enlève tout texte/chiffre dans la barre
 			}
 
 			// Texte : garde "Carte 1/total" sur la 1ère fiche
