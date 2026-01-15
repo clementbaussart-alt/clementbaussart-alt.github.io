@@ -367,8 +367,28 @@
         .study-page h2 { color: var(--text); margin-bottom: 20px; font-size: 28px; }
         .study-mode-indicator { display: inline-block; background: var(--partial); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-left: 10px; }
         .study-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .progress-bar { background: var(--border); height: 8px; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
-        .progress-fill { background: linear-gradient(90deg, var(--primary), var(--primary-2)); height: 100%; transition: width 0.3s ease; }
+        .progress-bar {
+			background: var(--border);
+			height: 8px;
+			border-radius: 10px;
+			margin-bottom: 20px;
+			overflow: hidden;
+			padding: 0;
+			line-height: 0;
+		}
+
+		.progress-fill {
+			background: linear-gradient(90deg, var(--primary), var(--primary-2));
+			height: 100%;
+			width: 0%;
+			display: block;
+			border-radius: inherit;
+			transition: width 0.3s ease;
+			font-size: 0;
+			line-height: 0;
+			overflow: hidden;
+			white-space: nowrap;
+		}
 
         .card-container { perspective: 1000px; margin-bottom: 30px; }
         .card { background: transparent; border-radius: 15px; min-height: 300px; max-height: 500px; cursor: pointer; transition: transform 0.6s; transform-style: preserve-3d; position: relative; }
