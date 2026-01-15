@@ -2856,50 +2856,55 @@
             });
             document.getElementById('totalCourses').textContent = totalCourses;
             document.getElementById('totalCards').textContent = totalCards;
-            	const list = document.getElementById('courseList');
-				list.innerHTML = '';
+			
+            const list = document.getElementById('courseList');
+			list.innerHTML = '';
 
-				const catNames = Object.keys(categories);
-				if (catNames.length === 0) {
-					list.innerHTML = '<p style="color:#999;text-align:center;padding:20px">Aucune catégorie créée.</p>';
-					return;
-				}
+			const catNames = Object.keys(categories);
+			if (catNames.length === 0) {
+				list.innerHTML = '<p style="color:#999;text-align:center;padding:20px">Aucune catégorie créée.</p>';
+				return;
+			}
 
-				catNames.forEach(catName => {
-					const category = categories[catName] || {};
+			catNames.forEach(catName => {
+				const category = categories[catName] || {};
 
-					let courseCount = 0;
-					let listCount = 0;
-					let cardCount = 0;
+				let courseCount = 0;
+				let listCount = 0;
+				let cardCount = 0;
 
-					Object.values(category).forEach(folder => {
-						courseCount++;
-						Object.values(folder).forEach(cards => {
-							listCount++;
-							cardCount += cards.length;
-						});
+				Object.values(category).forEach(folder => {
+					courseCount++;
+					Object.values(folder).forEach(cards => {
+						listCount++;
+						cardCount += cards.length;
 					});
-
-					const div = document.createElement('div');
-					div.className = 'course-card';
-
-					// Au clic : ouvre la catégorie dans la sidebar (sans choisir un cours précis)
-					div.onclick = () => {
-						openCategories[catName] = true;
-						localStorage.setItem(`flashcards_open_${currentUser.username}`, JSON.stringify(openCategories));
-						currentCategory = catName;
-						updateCategoryList();
-					};
-
-					div.innerHTML =
-						'<div class="course-card-left">' +
-							'<div class="course-card-title">' + escapeHtml(catName) + '</div>' +
-							'<div class="course-card-info">' + courseCount + ' cours • ' + listCount + ' liste' + (listCount > 1 ? 's' : '') + ' • ' + cardCount + ' carte' + (cardCount > 1 ? 's' : '') + '</div>' +
-						'</div>' +
-						'<div class="course-card-arrow">→</div>';
-
-					list.appendChild(div);
 				});
+
+				const div = document.createElement('div');
+				div.className = 'course-card';
+
+				// Au clic : ouvre la catégorie dans la sidebar (sans choisir un cours précis)
+				div.onclick = () => {
+					openCategories[catName] = true;
+					localStorage.setItem(`flashcards_open_${currentUser.username}`, JSON.stringify(openCategories));
+					currentCategory = catName;
+					updateCategoryList();
+				};
+
+				div.innerHTML =
+					'<div class="course-card-left">' +
+						'<div class="course-card-title">' + escapeHtml(catName) + '</div>' +
+						'<div class="course-card-info">' +
+						courseCount + ' cours • ' +
+						listCount + ' liste' + (listCount > 1 ? 's' : '') + ' • ' +
+						cardCount + ' carte' + (cardCount > 1 ? 's' : '') +
+					'</div>' +
+				'</div>' +
+				'<div class="course-card-arrow">→</div>';
+
+			list.appendChild(div);
+			});
         }
 
         function showListsPage(catName, folderName) {
