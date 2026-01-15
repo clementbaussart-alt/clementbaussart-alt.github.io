@@ -441,6 +441,15 @@
         .stat-bar-fill-known { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); }
         .stat-bar-fill-partial { background: linear-gradient(135deg, var(--partial) 0%, #f7b733 100%); }
         .stat-bar-fill-unknown { background: linear-gradient(135deg, var(--danger) 0%, #ee5a6f 100%); }
+		.stat-bar-fill {
+			font-size: 0;
+			line-height: 0;
+			color: transparent;
+			overflow: hidden;
+			white-space: nowrap;
+			height: 100%;
+			display: block;
+		}
         .legend-known { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); }
         .legend-partial { background: linear-gradient(135deg, var(--partial) 0%, #f7b733 100%); }
         .legend-unknown { background: linear-gradient(135deg, var(--danger) 0%, #ee5a6f 100%); }
