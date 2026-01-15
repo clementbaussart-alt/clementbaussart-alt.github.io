@@ -2084,9 +2084,12 @@
             allUsers[guestId] = currentUser;
             localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
             localStorage.setItem('current_user', JSON.stringify(currentUser));
+			localStorage.setItem("flashcards_open_active_key", openKey);
+
 
             showApp();
             showNotification('Connecté en tant qu\'invité', 'success');
+			
         }
 
         function showRegister() {
@@ -3142,6 +3145,7 @@
     					</button>
   					</div>
 				`;
+				updateImportanceCounts(getActiveCards());
 			}
 
             currentIndex = 0;
@@ -3371,7 +3375,17 @@
   			importanceFilter = f;
   			loadStudyPage();
   			showNotification("Filtre appliqué ✓", "success");
-			}
+		}
+
+		function getActiveOpenKey() {
+  			return localStorage.getItem("flashcards_open_active_key");
+		}
+
+		function getActiveCards() {
+  			const openKey = getActiveOpenKey();
+  			if (!openKey) return [];
+  			return JSON.parse(localStorage.getItem(openKey) || "[]");
+		}
 
         // ====== FONCTIONS DU THÈME ======
         const THEME_KEY = 'flashcards_theme_v2';
