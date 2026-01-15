@@ -1484,6 +1484,15 @@
                     <button class="btn-new-list" onclick="showNewListModal()">➕ Créer une nouvelle liste</button>
                 </div>
             </div>
+			<!-- PAGE : détails d'une catégorie (liste des cours) -->
+			<div id="categoryPage" class="page" style="display:none;">
+				<div class="page-header">
+					<button class="btn" onclick="goHome()">← Accueil</button>
+					<h2 id="categoryTitle">Catégorie</h2>
+				</div>
+
+				<div id="categoryCoursesList"></div>
+			</div>
             <div id="managePage" class="page">
                 <div class="container manage-cards-page">
                     <div class="breadcrumb"><a id="backToLists">← Retour aux listes</a></div>
@@ -2886,10 +2895,7 @@
 
 				// Au clic : ouvre la catégorie dans la sidebar (sans choisir un cours précis)
 				div.onclick = () => {
-					openCategories[catName] = true;
-					localStorage.setItem(`flashcards_open_${currentUser.username}`, JSON.stringify(openCategories));
-					currentCategory = catName;
-					updateCategoryList();
+					showCategoryPage(catName);
 				};
 
 				div.innerHTML =
@@ -2978,6 +2984,65 @@
                 container.appendChild(card);
             });
         }
+		
+		function showCategoryPage(catName) {
+			if (!categories[catName]) {
+				showNotification("Catégorie introuvable", "error");
+				return;
+			}
+
+		currentCategory = catName;
+		currentPage = 'category';
+
+		const title = document.getElementById('categoryTitle');
+		if (title) title.textContent = catName;
+
+		renderCategoryCourses(catName);
+		showPage('category'); // doit correspondre à ton système existant
+	}
+
+	function renderCategoryCourses(catName) {
+		const container = document.getElementById('categoryCoursesList');
+		if (!container) return;
+
+		container.innerHTML = '';
+
+		const category = categories[catName] || {};
+		const courseNames = Object.keys(category);
+
+		if (courseNames.length === 0) {
+			container.innerHTML = '<p style="color:#999;text-align:center;padding:20px">Aucun cours dans cette catégorie.</p>';
+			return;
+		}
+
+		courseNames.forEach(folderName => {
+			const div = document.createElement('div');
+			div.className = 'course-card';
+
+			// Comptage listes/cartes dans ce cours
+			let listCount = 0;
+			let cardCount = 0;
+			const folder = category[folderName] || {};
+			Object.values(folder).forEach(cards => {
+				listCount++;
+				cardCount += (cards ? cards.length : 0);
+			});
+
+			div.onclick = () => showListsPage(catName, folderName);
+
+			div.innerHTML =
+				'<div class="course-card-left">' +
+					'<div class="course-card-title">' + escapeHtml(folderName) + '</div>' +
+					'<div class="course-card-info">' +
+						listCount + ' liste' + (listCount > 1 ? 's' : '') + ' • ' +
+						cardCount + ' carte' + (cardCount > 1 ? 's' : '') +
+						'</div>' +
+					'</div>' +
+					'<div class="course-card-arrow">→</div>';
+
+				container.appendChild(div);
+			});
+		}
 
         // ====== FONCTIONS DE GESTION DES CARTES ======
         function addCard() {
