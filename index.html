@@ -1478,6 +1478,7 @@
             </div>
             <div id="listsPage" class="page">
                 <div class="container lists-page">
+					<button class="btn" onclick="backToCourses()">← Cours</button>
                     <div class="lists-page-header"><h2 id="listsTitle">Cours</h2><button class="btn-edit-page-title" onclick="showRenameFolderModal()">✏️</button><button class="btn-edit-page-title" title="Intégrer ce cours" onclick="copyFolderEmbed()">🔗</button></div>
                     <p class="lists-page-subtitle">Sélectionne une liste à réviser</p>
                     <div class="lists-grid" id="listsGrid"></div>
@@ -3211,6 +3212,16 @@
 		function goHome() {
 			currentPage = 'home';
 			showPage('home');
+		}
+
+		function backToCourses() {
+			// On revient à la page "Catégorie" qui affiche tous les cours
+			if (currentCategory) {
+				showCategoryPage(currentCategory);
+			} else {
+				// sécurité si jamais currentCategory n'est pas défini
+				goHome();
+			}
 		}
 
         // ====== FONCTIONS POUR LE MODE ÉTUDE ======
