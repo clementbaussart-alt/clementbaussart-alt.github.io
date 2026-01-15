@@ -2279,6 +2279,14 @@
                 }
             }
         }
+		
+		function loadTheme() {
+			// Si tu as déjà une autre logique de thème (applyTheme / buildThemeUI / etc.),
+			// appelle-la ici. Sinon, ne rien faire évite juste le crash.
+			try {
+				if (typeof applyTheme === 'function') applyTheme();
+			} catch (e) {}
+		}
 
         function initApp() {
             loadData();
