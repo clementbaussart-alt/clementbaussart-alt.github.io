@@ -2404,18 +2404,23 @@
         }
 
         function showPage(pageName) {
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
+			// pageName: "home", "lists", "category", "manage", ...
+			const pageId = pageName.endsWith('Page') ? pageName : (pageName + 'Page');
+			const target = document.getElementById(pageId);
 
-            const targetPage = document.getElementById(pageName + 'Page');
-            if (targetPage) {
-                targetPage.classList.add('active');
-            }
+			document.querySelectorAll('.page').forEach(p => {
+				p.classList.remove('active');
+				p.style.display = 'none';
+			});
 
-            currentPage = pageName;
-            updateCategoryList();
-        }
+			if (!target) {
+				console.error("Page introuvable:", pageId);
+				return;
+			}
+
+			target.classList.add('active');
+			target.style.display = 'block';
+		}
 
         // ====== FONCTIONS DE GESTION DES CATÉGORIES ET DOSSIERS ======
         function toggleCategory(catName) {
