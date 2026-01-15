@@ -1401,6 +1401,33 @@
   		transform:translateY(-1px);
   		background:rgba(255,255,255,0.85);
 		}
+		
+		.app-header {
+			width: 100% !important;
+			max-width: none !important;
+			padding-left: 24px !important; 
+			padding-right: 24px !important;
+			box-sizing: border-box;
+		}
+
+		.app-header {
+			display: flex;
+			gap: 16px;
+		}
+
+		.app-header > * {
+			flex: 1 1 0;
+			min-width: 0;
+		}
+
+		.recent-courses,
+		.course-list,
+		#courseList,
+		.course-card {
+			width: 100% !important;
+			max-width: none !important;
+			box-sizing: border-box;
+		}
     </style>
 </head>
 <body onload="checkAuth()">
