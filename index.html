@@ -3137,13 +3137,27 @@
                         ${progressHTML}
                     </div>
                     <div class="list-card-actions">
-                        <button class="btn-list-action btn-study" onclick="showStudyPage('${escapeHtml(currentCategory)}','${escapeHtml(currentFolder)}','${escapeHtml(listName)}')">📖 Réviser</button>
+                        <button class="btn-list-action btn-study">📖 Réviser</button>
                         <button class="btn-list-action btn-manage" onclick="showManagePage('${escapeHtml(currentCategory)}','${escapeHtml(currentFolder)}','${escapeHtml(listName)}')">✏️ Gérer</button>
                     </div>
                 `;
+
+				const btnStudy = card.querySelector('.btn-study');
+				btnStudy.onclick = (e) => {
+					e.stopPropagation();
+
+					// Si rien à revoir : on peut soit bloquer, soit réviser tout.
+					if (reviewIndices.length === 0) {
+						showNotification("Rien à revoir pour cette liste ✅", "success");
+						return;
+				}
+
+				// Démarrer la révision UNIQUEMENT sur partial/unknown
+				startReviewFromIndices(currentCategory, currentFolder, listName, reviewIndices);
+			};
                 card.appendChild(buttonsDiv);
                 container.appendChild(card);
-            });
+        	});
         }
 		
 		function showCategoryPage(catName) {
