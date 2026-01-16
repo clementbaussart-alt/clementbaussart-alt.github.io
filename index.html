@@ -3146,15 +3146,13 @@
 				btnStudy.onclick = (e) => {
 					e.stopPropagation();
 
-					// Si rien à revoir : on peut soit bloquer, soit réviser tout.
-					if (reviewIndices.length === 0) {
-						showNotification("Rien à revoir pour cette liste ✅", "success");
-						return;
-				}
+					// Si rien à revoir, on révise tout (au lieu de bloquer)
+					const indicesToStudy = (reviewIndices.length > 0)
+						? reviewIndices
+						: cards.map((_, i) => i);
 
-				// Démarrer la révision UNIQUEMENT sur partial/unknown
-				startReviewFromIndices(currentCategory, currentFolder, listName, reviewIndices);
-			};
+					startReviewFromIndices(currentCategory, currentFolder, listName, indicesToStudy);
+				};
                 card.appendChild(buttonsDiv);
                 container.appendChild(card);
         	});
