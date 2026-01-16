@@ -3061,6 +3061,26 @@
             showPage('lists');
         }
 
+		function sanitizeResultsForList(resultsObj, cardsLength) {
+			if (!resultsObj || typeof resultsObj !== 'object') return {};
+
+			// Copie
+			const clean = { ...resultsObj };
+
+			// Enlève la clé "undefined"
+			delete clean.undefined;
+
+			// Enlève tout index hors plage
+			Object.keys(clean).forEach(k => {
+				const idx = Number(k);
+				if (!Number.isInteger(idx) || idx < 0 || idx >= cardsLength) {
+					delete clean[k];
+				}
+			});
+
+			return clean;
+		}
+
         function loadListsPage() {
             const container = document.getElementById('listsGrid');
             container.innerHTML = '';
@@ -3068,6 +3088,18 @@
             const lists = categories[currentCategory][currentFolder];
             Object.keys(lists).forEach(listName => {
                 const cards = lists[listName];
+				const resultsRoot =
+					JSON.parse(localStorage.getItem('flashcards_results_Brochy') || '{}');
+
+				const resultsForThisList =
+					((((resultsRoot[currentCategory] || {})[currentFolder] || {})[listName]) || {});
+
+				const cleanResults = sanitizeResultsForList(resultsForThisList, cards.length);
+
+				const reviewCount = cards.reduce((acc, _c, i) => {
+				const status = cleanResults[String(i)];
+					return acc + (status && status !== 'known' ? 1 : 0);
+				}, 0);
                 const cardCount = cards.length;
                 let toReviewCount = 0;
                 if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][listName]) {
