@@ -3101,13 +3101,6 @@
 					return acc + (status && status !== 'known' ? 1 : 0);
 				}, 0);
                 const cardCount = cards.length;
-                let toReviewCount = 0;
-                if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][listName]) {
-                    const listResults = results[currentCategory][currentFolder][listName];
-                    Object.values(listResults).forEach(result => {
-                        if (result === 'partial' || result === 'unknown') toReviewCount++;
-                    });
-                }
 
 				const reviewIndices = cards
 					.map((_, i) => i)
@@ -3133,9 +3126,9 @@
                 buttonsDiv.appendChild(deleteBtn);
 
                 let progressHTML = '';
-                if (toReviewCount > 0) {
-                    progressHTML = `<div class="list-card-progress">🔄 ${reviewCount} à revoir</div>`
-                }
+                if (reviewCount > 0) {
+					progressHTML = `<div class="list-card-progress">🔄 ${reviewCount} à revoir</div>`;
+				}
 
                 card.innerHTML = `
                     <div class="list-card-left">
