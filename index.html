@@ -3096,6 +3096,13 @@
 
 				const cleanResults = sanitizeResultsForList(resultsForThisList, cards.length);
 
+				const reviewIndices = cards
+					.map((_, i) => i)
+					.filter(i => {
+					const status = cleanResults[String(i)];
+					return status === 'partial' || status === 'unknown';
+				});
+
 				const reviewCount = cards.reduce((acc, _c, i) => {
 				const status = cleanResults[String(i)];
 					return acc + (status && status !== 'known' ? 1 : 0);
