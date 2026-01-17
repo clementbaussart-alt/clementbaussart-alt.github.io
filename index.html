@@ -2180,6 +2180,8 @@
         let currentEditingSide = null;
         let renameTarget = null;
 		let studyIndices = [];
+		let editMode = false;
+		let editTargetIndex = null;
 		let importanceFilter = ['important','normal','pas important','explication'];
         window.activeImportanceFilter = [];
         window.currentImportance = 'normal';
@@ -2839,6 +2841,38 @@
             setTimeout(() => input.focus(), 150);
         }
 
+		function openCreateCard() {
+			editMode = false;
+			editTargetIndex = null;
+
+			// vider les champs du même formulaire
+			document.getElementById('qInput').value = '';
+			document.getElementById('aInput').value = '';
+			document.getElementById('importanceSelect').value = 'normal'; // si tu as
+			// etc.
+
+			document.getElementById('cardModalTitle').textContent = 'Créer une fiche';
+			document.getElementById('btnSaveCard').textContent = 'Créer';
+			openCardModal(); // ta fonction existante pour afficher le modal
+		}
+
+		function openEditCard(cardIndex) {
+			editMode = true;
+			editTargetIndex = cardIndex;
+
+			const cards = categories[currentCategory][currentFolder][currentList];
+			const c = cards[cardIndex];
+
+			// pré-remplir les champs du même formulaire (UI “Image 1”)
+			document.getElementById('qInput').value = c.q || c.question || '';
+			document.getElementById('aInput').value = c.a || c.answer || '';
+			document.getElementById('importanceSelect').value = c.importance || 'normal';
+
+			document.getElementById('cardModalTitle').textContent = 'Modifier la fiche';
+			document.getElementById('btnSaveCard').textContent = 'Enregistrer';
+			openCardModal();
+		}
+
         function closeRenameListModal() {
             document.getElementById('renameListModal').classList.remove('show');
             document.getElementById('renameListInput').value = '';
@@ -3273,6 +3307,31 @@
             if (currentPage === 'manage') loadManagePage();
             showNotification('Carte ajoutée avec succès ✓', 'success');
         }
+
+		function saveCardFromModal() {
+			const q = document.getElementById('qInput').value.trim();
+			const a = document.getElementById('aInput').value.trim();
+			const importance = document.getElementById('importanceSelect').value;
+
+			const cards = categories[currentCategory][currentFolder][currentList];
+
+			if (!q || !a) {
+				showNotification("Question et réponse obligatoires", "error");
+				return;
+			}
+
+			if (editMode && editTargetIndex !== null) {
+					// UPDATE (modifier)
+				cards[editTargetIndex] = { ...cards[editTargetIndex], q, a, importance };
+				} else {
+					// CREATE (ajouter)
+					cards.push({ q, a, importance });
+			}
+
+			saveUserData();      // ta sauvegarde (localStorage / etc.)
+			loadManagePage();    // ou refresh de la page de gestion
+			closeCardModal();
+		}
 
         function showManagePage(catName, folderName, listName) {
             currentCategory = catName;
