@@ -3128,11 +3128,6 @@
                 buttonsDiv.appendChild(editBtn);
                 buttonsDiv.appendChild(deleteBtn);
 
-                let progressHTML = '';
-                if (reviewCount > 0) {
-					progressHTML = `<div class="list-card-progress">🔄 ${reviewCount} à revoir</div>`;
-				}
-
                 card.innerHTML = `
                     <div class="list-card-left">
                         <div class="list-card-title">${escapeHtml(listName)}</div>
