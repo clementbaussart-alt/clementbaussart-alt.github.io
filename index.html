@@ -3103,11 +3103,6 @@
 					progressHTML = `<div class="list-card-progress">🔄 ${reviewCount} à revoir</div>`;
 				}
 				
-				const reviewCount = cards.reduce((acc, _c, i) => {
-					const status = cleanResults[String(i)];
-					return acc + (status === 'partial' || status === 'unknown' ? 1 : 0);
-				}, 0);
-				
                 const cardCount = cards.length;
 
 				const reviewIndices = cards
