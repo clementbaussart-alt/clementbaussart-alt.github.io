@@ -3641,8 +3641,6 @@
 			// - si tu as studyIndices, c’est : const actualIndex = studyIndices[currentIndex];
 			listResults[String(actualIndex)] = type; // type = 'known' | 'partial' | 'unknown'
 			localStorage.setItem(key, JSON.stringify(resultsRoot));
-			
-			results[currentCategory][currentFolder][currentList][actualIndex] = type;
 
             if (isReviewMode) {
                 const actualIndex = reviewIndices[currentIndex];
