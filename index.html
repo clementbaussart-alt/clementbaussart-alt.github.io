@@ -3102,6 +3102,8 @@
 						const status = cleanResults[String(i)];
 						return status === 'partial' || status === 'unknown';
 				});
+
+				console.log('LIST', listName, 'reviewIndices=', reviewIndices, 'cleanResults=', cleanResults);
 				
 				const reviewCount = reviewIndices.length;
 
