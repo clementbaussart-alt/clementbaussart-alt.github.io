@@ -3097,9 +3097,10 @@
 				const cleanResults = sanitizeResultsForList(resultsForThisList, cards.length);
 
 				const reviewCount = cards.reduce((acc, _c, i) => {
-				const status = cleanResults[String(i)];
-					return acc + (status && status !== 'known' ? 1 : 0);
+					const status = cleanResults[String(i)];
+					return acc + (status === 'partial' || status === 'unknown' ? 1 : 0);
 				}, 0);
+				
                 const cardCount = cards.length;
 
 				const reviewIndices = cards
@@ -3138,6 +3139,7 @@
                     </div>
                     <div class="list-card-actions">
                         <button class="btn-list-action btn-study">📖 Réviser</button>
+						<button class="btn-list-action btn-review">🔄 À revoir</button>
                         <button class="btn-list-action btn-manage" onclick="showManagePage('${escapeHtml(currentCategory)}','${escapeHtml(currentFolder)}','${escapeHtml(listName)}')">✏️ Gérer</button>
                     </div>
                 `;
@@ -3150,9 +3152,27 @@
 					const indicesToStudy = (reviewIndices.length > 0)
 						? reviewIndices
 						: cards.map((_, i) => i);
-
-					startReviewFromIndices(currentCategory, currentFolder, listName, indicesToStudy);
 				};
+
+				card.querySelector('.btn-study').onclick = (e) => {
+					e.stopPropagation();
+					showStudyPage(currentCategory, currentFolder, listName);
+				};
+
+				// 🔄 À revoir = uniquement partial/unknown
+				const btnReview = card.querySelector('.btn-review');
+				btnReview.onclick = (e) => {
+					e.stopPropagation();
+					if (reviewIndices.length === 0) return;
+					startReviewFromIndices(currentCategory, currentFolder, listName, reviewIndices);
+				};
+
+// désactive si rien à revoir
+				if (reviewIndices.length === 0) {
+					btnReview.disabled = true;
+					[btnReview.style](http://btnReview.style).opacity = '0.5';
+					[btnReview.style](http://btnReview.style).cursor = 'not-allowed';
+				}
                 card.appendChild(buttonsDiv);
                 container.appendChild(card);
         	});
