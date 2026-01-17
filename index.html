@@ -3096,6 +3096,13 @@
 
 				const cleanResults = sanitizeResultsForList(resultsForThisList, cards.length);
 
+				const reviewCount = reviewIndices.length;
+
+				let progressHTML = '';
+				if (reviewCount > 0) {
+					progressHTML = `<div class="list-card-progress">🔄 ${reviewCount} à revoir</div>`;
+				}
+				
 				const reviewCount = cards.reduce((acc, _c, i) => {
 					const status = cleanResults[String(i)];
 					return acc + (status === 'partial' || status === 'unknown' ? 1 : 0);
@@ -3106,8 +3113,8 @@
 				const reviewIndices = cards
 					.map((_, i) => i)
 					.filter(i => {
-					const status = cleanResults[String(i)];
-					return status === 'partial' || status === 'unknown';
+						const status = cleanResults[String(i)];
+						return status === 'partial' || status === 'unknown';
 				});
 
                 const card = document.createElement('div');
@@ -3161,11 +3168,18 @@
 
 				// 🔄 À revoir = uniquement partial/unknown
 				const btnReview = card.querySelector('.btn-review');
+
 				btnReview.onclick = (e) => {
 					e.stopPropagation();
 					if (reviewIndices.length === 0) return;
 					startReviewFromIndices(currentCategory, currentFolder, listName, reviewIndices);
 				};
+
+				if (reviewIndices.length === 0) {
+					btnReview.disabled = true;
+					btnReview.style.opacity = '0.5';
+					btnReview.style.cursor = 'not-allowed';
+				}
 
 // désactive si rien à revoir
 				if (reviewIndices.length === 0) {
