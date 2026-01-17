@@ -3495,6 +3495,24 @@
 			loadStudyPage(); // important: ne doit pas écraser studyIndices
 			showCard();      // si ta logique d'étude utilise showCard()
 		}
+
+		function backToListsFromStudy() {
+			// revient aux listes et rafraîchit les compteurs “à revoir”
+			showPage('lists');
+			loadListsPage();
+		}
+
+		function skipToNextCard() {
+			// passe à la prochaine carte sans enregistrer de résultat
+			currentIndex++;
+
+			if (currentIndex >= studyIndices.length) {
+				endStudy(); // ou ta fonction de fin
+				return;
+		}
+
+		showCard(); // réaffiche la carte suivante
+		}
 		
 		function normalizeImportance(v) {
 			return (v || 'normal').toLowerCase().trim();
@@ -3571,6 +3589,28 @@
   				badge.className = 'card-importance-header ' + (imp === 'pas important' ? 'pas-important' : imp);
   				badge.textContent = imp;
 			}
+
+			// Ajout/refresh des boutons “liste” et “suivante”
+			let nav = document.getElementById('studyQuickNav');
+			if (!nav) {
+				nav = document.createElement('div');
+				nav.id = 'studyQuickNav';
+				nav.style.display = 'flex';
+				nav.style.gap = '10px';
+				nav.style.marginTop = '12px';
+
+	// adapte le parent si besoin : le conteneur de la fiche en étude
+				const parent = document.getElementById('studyCard') || document.getElementById('studyPage') || document.body;
+				parent.appendChild(nav);
+			}
+
+			nav.innerHTML = `
+				<button class="btn-list-action" id="btnBackToLists">↩︎ Liste</button>
+				<button class="btn-list-action" id="btnSkipNext">⏭ Suivante</button>
+			`;
+
+			document.getElementById('btnBackToLists').onclick = backToListsFromStudy;
+			document.getElementById('btnSkipNext').onclick = skipToNextCard;
         }
 
         function flipCard() {
