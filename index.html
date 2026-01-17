@@ -2173,6 +2173,7 @@
         let currentList = null;
         let currentPage = 'home';
         let currentIndex = 0;
+		let answerHistory = []; // pile des actions pour pouvoir annuler
         let isFlipped = false;
         let isReviewMode = false;
         let reviewIndices = [];
@@ -3659,6 +3660,29 @@
 
             currentIndex++;
 
+			const key = 'flashcards_results_Brochy';
+			const resultsRoot = JSON.parse(localStorage.getItem(key) || '{}');
+			resultsRoot[currentCategory] ||= {};
+			resultsRoot[currentCategory][currentFolder] ||= {};
+			resultsRoot[currentCategory][currentFolder][currentList] ||= {};
+			const listResults = resultsRoot[currentCategory][currentFolder][currentList];
+
+			const actualIndex = Array.isArray(studyIndices) ? studyIndices[currentIndex] : currentIndex;
+
+			// mémorise l’état précédent (pour annulation)
+			answerHistory.push({
+				category: currentCategory,
+				folder: currentFolder,
+				list: currentList,
+				cardIndex: actualIndex,
+				prev: listResults[String(actualIndex)] ?? null
+			});
+
+			// écrit le nouveau statut
+			listResults[String(actualIndex)] = type;
+
+			localStorage.setItem(key, JSON.stringify(resultsRoot));
+
             // ✅ Fin de session : toujours afficher les résultats
 			const totalToStudy = isReviewMode ? reviewIndices.length : studyIndices.length;
 			if (currentIndex >= totalToStudy) {
@@ -3705,6 +3729,32 @@
             }
 			loadListsPage();
         }
+
+		function goToPreviousCardUndo() {
+			if (!answerHistory.length || currentIndex <= 0) return;
+
+			const last = answerHistory.pop();
+
+			// restaurer le statut précédent dans le storage
+			const key = 'flashcards_results_Brochy';
+			const resultsRoot = JSON.parse(localStorage.getItem(key) || '{}');
+
+			const listResults =
+				resultsRoot?.[last.category]?.[last.folder]?.[last.list];
+
+			if (listResults) {
+				if (last.prev === null) {
+					delete listResults[String(last.cardIndex)];
+			} else {
+				listResults[String(last.cardIndex)] = last.prev;
+			}
+			localStorage.setItem(key, JSON.stringify(resultsRoot));
+		}
+
+			// revenir sur la fiche précédente
+			currentIndex--;
+			showCard();
+		}
 
         function editCurrentCard() {
             const cards = categories[currentCategory][currentFolder][currentList];
