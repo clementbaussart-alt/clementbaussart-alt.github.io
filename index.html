@@ -2856,21 +2856,29 @@
 			openCardModal(); // ta fonction existante pour afficher le modal
 		}
 
-		function openEditCard(cardIndex) {
+		function openEditCard(i) {
+			// Passe en mode édition
 			editMode = true;
-			editTargetIndex = cardIndex;
+			editTargetIndex = i;
 
 			const cards = categories[currentCategory][currentFolder][currentList];
-			const c = cards[cardIndex];
+			const c = cards[i];
 
-			// pré-remplir les champs du même formulaire (UI “Image 1”)
+			// Préremplit le MODAL de création (IDs à adapter si besoin)
 			document.getElementById('qInput').value = c.q || c.question || '';
 			document.getElementById('aInput').value = c.a || c.answer || '';
-			document.getElementById('importanceSelect').value = c.importance || 'normal';
+			if (document.getElementById('importanceSelect')) {
+				document.getElementById('importanceSelect').value = c.importance || 'normal';
+			}
 
-			document.getElementById('cardModalTitle').textContent = 'Modifier la fiche';
-			document.getElementById('btnSaveCard').textContent = 'Enregistrer';
-			openCardModal();
+			// Change le bouton “Créer” -> “Enregistrer”
+			const btn = document.getElementById('btnSaveCard');
+			if (btn) {
+				btn.textContent = '💾 Enregistrer';
+				btn.onclick = () => saveEditedCard(i); // réutilise TA sauvegarde existante
+			}
+
+			openCardModal(); // <- remplace par le nom EXACT de ta fonction qui ouvre le modal “image 1”
 		}
 
         function closeRenameListModal() {
