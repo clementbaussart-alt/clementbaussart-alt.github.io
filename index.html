@@ -720,28 +720,6 @@
             font-weight: 500;
         }
 
-		.btn-delete-cat{
-			margin-left: 8px;
-			width: 24px;
-			height: 24px;
-			border-radius: 8px;
-			border: 1px solid var(--border);
-			background: var(--panel);
-			cursor: pointer;
-			font-size: 14px;
-			line-height: 1;
-		}
-
-		.btn-delete-folder{
-			margin-left: auto;
-			width: 24px;
-			height: 24px;
-			border-radius: 8px;
-			border: 1px solid var(--border);
-			background: var(--panel);
-			cursor: pointer;
-		}
-
         /* COMPARATOR STYLES */
         #comparatorModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow: auto; }
         #comparatorModal.show { display: block; }
@@ -2681,20 +2659,6 @@
                     opt.textContent = catName;
                     if (catName === currentCategory) opt.selected = true;
                     select.appendChild(opt);
-
-					const delCatBtn = document.createElement('button');
-					delCatBtn.className = 'btn-delete-cat';
-					delCatBtn.type = 'button';
-					delCatBtn.textContent = '✕';
-					delCatBtn.title = 'Supprimer la catégorie';
-
-					delCatBtn.onclick = (e) => {
-						e.stopPropagation(); // important sinon ça déclenche l’ouverture/fermeture
-						deleteCategory(catName);
-					};
-
-					// IMPORTANT : tu l’ajoutes DANS le header de catégorie
-					categoryHeader.appendChild(delCatBtn);
                 });
             }
         }
@@ -3309,21 +3273,7 @@
 			Object.values(folder).forEach(cards => {
 				listCount++;
 				cardCount += (cards ? cards.length : 0);
-
-			const delFolderBtn = document.createElement('button');
-			delFolderBtn.className = 'btn-delete-folder';
-			delFolderBtn.type = 'button';
-			delFolderBtn.textContent = '✕';
-			delFolderBtn.title = 'Supprimer le cours';
-
-			delFolderBtn.onclick = (e) => {
-				e.stopPropagation();
-				deleteFolder(currentCategory, folderName);
-			};
-
-				// Ajoute-le dans la carte du cours (à droite)
-			div.appendChild(delFolderBtn);
-		});
+			});
 
 			div.onclick = () => showListsPage(catName, folderName);
 
@@ -3392,42 +3342,6 @@
 			saveUserData();      // ta sauvegarde (localStorage / etc.)
 			loadManagePage();    // ou refresh de la page de gestion
 			closeCardModal();
-		}
-
-		function deleteCategory(catName) {
-			if (!categories || !categories[catName]) return;
-
-			if (!confirm(`Supprimer la catégorie "${catName}" ?\n⚠️ Cette action est irréversible.`)) return;
-
-			delete categories[catName];
-
-			// si tu as une catégorie courante, on la reset si besoin
-			if (currentCategory === catName) {
-				currentCategory = null;
-				currentFolder = null;
-				currentList = null;
-			}
-
-			saveUserData?.();           // si tu l’as
-			updateCategoryList?.();     // si tu l’as
-			showNotification?.("Catégorie supprimée", "success");
-		}
-
-		function deleteFolder(catName, folderName) {
-			if (!categories?.[catName]?.[folderName]) return;
-
-			if (!confirm(`Supprimer le cours "${folderName}" ?\n⚠️ Toutes les listes de ce cours seront supprimées.`)) return;
-
-			delete categories[catName][folderName];
-
-			if (currentCategory === catName && currentFolder === folderName) {
-				currentFolder = null;
-				currentList = null;
-			}
-
-			saveUserData?.();
-			updateCategoryList?.();
-			showNotification?.("Cours supprimé", "success");
 		}
 
 		function saveCardEdit() {
