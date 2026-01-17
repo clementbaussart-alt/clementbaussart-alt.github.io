@@ -3461,6 +3461,28 @@
     		document.getElementById('studyTitle').textContent = currentList;
     		document.getElementById('studyModeIndicator').style.display = 'none';
 		}
+
+		function startReviewFromIndices(cat, folder, listName, indices) {
+			// Rien à revoir
+			if (!indices || indices.length === 0) {
+				showNotification("Rien à revoir ✅", "success");
+				return;
+			}
+
+			// Contexte liste
+			currentCategory = cat;
+			currentFolder = folder;
+			currentList = listName; // si tu utilises currentList, sinon enlève
+
+			// Indices filtrés
+			studyIndices = indices;
+			currentIndex = 0;
+
+			// Lance l'étude
+			showPage('study');
+			loadStudyPage(); // important: ne doit pas écraser studyIndices
+			showCard();      // si ta logique d'étude utilise showCard()
+		}
 		
 		function normalizeImportance(v) {
 			return (v || 'normal').toLowerCase().trim();
