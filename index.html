@@ -3155,6 +3155,7 @@
 
 				card.querySelector('.btn-study').onclick = (e) => {
 					e.stopPropagation();
+					isCustomStudyIndices = false;
 					showStudyPage(currentCategory, currentFolder, listName);
 				};
 
@@ -3441,9 +3442,10 @@
     		}
 
     		// ✅ Construit la liste des indices à étudier selon le filtre d’importance
-    		studyIndices = cards
-        		.map((_, i) => i)
-        		.filter(i => importanceFilter.includes((cards[i].importance || 'normal').toLowerCase()));
+			if (!isCustomStudyIndices) {
+    			studyIndices = cards
+        			.map((_, i) => i)
+        			.filter(i => importanceFilter.includes((cards[i].importance || 'normal').toLowerCase()));
 
     		if (studyIndices.length === 0) {
         		showNotification("Aucune carte ne correspond au filtre d'importance", "error");
@@ -3482,9 +3484,11 @@
 
 			// Indices filtrés
 			studyIndices = indices;
-			currentIndex = 0;
+			isCustomStudyIndices = true;
+			
 
 			// Lance l'étude
+			currentIndex = 0;
 			showPage('study');
 			loadStudyPage(); // important: ne doit pas écraser studyIndices
 			showCard();      // si ta logique d'étude utilise showCard()
