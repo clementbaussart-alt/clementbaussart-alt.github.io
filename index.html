@@ -2857,28 +2857,31 @@
 		}
 
 		function openEditCard(i) {
-			// Passe en mode édition
-			editMode = true;
-			editTargetIndex = i;
-
+			// Pré-remplir le modal de création (même UI)
 			const cards = categories[currentCategory][currentFolder][currentList];
 			const c = cards[i];
 
-			// Préremplit le MODAL de création (IDs à adapter si besoin)
-			document.getElementById('qInput').value = c.q || c.question || '';
-			document.getElementById('aInput').value = c.a || c.answer || '';
-			if (document.getElementById('importanceSelect')) {
-				document.getElementById('importanceSelect').value = c.importance || 'normal';
-			}
+			// Préfill
+			document.getElementById('newQuestion').innerHTML = c.question || c.q || '';
+			document.getElementById('newAnswer').innerHTML = c.answer || c.a || '';
+			document.getElementById('importanceSelect').value = c.importance || 'normal';
 
-			// Change le bouton “Créer” -> “Enregistrer”
-			const btn = document.getElementById('btnSaveCard');
+			// Ouvre le même modal que “créer”
+			showNewCardModal(); // si ton bouton “ajouter fiche” utilise cette fonction
+
+			// IMPORTANT : on force le bouton “Créer/Enregistrer” à faire une MAJ et pas un ajout
+			window._editingCardIndex = i;
+
+			// Si tu as un bouton avec onclick="addCard()" ou similaire, on remplace temporairement
+			const btn = document.querySelector('.btn-save-card, #saveCardBtn, button[onclick*="addCard"]');
 			if (btn) {
 				btn.textContent = '💾 Enregistrer';
-				btn.onclick = () => saveEditedCard(i); // réutilise TA sauvegarde existante
+				btn.onclick = () => saveCardEdit();
 			}
+		}
 
-			openCardModal(); // <- remplace par le nom EXACT de ta fonction qui ouvre le modal “image 1”
+		function editCard(i) {
+			openEditCard(i);
 		}
 
         function closeRenameListModal() {
@@ -3339,6 +3342,32 @@
 			saveUserData();      // ta sauvegarde (localStorage / etc.)
 			loadManagePage();    // ou refresh de la page de gestion
 			closeCardModal();
+		}
+
+		function saveCardEdit() {
+			const i = window._editingCardIndex;
+			if (i === undefined || i === null) return;
+
+			const cards = categories[currentCategory][currentFolder][currentList];
+
+			const question = document.getElementById('newQuestion').innerHTML.trim();
+			const answer = document.getElementById('newAnswer').innerHTML.trim();
+			const importance = document.getElementById('importanceSelect').value;
+
+			cards[i] = { ...cards[i], question, answer, importance };
+
+			// sauvegarde comme tu fais déjà (mets ici ta fonction existante)
+			saveUserData?.(); // si tu as
+			localStorage.setItem(`flashcards_open_${currentUser.username}`, JSON.stringify(openCategories)); // uniquement si c’est comme ça chez toi
+
+			// refresh UI
+			loadManagePage?.();
+			loadListsPage?.();
+
+			// ferme le modal (mets ici ta fonction existante)
+			closeNewCardModal?.();
+
+			window._editingCardIndex = null;
 		}
 
         function showManagePage(catName, folderName, listName) {
