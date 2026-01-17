@@ -2368,6 +2368,14 @@
         }
 
         function loadUserData() {
+				allUsers = JSON.parse(localStorage.getItem('flashcards_users') || '{}');
+				currentUser = JSON.parse(localStorage.getItem('current_user') || 'null');
+
+				if (!currentUser) return;
+
+			// IMPORTANT : recharger categories depuis le user
+				categories = currentUser.folders || {};
+			}
             const savedUser = localStorage.getItem('current_user');
             if (savedUser) {
                 try {
@@ -2417,7 +2425,9 @@
         }
 
         function checkAuth() {
-            loadUsers();
+            loadUserData();
+			updateCategoryList();
+			updateHomeStats();
             const savedUser = localStorage.getItem('current_user');
             if (savedUser) {
                 try {
@@ -3318,6 +3328,18 @@
             if (currentPage === 'manage') loadManagePage();
             showNotification('Carte ajoutée avec succès ✓', 'success');
         }
+
+		function saveUserData() {
+			if (!currentUser || !currentUser.username) return;
+
+			// On stocke TOUTES les données de l’utilisateur
+			currentUser.folders = categories;
+
+			// Sauvegarde user complet
+			allUsers[currentUser.username] = currentUser;
+			localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
+			localStorage.setItem('current_user', JSON.stringify(currentUser));
+		}
 
 		function saveCardFromModal() {
 			const q = document.getElementById('qInput').value.trim();
