@@ -3660,11 +3660,7 @@
             }
 
             currentIndex++;
-
-			const resultsRoot = JSON.parse(localStorage.getItem(key) || '{}');
-			resultsRoot[currentCategory] ||= {};
-			resultsRoot[currentCategory][currentFolder] ||= {};
-			resultsRoot[currentCategory][currentFolder][currentList] ||= {};
+			
 			const listResults = resultsRoot[currentCategory][currentFolder][currentList];
 
 			const actualIndex = Array.isArray(studyIndices) ? studyIndices[currentIndex] : currentIndex;
