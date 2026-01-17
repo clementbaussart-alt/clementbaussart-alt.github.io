@@ -3496,22 +3496,30 @@
 			showCard();      // si ta logique d'étude utilise showCard()
 		}
 
-		function backToListsFromStudy() {
-			// revient aux listes et rafraîchit les compteurs “à revoir”
-			showPage('lists');
-			loadListsPage();
+		function restartCurrentList() {
+			// relance la même liste depuis le début
+			isCustomStudyIndices = false; // si tu as mis ce flag
+			showStudyPage(currentCategory, currentFolder, currentList);
 		}
+		
+		function goToNextListInFolder() {
+			const folder = categories?.[currentCategory]?.[currentFolder];
+			if (!folder) return;
 
-		function skipToNextCard() {
-			// passe à la prochaine carte sans enregistrer de résultat
-			currentIndex++;
+			const listNames = Object.keys(folder);
+			const idx = listNames.indexOf(currentList);
 
-			if (currentIndex >= studyIndices.length) {
-				endStudy(); // ou ta fonction de fin
+			if (idx === -1 || idx === listNames.length - 1) {
+				// pas de liste suivante -> retour aux listes du cours
+				showPage('lists');
+				loadListsPage();
 				return;
-		}
+			}
 
-		showCard(); // réaffiche la carte suivante
+			const nextListName = listNames[idx + 1];
+
+			isCustomStudyIndices = false; // révision normale de la prochaine liste
+			showStudyPage(currentCategory, currentFolder, nextListName);
 		}
 		
 		function normalizeImportance(v) {
