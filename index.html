@@ -2231,6 +2231,7 @@
                             'Chapitre 1': [
                                 {question: "Qu'est-ce que le principe de légalité ?", answer: "Le principe selon lequel l'administration doit agir conformément aux règles de droit.", importance: 'important'},
                                 {question: "Qu'est-ce que la théorie du service public ?", answer: "Une théorie développée par Léon Duguit selon laquelle l'État doit assurer certains services essentiels à la population.", importance: 'normal'}
+                           		<button id="btnPrevUndo" onclick="goToPreviousCardUndo()" title="Revenir en arrière">⏮</button>
 							]
                         }
                     }
@@ -2240,7 +2241,6 @@
             allUsers[guestId] = currentUser;
             localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
             localStorage.setItem('current_user', JSON.stringify(currentUser));
-			
 
             showApp();
             showNotification('Connecté en tant qu\'invité', 'success');
@@ -3660,7 +3660,12 @@
             }
 
             currentIndex++;
-			
+
+			const key = 'flashcards_results_Brochy';
+			const resultsRoot = JSON.parse(localStorage.getItem(key) || '{}');
+			resultsRoot[currentCategory] ||= {};
+			resultsRoot[currentCategory][currentFolder] ||= {};
+			resultsRoot[currentCategory][currentFolder][currentList] ||= {};
 			const listResults = resultsRoot[currentCategory][currentFolder][currentList];
 
 			const actualIndex = Array.isArray(studyIndices) ? studyIndices[currentIndex] : currentIndex;
