@@ -3447,6 +3447,8 @@
         			.map((_, i) => i)
         			.filter(i => importanceFilter.includes((cards[i].importance || 'normal').toLowerCase()));
 
+    		}
+			
     		if (studyIndices.length === 0) {
         		showNotification("Aucune carte ne correspond au filtre d'importance", "error");
        			document.getElementById('emptyState').style.display = 'block';
