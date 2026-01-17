@@ -3477,22 +3477,8 @@
             cardElement.appendChild(editorDiv);
         }
 
-        function saveEditedCard(idx) {
-            const cards = categories[currentCategory][currentFolder][currentList];
-            const question = document.getElementById(`editQuestion${idx}`).innerHTML.trim();
-            const answer = document.getElementById(`editAnswer${idx}`).innerHTML.trim();
-            const importance = document.getElementById(`editImportance${idx}`).value;
-
-            if (!question || !answer) {
-                showNotification('Veuillez remplir la question et la réponse.', 'error');
-                return;
-            }
-
-            cards[idx] = { question, answer, importance };
-            saveData();
-            loadManagePage();
-            showNotification('Carte modifiée ✓', 'success');
-        }
+        function saveEditedCard(i) { openEditCard(i); }
+		function cancelEditCard(i) { /* rien ou masquer l’inline */ }
 
         function cancelEditCard(idx) {
             loadManagePage();
