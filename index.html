@@ -3628,6 +3628,19 @@
         function answer(type) {
             const cards = categories[currentCategory][currentFolder][currentList];
 			const actualIndex = isReviewMode ? reviewIndices[currentIndex] : studyIndices[currentIndex];
+			const key = 'flashcards_results_Brochy'; // ou flashcards_results_${currentUser.username} si tu utilises ça
+			const resultsRoot = JSON.parse(localStorage.getItem(key) || '{}');
+
+			if (!resultsRoot[currentCategory]) resultsRoot[currentCategory] = {};
+			if (!resultsRoot[currentCategory][currentFolder]) resultsRoot[currentCategory][currentFolder] = {};
+			if (!resultsRoot[currentCategory][currentFolder][currentList]) resultsRoot[currentCategory][currentFolder][currentList] = {};
+
+			const listResults = resultsRoot[currentCategory][currentFolder][currentList];
+
+			// IMPORTANT : utilise l’index réel de la carte
+			// - si tu as studyIndices, c’est : const actualIndex = studyIndices[currentIndex];
+			listResults[String(actualIndex)] = type; // type = 'known' | 'partial' | 'unknown'
+			localStorage.setItem(key, JSON.stringify(resultsRoot));
 			results[currentCategory][currentFolder][currentList][actualIndex] = type;
 
             if (isReviewMode) {
