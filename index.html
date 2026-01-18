@@ -2354,16 +2354,15 @@
 
 		let savedRange = null;
 
+		// Sauvegarde seulement si sélection dans un editor
 		function saveSelection() {
 			const sel = window.getSelection();
 			if (!sel || sel.rangeCount === 0) return;
 
 			const range = sel.getRangeAt(0);
-			const node = range.commonAncestorContainer;
-			const el = (node.nodeType === 1 ? node : node.parentElement);
-
-			// Ne sauvegarde que si on est dans un éditeur
-			if (!el || !el.closest || !el.closest('.editor-content')) return;
+			let node = range.commonAncestorContainer;
+			if (node && node.nodeType === 3) node = node.parentNode; // texte -> element
+			if (!node || !node.closest || !node.closest('.editor-content')) return;
 
 			savedRange = range.cloneRange();
 		}
@@ -2376,41 +2375,35 @@
 			return true;
 		}
 
+		// Track du "côté" actif (création + édition inline)
 		document.addEventListener('focusin', (e) => {
 			const t = e.target;
 			if (!t || !t.id) return;
 
 			if (t.id === 'newQuestion') { activeInlineEditIndex = null; activeInlineSide = 'question'; }
-			if (t.id === 'newAnswer') { activeInlineEditIndex = null; activeInlineSide = 'answer'; }
+			if (t.id === 'newAnswer')   { activeInlineEditIndex = null; activeInlineSide = 'answer'; }
+
+			if (t.id.startsWith('editQuestion')) activeInlineSide = 'question';
+			if (t.id.startsWith('editAnswer'))   activeInlineSide = 'answer';
 		});
 
-		document.addEventListener('mouseup', (e) => {
-			const t = e.target;
-			if (t && t.closest && t.closest('.editor-content')) saveSelection();
-		});
-
-		document.addEventListener('keyup', (e) => {
-			const t = e.target;
-			if (t && t.closest && t.closest('.editor-content')) saveSelection();
-		});
+		document.addEventListener('mouseup', saveSelection);
+		document.addEventListener('keyup', saveSelection);
 
 		function applyColorToSelection(cmd, color) {
-			// remettre le focus sur l’éditeur actif (sinon la sélection saute)
-			if (activeInlineEditIndex !== null) {
+			// 1) Focus sur le bon éditeur
+			if (activeInlineEditIndex !== null && activeInlineEditIndex !== undefined) {
 				setActiveInlineEditor(activeInlineEditIndex, activeInlineSide);
 			} else {
-				// mode création (newQuestion/newAnswer)
 				const el = document.getElementById(activeInlineSide === 'answer' ? 'newAnswer' : 'newQuestion');
 				if (el) el.focus();
 			}
 
-			// restaurer la sélection
-			restoreSelection();
-
-			// appliquer
+			// 2) Restore + apply
+			if (!restoreSelection()) return;
 			document.execCommand(cmd, false, color);
 
-			// re-sauvegarder la nouvelle sélection
+			// 3) resave
 			saveSelection();
 		}
 
