@@ -2936,6 +2936,27 @@
 
 			currentIndex--;
 			showCard();
+
+			// ✅ si le plein écran est ouvert, rafraîchir aussi l’overlay
+			const fs = document.getElementById('fullscreenMode');
+			if (fs && fs.classList.contains('active')) {
+				updateFullscreenCard(); // à créer (voir ci-dessous)
+			}
+		}
+
+		function updateFullscreenCard() {
+			// Reprend le contenu déjà affiché par showCard()
+			const q = document.getElementById('question')?.innerHTML || '';
+			const a = document.getElementById('answer')?.innerHTML || '';
+			const badge = document.getElementById('importanceBadge')?.className || '';
+
+			const fq = document.getElementById('fullscreenQuestion');
+			const fa = document.getElementById('fullscreenAnswer');
+			const fb = document.getElementById('fullscreenImportanceBadge');
+
+			if (fq) fq.innerHTML = q;
+			if (fa) fa.innerHTML = a;
+			if (fb) fb.className = document.getElementById('importanceBadge')?.className || 'card-importance-header';
 		}
         // ====== FONCTIONS DE GESTION DES CATÉGORIES ET DOSSIERS ======
         function toggleCategory(catName) {
