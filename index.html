@@ -1652,6 +1652,34 @@
 			align-items: center;
 			justify-content: center;
 		}
+
+		#btnPrevStudy{
+			/* annule le style global des button */
+			flex: 0 0 auto !important;
+			min-width: 0 !important;
+			padding: 0 !important;
+
+			/* style “rond à droite” */
+			position: absolute;
+			right: 12px;
+			top: 50%;
+			transform: translateY(-50%);
+			width: 44px;
+			height: 44px;
+			border-radius: 999px;
+			border: 1px solid var(--border);
+			background: rgba(255,255,255,0.92);
+			color: var(--text);
+			box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+			z-index: 50;
+
+			display: inline-flex !important;
+			align-items: center;
+			justify-content: center;
+		}
+
+		/* le parent doit être positionné */
+		#cardSection{ position: relative; }
     </style>
 </head>
 <body onload="checkAuth()">
