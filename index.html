@@ -2769,6 +2769,10 @@
 			target.style.display = 'block';
 		}
 
+		function setActiveInlineSide(side) {
+			activeInlineSide = side; // 'question' ou 'answer'
+		}
+
         // ====== FONCTIONS DE GESTION DES CATÉGORIES ET DOSSIERS ======
         function toggleCategory(catName) {
             openCategories[catName] = !openCategories[catName];
@@ -3782,13 +3786,13 @@
 							<div class="format-mini-label">Texte</div>
 							<input type="color" value="#000000"
 								onchange="applyColorToSelection('foreColor', this.value)"
-								onclick="setActiveInlineEditor(${i}, 'question')">
+								onclick="onclick="setActiveInlineEditor(${i}, activeInlineSide)">
 						</div>
 						<div>
 							<div class="format-mini-label">Fond</div>
 							<input type="color" value="#ffff00"
 								onchange="applyColorToSelection('backColor', this.value)"
-								onclick="setActiveInlineEditor(${i}, 'question')">
+								onclick="onclick="setActiveInlineEditor(${i}, activeInlineSide)">
 						</div>
 					</div>
 
