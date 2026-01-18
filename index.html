@@ -1626,23 +1626,6 @@
 
 		#cardSection { position: relative; }
 
-		#btnPrevStudy{
-			position: absolute;
-			right: -56px;          /* décale à droite de la carte */
-			top: 50%;
-			transform: translateY(-50%);
-			width: 44px;
-			height: 44px;
-			border-radius: 999px;
-			border: 1px solid var(--border);
-			background: rgba(255,255,255,0.92);
-			color: var(--text);
-			cursor: pointer;
-			font-weight: 900;
-			box-shadow: 0 10px 24px rgba(0,0,0,0.18);
-			display: none;         /* affiché seulement en mode étude */
-		}
-
 		#btnPrevStudy:hover{
 			transform: translateY(-50%) scale(1.05);
 		}
@@ -1654,25 +1637,22 @@
 		}
 
 		#btnPrevStudy{
+			/* annule le style global des button */
 			flex: 0 0 auto !important;
 			min-width: 0 !important;
 			padding: 0 !important;
 
+			/* style “rond à droite” */
 			position: absolute;
-			right: 14px;
-			bottom: 14px;     /* ✅ en bas */
-			top: auto !important;
-			transform: none !important;
-
-			width: 34px;      /* ✅ plus petit */
-			height: 34px;
+			right: 12px;
+			top: 50%;
+			transform: translateY(-50%);
+			width: 44px;
+			height: 44px;
 			border-radius: 999px;
 			border: 1px solid var(--border);
 			background: rgba(255,255,255,0.92);
 			color: var(--text);
-			cursor: pointer;
-			font-weight: 900;
-			font-size: 16px;
 			box-shadow: 0 10px 24px rgba(0,0,0,0.18);
 			z-index: 50;
 
