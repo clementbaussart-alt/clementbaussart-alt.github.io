@@ -1824,12 +1824,14 @@
                                                 <input type="color"
 													onmousedown="saveSelection()"
 													oninput="applyColorToSelection('foreColor', this.value)">
+												<button type="button" class="editor-btn" onclick="applySavedColor('foreColor', 'textColorPicker')">OK</button>
                                             </div>
                                             <div>
                                                 <div style="font-size: 8px; color: var(--text-soft); margin-bottom: 1px; text-align: center;">Fond</div>
                                                 <input type="color"
 													onmousedown="saveSelection()"
 													oninput="applyColorToSelection('backColor', this.value)">
+												<button type="button" class="editor-btn" onclick="applySavedColor('backColor', 'bgColorPicker')">OK</button>
                                             </div>
                                         </div>
                                     </div>
@@ -3064,6 +3066,24 @@
                 showNotification('Cours renommée ✓', 'success');
             }
         }
+
+		function applySavedColor(cmd, pickerId) {
+			const picker = document.getElementById(pickerId);
+			if (!picker) return;
+
+			// Remet le focus dans l’éditeur actif (indispensable)
+			if (activeInlineEditIndex !== null && activeInlineEditIndex !== undefined) {
+				setActiveInlineEditor(activeInlineEditIndex, activeInlineSide);
+			} else {
+				const el = document.getElementById(activeInlineSide === 'answer' ? 'newAnswer' : 'newQuestion');
+				if (el) el.focus();
+			}
+
+			// Restore sélection + applique
+			if (!restoreSelection()) return;
+			document.execCommand(cmd, false, picker.value);
+			saveSelection();
+		}
 
         function showNewListModal() {
             if (!currentCategory || !currentFolder) {
