@@ -1592,6 +1592,7 @@
 			flex-basis: 24px !important;
 			padding: 0 !important;
 		}
+		
 		#cardsList .format-panel{
 			display: block !important;
 			visibility: visible !important;
@@ -1600,6 +1601,13 @@
 			z-index: 9999 !important;
 			border: 2px solid red !important; /* temporaire pour voir */
 			background: white !important;
+		}
+
+		.card-edit-item{
+			display: grid;
+			grid-template-columns: 1fr 240px;
+			gap: 12px;
+			align-items: start;
 		}
     </style>
 </head>
@@ -3606,6 +3614,23 @@
             showPage('manage');
         }
 
+		function injectFormatPanelsInCardsList() {
+			document.querySelectorAll('#cardsList .card-edit-item').forEach(cardItem => {
+				const i = Number(cardItem.dataset.index);
+				if (!Number.isInteger(i)) return;
+
+				// évite doublons
+				if (cardItem.querySelector(`.format-panel[data-format-for="${i}"]`)) return;
+
+				cardItem.insertAdjacentHTML('beforeend', renderFormatPanel(i));
+
+				// synchro importance si tu l’utilises
+				const inlineSel = document.getElementById(`inlineImportance${i}`);
+				const origSel = document.getElementById(`editImportance${i}`);
+				if (inlineSel && origSel) inlineSel.value = origSel.value;
+			});
+		}
+
         function loadManagePage() {
             const cardsList = document.getElementById('cardsList');
             const cardCount = document.getElementById('cardCount');
@@ -3658,6 +3683,7 @@
 				const origSel = document.getElementById(`editImportance${i}`);
 				if (inlineSel && origSel) inlineSel.value = origSel.value;
 			});
+			injectFormatPanelsInCardsList(); 
         }
 
         function deleteCard(idx) {
