@@ -2376,6 +2376,14 @@
 			return true;
 		}
 
+		document.addEventListener('focusin', (e) => {
+			const t = e.target;
+			if (!t || !t.id) return;
+
+			if (t.id === 'newQuestion') { activeInlineEditIndex = null; activeInlineSide = 'question'; }
+			if (t.id === 'newAnswer') { activeInlineEditIndex = null; activeInlineSide = 'answer'; }
+		});
+
 		document.addEventListener('mouseup', (e) => {
 			const t = e.target;
 			if (t && t.closest && t.closest('.editor-content')) saveSelection();
@@ -2478,14 +2486,6 @@
 			const sel = document.getElementById(`inlineImportance${i}`);
 			const original = document.getElementById(`editImportance${i}`);
 			if (sel && original) original.value = sel.value;
-			
-			document.addEventListener('focusin', (e) => {
-				const t = e.target;
-				if (!t || !t.id) return;
-
-				if (t.id === 'newQuestion') { activeInlineEditIndex = null; activeInlineSide = 'question'; }
-				if (t.id === 'newAnswer') { activeInlineEditIndex = null; activeInlineSide = 'answer'; }
-			});
 		}
 
         function showRegister() {
