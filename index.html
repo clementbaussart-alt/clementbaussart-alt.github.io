@@ -1680,6 +1680,29 @@
 
 		/* le parent doit être positionné */
 		#cardSection{ position: relative; }
+
+		#btnPrevFullscreen{
+			position: absolute;
+			right: 20px;
+			top: 50%;
+			transform: translateY(-50%);
+			width: 52px;
+			height: 52px;
+			border-radius: 999px;
+			border: 1px solid rgba(255,255,255,0.25);
+			background: rgba(0,0,0,0.45);
+			color: white;
+			cursor: pointer;
+			font-weight: 900;
+			z-index: 10002;
+			display: none;
+		}
+
+		.fullscreen-mode.active #btnPrevFullscreen{
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -2363,6 +2386,7 @@
         <!-- Mode plein écran pour les fiches -->
         <div id="fullscreenMode" class="fullscreen-mode">
             <button class="fullscreen-close-btn" onclick="event.stopPropagation(); closeFullscreenOverlay()">✕</button>
+			<button id="btnPrevFullscreen" type="button" onclick="goToPreviousCardUndo()" title="Fiche précédente">⟵</button>
             <div class="fullscreen-card-container" id="fullscreenCardContainer">
                 <div class="fullscreen-card" id="fullscreenCard" onclick="flipFullscreenCard()">
                     <div class="fullscreen-card-face fullscreen-card-front">
