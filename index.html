@@ -1623,6 +1623,35 @@
 		.card-edit-item > .format-panel {
 			grid-column: 2;
 		}
+
+		#cardSection { position: relative; }
+
+		#btnPrevStudy{
+			position: absolute;
+			right: -56px;          /* décale à droite de la carte */
+			top: 50%;
+			transform: translateY(-50%);
+			width: 44px;
+			height: 44px;
+			border-radius: 999px;
+			border: 1px solid var(--border);
+			background: rgba(255,255,255,0.92);
+			color: var(--text);
+			cursor: pointer;
+			font-weight: 900;
+			box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+			display: none;         /* affiché seulement en mode étude */
+		}
+
+		#btnPrevStudy:hover{
+			transform: translateY(-50%) scale(1.05);
+		}
+
+		body .page#studyPage.active #btnPrevStudy{
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -1925,6 +1954,7 @@
 						<div class="card-top-actions">
   						<button class="btn-top-mini" id="btnEditCurrent" onclick="editCurrentCard()">✏️ Éditer</button>
   						<button class="btn-top-mini" onclick="openFullscreenStudy()">⛶ Plein écran</button>
+						<button id="btnPrevStudy" onclick="goToPreviousCardUndo()" title="Fiche précédente">⟵</button>
 					</div>
                         <div class="card-container">
                             <div class="card" id="flashcard" onclick="flipCard()">
@@ -2833,6 +2863,28 @@
 			activeInlineSide = side; // 'question' ou 'answer'
 		}
 
+		let answerHistory = [];
+
+		function goToPreviousCardUndo() {
+			if (currentIndex <= 0 || answerHistory.length === 0) return;
+
+			const last = answerHistory.pop();
+
+			// restaurer le statut précédent en localStorage/results si tu enregistres les réponses
+			const key = `flashcards_results_${currentUser.username}`;
+			const resultsRoot = JSON.parse(localStorage.getItem(key) || '{}');
+
+			const listResults = resultsRoot?.[currentCategory]?.[currentFolder]?.[currentList];
+			if (listResults) {
+				if (last.prev === null) delete listResults[String(last.cardIndex)];
+				else listResults[String(last.cardIndex)] = last.prev;
+
+				localStorage.setItem(key, JSON.stringify(resultsRoot));
+			}
+
+			currentIndex--;
+			showCard();
+		}
         // ====== FONCTIONS DE GESTION DES CATÉGORIES ET DOSSIERS ======
         function toggleCategory(catName) {
             openCategories[catName] = !openCategories[catName];
@@ -4153,6 +4205,10 @@
 
 			const listResults = resultsRoot[currentCategory][currentFolder][currentList];
 
+			answerHistory.push({
+				cardIndex: actualIndex,
+				prev: listResults[String(actualIndex)] ?? null
+			});
 			// IMPORTANT : utilise l’index réel de la carte
 			// - si tu as studyIndices, c’est : const actualIndex = studyIndices[currentIndex];
 			listResults[String(actualIndex)] = type; // type = 'known' | 'partial' | 'unknown'
