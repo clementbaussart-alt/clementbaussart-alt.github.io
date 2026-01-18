@@ -1686,18 +1686,22 @@
 
 		#btnPrevFullscreen{
 			position: absolute;
-			right: 20px;
-			top: 50%;
-			transform: translateY(-50%);
-			width: 52px;
-			height: 52px;
+			right: 16px;
+			bottom: 16px;   /* ✅ en bas */
+			top: auto;
+			transform: none;
+
+			width: 38px;    /* ✅ plus petit */
+			height: 38px;
 			border-radius: 999px;
 			border: 1px solid rgba(255,255,255,0.25);
 			background: rgba(0,0,0,0.45);
 			color: white;
 			cursor: pointer;
 			font-weight: 900;
+			font-size: 16px;
 			z-index: 10002;
+
 			display: none;
 		}
 
