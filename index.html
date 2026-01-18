@@ -2357,7 +2357,15 @@
 		function saveSelection() {
 			const sel = window.getSelection();
 			if (!sel || sel.rangeCount === 0) return;
-			savedRange = sel.getRangeAt(0).cloneRange();
+
+			const range = sel.getRangeAt(0);
+			const node = range.commonAncestorContainer;
+			const el = (node.nodeType === 1 ? node : node.parentElement);
+
+			// Ne sauvegarde que si on est dans un éditeur
+			if (!el || !el.closest || !el.closest('.editor-content')) return;
+
+			savedRange = range.cloneRange();
 		}
 
 		function restoreSelection() {
@@ -2379,11 +2387,24 @@
 		});
 
 		function applyColorToSelection(cmd, color) {
+			// remettre le focus sur l’éditeur actif (sinon la sélection saute)
+			if (activeInlineEditIndex !== null) {
+				setActiveInlineEditor(activeInlineEditIndex, activeInlineSide);
+			} else {
+				// mode création (newQuestion/newAnswer)
+				const el = document.getElementById(activeInlineSide === 'answer' ? 'newAnswer' : 'newQuestion');
+				if (el) el.focus();
+			}
+
+			// restaurer la sélection
 			restoreSelection();
+
+			// appliquer
 			document.execCommand(cmd, false, color);
+
+			// re-sauvegarder la nouvelle sélection
 			saveSelection();
 		}
-		
 
         // ====== FONCTIONS D'AUTHENTIFICATION ======
         function login() {
@@ -2459,11 +2480,11 @@
 			if (sel && original) original.value = sel.value;
 			
 			document.addEventListener('focusin', (e) => {
-				const el = e.target;
-				if (!el || !el.id) return;
+				const t = e.target;
+				if (!t || !t.id) return;
 
-				if (el.id.startsWith('editQuestion')) activeInlineSide = 'question';
-				if (el.id.startsWith('editAnswer')) activeInlineSide = 'answer';
+				if (t.id === 'newQuestion') { activeInlineEditIndex = null; activeInlineSide = 'question'; }
+				if (t.id === 'newAnswer') { activeInlineEditIndex = null; activeInlineSide = 'answer'; }
 			});
 		}
 
