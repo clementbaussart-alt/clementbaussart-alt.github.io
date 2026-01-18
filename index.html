@@ -3823,7 +3823,27 @@
 			`;
 		}
 
-        function saveEditedCard(i) { openEditCard(i); saveUserData(); hideAllInlineFormatPanels(); } 
+        function saveEditedCard(i) { 
+			const cards = categories[currentCategory][currentFolder][currentList];
+			if (!cards || !cards[i]) return;
+
+			const qEl = document.getElementById(`editQuestion${i}`);
+			const aEl = document.getElementById(`editAnswer${i}`);
+			const impEl = document.getElementById(`editImportance${i}`);
+
+			const question = (qEl ? qEl.innerHTML : '').trim();
+			const answer = (aEl ? aEl.innerHTML : '').trim();
+			const importance = impEl ? impEl.value : (cards[i].importance || 'normal');
+
+			cards[i] = { ...cards[i], question, answer, importance };
+
+			saveData();                 // <-- indispensable pour persister
+			loadManagePage?.();         // ou ta fonction qui rerend #cardsList
+			showNotification('Carte enregistrée ✓', 'success');
+			openEditCard(i); 
+			saveUserData(); 
+			hideAllInlineFormatPanels(); 
+		} 
 		function cancelEditCard(i) { hideAllInlineFormatPanels(); /* rien ou masquer l’inline */ }
 
         function cancelEditCard(idx) {
