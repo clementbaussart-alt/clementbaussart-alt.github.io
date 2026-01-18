@@ -1673,13 +1673,16 @@
 
 			width: 2px;    /* ✅ plus petit */
 			height: 2px;
+			padding: 0 !important;        /* ✅ annule le padding global */
+			min-width: 0 !important; 
 			border-radius: 999px;
 			border: 1px solid rgba(255,255,255,0.25);
 			background: rgba(0,0,0,0.45);
 			color: white;
 			cursor: pointer;
 			font-weight: 900;
-			font-size: 16px;
+			font-size: 14px !important;   /* ✅ plus petit */
+			line-height: 1 !important;
 			z-index: 10002;
 
 			display: none;
