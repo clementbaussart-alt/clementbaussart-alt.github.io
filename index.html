@@ -2370,6 +2370,7 @@
 			
             loadUserData();
 			initApp();
+			loadTheme();
 			refreshUserUI();
         }
 
@@ -2412,12 +2413,23 @@
                     console.error('Erreur lors du chargement des données utilisateur:', e);
        		}
 		}
+		
 		function loadTheme() {
-			// Si tu as déjà une autre logique de thème (applyTheme / buildThemeUI / etc.),
-			// appelle-la ici. Sinon, ne rien faire évite juste le crash.
+			if (!currentUser) return;
+
+			const raw = localStorage.getItem(`flashcards_theme_${currentUser.username}`);
+			if (!raw) return;
+
 			try {
-				if (typeof applyTheme === 'function') applyTheme();
-			} catch (e) {}
+				const theme = JSON.parse(raw);
+				if (!theme || typeof theme !== 'object') return;
+
+				Object.entries(theme).forEach(([key, val]) => {
+					document.documentElement.style.setProperty(key, val);
+				});
+			} catch (e) {
+				console.error('Theme load error', e);
+			}
 		}
 
         function initApp() {
@@ -4147,13 +4159,28 @@
 		}
 
 		function saveTheme() {
-			try {
-				const theme = getCurrentThemeObject();
-				localStorage.setItem(THEME_KEY, JSON.stringify(theme));
-				showNotification("Thème enregistré ✓", "success");
-			} catch (e) {
-				showNotification("Erreur lors de l'enregistrement du thème", "error");
-			}
+			if (!currentUser) return;
+
+			const theme = {
+				'--bg-gradient-from': getComputedStyle(document.documentElement).getPropertyValue('--bg-gradient-from').trim(),
+				'--bg-gradient-to': getComputedStyle(document.documentElement).getPropertyValue('--bg-gradient-to').trim(),
+				'--primary': getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
+				'--primary-2': getComputedStyle(document.documentElement).getPropertyValue('--primary-2').trim(),
+				'--accent': getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),
+				'--accent-2': getComputedStyle(document.documentElement).getPropertyValue('--accent-2').trim(),
+				'--danger': getComputedStyle(document.documentElement).getPropertyValue('--danger').trim(),
+				'--text': getComputedStyle(document.documentElement).getPropertyValue('--text').trim(),
+				'--text-soft': getComputedStyle(document.documentElement).getPropertyValue('--text-soft').trim(),
+				'--panel': getComputedStyle(document.documentElement).getPropertyValue('--panel').trim(),
+				'--panel-muted': getComputedStyle(document.documentElement).getPropertyValue('--panel-muted').trim(),
+				'--border': getComputedStyle(document.documentElement).getPropertyValue('--border').trim(),
+				'--known': getComputedStyle(document.documentElement).getPropertyValue('--known').trim(),
+				'--partial': getComputedStyle(document.documentElement).getPropertyValue('--partial').trim(),
+				'--unknown': getComputedStyle(document.documentElement).getPropertyValue('--unknown').trim(),
+			};
+
+			localStorage.setItem(`flashcards_theme_${currentUser.username}`, JSON.stringify(theme));
+			showNotification('Thème enregistré ✓', 'success');
 		}
 
 		function resetTheme() {
