@@ -2346,7 +2346,8 @@
 		let editTargetIndex = null;
 		let importanceFilter = ['important','normal','pas important','explication'];
 		let activeInlineEditIndex = null;
-		let activeInlineSide = 'question'; 
+		let activeInlineSide = 'question';
+		let savedRange = null;
         window.activeImportanceFilter = [];
         window.currentImportance = 'normal';
 
@@ -2624,6 +2625,35 @@
             loadTheme();
             showPage('home');
         }
+
+		function saveSelection() {
+			const sel = window.getSelection();
+			if (!sel || sel.rangeCount === 0) return;
+			savedRange = sel.getRangeAt(0).cloneRange();
+		}
+
+		document.addEventListener('mouseup', (e) => {
+		if (e.target.closest('.editor-content')) saveSelection();
+		});
+
+		document.addEventListener('keyup', (e) => {
+			if (e.target.closest('.editor-content')) saveSelection();
+		});
+
+		function restoreSelection() {
+			if (!savedRange) return false;
+			const sel = window.getSelection();
+			sel.removeAllRanges();
+			sel.addRange(savedRange);
+			return true;
+		}
+
+		function applyColorToSelection(cmd, color) {
+			// cmd = 'foreColor' ou 'backColor'
+			restoreSelection();
+			document.execCommand(cmd, false, color);
+			saveSelection(); // re-sauvegarde après modification
+		}
 
         function checkAuth() {
             loadUserData();
