@@ -1821,11 +1821,15 @@
                                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">
                                             <div>
                                                 <div style="font-size: 8px; color: var(--text-soft); margin-bottom: 1px; text-align: center;">Texte</div>
-                                                <input type="color" id="textColorPicker" value="#000000" title="Couleur du texte" style="width: 100%; height: 22px; border: 1px solid var(--border); border-radius: 2px; cursor: pointer; padding: 0;" onchange="applyColorToSelection('foreColor', this.value)">
+                                                <input type="color"
+													onmousedown="saveSelection()"
+													oninput="applyColorToSelection('foreColor', this.value)">
                                             </div>
                                             <div>
                                                 <div style="font-size: 8px; color: var(--text-soft); margin-bottom: 1px; text-align: center;">Fond</div>
-                                                <input type="color" id="bgColorPicker" value="#ffff00" title="Couleur de fond" style="width: 100%; height: 22px; border: 1px solid var(--border); border-radius: 2px; cursor: pointer; padding: 0;" onchange="applyColorToSelection('backColor', this.value)">
+                                                <input type="color"
+													onmousedown="saveSelection()"
+													oninput="applyColorToSelection('backColor', this.value)">
                                             </div>
                                         </div>
                                     </div>
