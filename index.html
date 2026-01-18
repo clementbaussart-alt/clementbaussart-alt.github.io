@@ -1609,6 +1609,21 @@
 			gap: 12px;
 			align-items: start;
 		}
+		
+		.card-edit-item {
+			display: grid;
+			grid-template-columns: 1fr 240px;
+			gap: 12px;
+			align-items: start;
+		}
+
+		.card-edit-item > .card-inline-editor {
+			grid-column: 1;
+		}
+
+		.card-edit-item > .format-panel {
+			grid-column: 2;
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -3782,7 +3797,7 @@
 			`;
 		}
 
-        function saveEditedCard(i) { openEditCard(i); saveUserData(); } 
+        function saveEditedCard(i) { openEditCard(i); saveUserData(); hideAllInlineFormatPanels(); } 
 		function cancelEditCard(i) { hideAllInlineFormatPanels(); /* rien ou masquer l’inline */ }
 
         function cancelEditCard(idx) {
@@ -4197,6 +4212,8 @@
 			const inlineSel = document.getElementById(`inlineImportance${i}`);
 			const origSel = document.getElementById(`editImportance${i}`);
 			if (inlineSel && origSel) inlineSel.value = origSel.value;
+
+			setActiveInlineEditor(i, 'question');
 		}
 
         // ====== FONCTIONS DU THÈME ======
