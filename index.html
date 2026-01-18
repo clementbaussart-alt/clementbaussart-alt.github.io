@@ -2925,6 +2925,7 @@
 			}
 
 			currentIndex--;
+			forceQuestionSide();
 			resetFlipState();
 			showCard();
 
@@ -2932,6 +2933,21 @@
 			const fs = document.getElementById('fullscreenMode');
 			if (fs && fs.classList.contains('active')) {
 				updateFullscreenCard(); // à créer (voir ci-dessous)
+			}
+		}
+
+		function forceQuestionSide() {
+			// Normal
+			const card = document.getElementById('flashcard');
+			if (card && card.classList.contains('flipped')) {
+				card.classList.remove('flipped');
+			}
+			isFlipped = false;
+
+			// Fullscreen
+			const fsCard = document.getElementById('fullscreenCard');
+			if (fsCard && fsCard.classList.contains('flipped')) {
+				fsCard.classList.remove('flipped');
 			}
 		}
 
@@ -4196,6 +4212,7 @@
 	}
 
         function showCard() {
+			forceQuestionSide();
 			resetFlipState();
             const cards = categories[currentCategory][currentFolder][currentList];
 
