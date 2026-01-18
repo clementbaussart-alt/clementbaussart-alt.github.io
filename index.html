@@ -3094,6 +3094,7 @@
 
 		function editCard(i) {
 			openEditCard(i);
+			showInlineFormatPanel(i);
 		}
 
         function closeRenameListModal() {
@@ -3594,6 +3595,7 @@
 
 			// ferme le modal (mets ici ta fonction existante)
 			closeNewCardModal?.();
+			hideAllInlineFormatPanels();
 
 			window._editingCardIndex = null;
 		}
@@ -3781,7 +3783,7 @@
 		}
 
         function saveEditedCard(i) { openEditCard(i); saveUserData(); } 
-		function cancelEditCard(i) { /* rien ou masquer l’inline */ }
+		function cancelEditCard(i) { hideAllInlineFormatPanels(); /* rien ou masquer l’inline */ }
 
         function cancelEditCard(idx) {
             loadManagePage();
@@ -4174,6 +4176,27 @@
   			const openKey = getActiveOpenKey();
   			if (!openKey) return [];
   			return JSON.parse(localStorage.getItem(openKey) || "[]");
+		}
+
+		function hideAllInlineFormatPanels() {
+			document.querySelectorAll('#cardsList .format-panel').forEach(p => p.remove());
+		}
+
+		function showInlineFormatPanel(i) {
+			// enlève partout
+			hideAllInlineFormatPanels();
+
+			// cible la carte i
+			const cardItem = document.querySelector(`#cardsList .card-edit-item[data-index="${i}"]`);
+			if (!cardItem) return;
+
+			// ajoute le panneau
+			cardItem.insertAdjacentHTML('beforeend', renderFormatPanel(i));
+
+			// sync importance si tu l’utilises
+			const inlineSel = document.getElementById(`inlineImportance${i}`);
+			const origSel = document.getElementById(`editImportance${i}`);
+			if (inlineSel && origSel) inlineSel.value = origSel.value;
 		}
 
         // ====== FONCTIONS DU THÈME ======
