@@ -2217,6 +2217,7 @@
 
             localStorage.setItem('current_user', JSON.stringify(currentUser));
             showApp();
+			initApp();
             showNotification('Connexion réussie !', 'success');
         }
 
@@ -2243,6 +2244,7 @@
             localStorage.setItem('current_user', JSON.stringify(currentUser));
 
             showApp();
+			initApp()
             showNotification('Connecté en tant qu\'invité', 'success');
 			
         }
@@ -2301,6 +2303,7 @@
 
             localStorage.setItem('current_user', JSON.stringify(currentUser));
             showApp();
+			initApp()
             showNotification('Compte créé avec succès !', 'success');
         }
 
@@ -2364,7 +2367,9 @@
         function showApp() {
             document.getElementById('authPage').style.display = 'none';
             document.getElementById('appContent').style.display = 'flex';
+			
             loadUserData();
+			initApp();
         }
 
         function loadUserData() {
