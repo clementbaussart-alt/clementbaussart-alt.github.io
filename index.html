@@ -2925,6 +2925,7 @@
 			}
 
 			currentIndex--;
+			resetFlipState();
 			showCard();
 
 			// ✅ si le plein écran est ouvert, rafraîchir aussi l’overlay
@@ -3048,6 +3049,16 @@
                 showNotification('Catégorie renommée ✓', 'success');
             }
         }
+
+		function resetFlipState() {
+			isFlipped = false;
+
+			const card = document.getElementById('flashcard');
+			if (card) card.classList.remove('flipped');
+
+			const fsCard = document.getElementById('fullscreenCard');
+			if (fsCard) fsCard.classList.remove('flipped');
+		}
 
         function updateFolderCategorySelect() {
             const select = document.getElementById('folderCategorySelect');
@@ -4185,6 +4196,7 @@
 	}
 
         function showCard() {
+			resetFlipState();
             const cards = categories[currentCategory][currentFolder][currentList];
 
             if (!cards || cards.length === 0) {
