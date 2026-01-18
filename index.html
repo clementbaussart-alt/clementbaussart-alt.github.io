@@ -3109,7 +3109,19 @@
 
 		function editCard(i) {
 			openEditCard(i);
-			setTimeout(() => showInlineFormatPanel(i), 0);
+
+			// Injection après rerender : on attend que l’élément soit de retour dans le DOM
+			const tryInject = () => {
+				const cardItem = document.querySelector(`#cardsList .card-edit-item[data-index="${i}"]`);
+				if (!cardItem) {
+					// pas encore rendu
+					requestAnimationFrame(tryInject);
+					return;
+				}
+				showInlineFormatPanel(i);
+			};
+
+			requestAnimationFrame(tryInject);
 		}
 
         function closeRenameListModal() {
@@ -3700,7 +3712,6 @@
 				const origSel = document.getElementById(`editImportance${i}`);
 				if (inlineSel && origSel) inlineSel.value = origSel.value;
 			});
-			injectFormatPanelsInCardsList(); 
         }
 
         function deleteCard(idx) {
