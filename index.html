@@ -732,6 +732,32 @@
             font-weight: 500;
         }
 
+		/* 1) Le bloc principal ne doit pas ajouter un gros padding */
+		.main-content {
+			padding: 20px !important;   /* au lieu de 40px */
+		}
+
+		/* 2) Le header + le container sont centrés dans la zone main-content */
+		.app-header,
+		.container {
+			max-width: 1200px !important;
+			width: 100% !important;
+			margin-left: auto !important;
+			margin-right: auto !important;
+		}
+
+/* 3) Évite le double padding (si tu gardes celui de main-content) */
+		.app-header,
+		.container {
+			padding-left: 24px !important;
+			padding-right: 24px !important;
+		}
+
+/* 4) Important : supprime le vieux margin auto + max-width:800 qui traîne */
+		.app-header {
+			margin: 0 auto 20px auto !important;
+		}
+
         /* COMPARATOR STYLES */
         #comparatorModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow: auto; }
         #comparatorModal.show { display: block; }
