@@ -763,7 +763,6 @@
 		#mainContent .app-header {
 			max-width: 1200px !important;
 			width: 100% !important;
-			margin: 0 auto !important;   /* <-- centrage garanti */
 		}
 
 		/* Empêche les vieux margins qui décalent */
@@ -775,6 +774,31 @@
 		#mainContent .app-header {
 			padding-left: 24px !important;
 			padding-right: 24px !important;
+		}
+
+		/* 1) Remettre le décalage pour laisser la place à la sidebar */
+		.main-content {
+			margin-left: 280px !important;
+			padding: 20px !important;
+		}
+
+/* Quand la sidebar est cachée */
+		.main-content.sidebar-hidden {
+			margin-left: 0 !important;
+		}
+
+/* 2) Recentrer correctement les blocs */
+		#mainContent .container,
+		#mainContent .app-header {
+			max-width: 1200px !important;
+			width: 100% !important;
+			margin-left: auto !important;
+			margin-right: auto !important;
+		}
+
+/* 3) IMPORTANT : annuler ton ancien "margin:0 !important" */
+		#mainContent .container {
+			margin: 0 auto !important;
 		}
 
         /* COMPARATOR STYLES */
