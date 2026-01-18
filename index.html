@@ -1824,14 +1824,14 @@
                                                 <input type="color"
 													onmousedown="saveSelection()"
 													oninput="applyColorToSelection('foreColor', this.value)">
-												<button type="button" class="editor-btn" onclick="applySavedColor('foreColor','textColorPicker${i}')">OK</button>
+												<button type="button" class="editor-btn" onclick="applySavedColor('foreColor','textColorPicker')">OK</button>
                                             </div>
                                             <div>
                                                 <div style="font-size: 8px; color: var(--text-soft); margin-bottom: 1px; text-align: center;">Fond</div>
                                                 <input type="color"
 													onmousedown="saveSelection()"
 													oninput="applyColorToSelection('backColor', this.value)">
-												<button type="button" class="editor-btn" onclick="applySavedColor('backColor','bgColorPicker${i}')">OK</button>
+												<button type="button" class="editor-btn" onclick="applySavedColor('backColor','bgColorPicker')">OK</button>
                                             </div>
                                         </div>
                                     </div>
@@ -3863,14 +3863,14 @@
 					<div class="format-grid-2">
 						<div>
 							<div class="format-mini-label">Texte</div>
-							<input type="color" value="#000000"
-								onchange="applyColorToSelection('foreColor', this.value)"
+							<input type="color" id="textColorPicker${i}" onmousedown="saveSelection()">
+							<button type="button" class="editor-btn" onclick="applySavedColor('foreColor','textColorPicker${i}')">OK</button>
 								onclick="onclick="setActiveInlineEditor(${i}, activeInlineSide)">
 						</div>
 						<div>
 							<div class="format-mini-label">Fond</div>
-							<input type="color" value="#ffff00"
-								onchange="applyColorToSelection('backColor', this.value)"
+							<input type="color" id="bgColorPicker${i}" onmousedown="saveSelection()">
+							<button type="button" class="editor-btn" onclick="applySavedColor('backColor','bgColorPicker${i}')">OK</button>
 								onclick="onclick="setActiveInlineEditor(${i}, activeInlineSide)">
 						</div>
 					</div>
