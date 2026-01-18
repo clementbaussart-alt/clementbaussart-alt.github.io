@@ -2506,6 +2506,7 @@
             if (currentUser) {
                 currentUser.folders = categories;
                 allUsers[currentUser.username] = currentUser;
+				localStorage.setItem('current_user', JSON.stringify(currentUser));
                 localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
                 localStorage.setItem(`flashcards_open_${currentUser.username}`, JSON.stringify(openCategories));
             }
@@ -3317,6 +3318,7 @@
                 question: q,
                 answer: a,
                 importance: importance
+				saveUserData();
             });
             saveData();
             document.getElementById('newQuestion').innerHTML = '';
@@ -3330,13 +3332,16 @@
 		function saveUserData() {
 			if (!currentUser || !currentUser.username) return;
 
-			// On stocke TOUTES les données de l’utilisateur
+			// Categories -> user
 			currentUser.folders = categories;
 
-			// Sauvegarde user complet
+			// Persistance
+			localStorage.setItem('current_user', JSON.stringify(currentUser));
+
+			// Optionnel : garder aussi la base users à jour
+			allUsers = JSON.parse(localStorage.getItem('flashcards_users') || '{}');
 			allUsers[currentUser.username] = currentUser;
 			localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
-			localStorage.setItem('current_user', JSON.stringify(currentUser));
 		}
 
 		function saveCardFromModal() {
@@ -3449,6 +3454,7 @@
         function deleteCard(idx) {
             if (!confirm('Supprimer cette carte ?')) return;
             categories[currentCategory][currentFolder][currentList].splice(idx, 1);
+			saveUserData();
             saveData();
             updateCategoryList();
             if (currentPage === 'manage') loadManagePage();
@@ -3492,7 +3498,7 @@
             cardElement.appendChild(editorDiv);
         }
 
-        function saveEditedCard(i) { openEditCard(i); }
+        function saveEditedCard(i) { openEditCard(i); saveUserData(); } 
 		function cancelEditCard(i) { /* rien ou masquer l’inline */ }
 
         function cancelEditCard(idx) {
@@ -4393,6 +4399,7 @@
                         currentUser.folders = categories;
                         allUsers[currentUser.username] = currentUser;
                         localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
+						saveUserData();
                         saveData();
                         updateCategoryList();
                         showNotification('Données importées avec succès ✓', 'success');
@@ -4568,6 +4575,7 @@
             });
 
             categories[catName][actualFolderName][listName] = cards;
+			saveUserData();
             saveData();
             updateCategoryList();
             closeImportTextModal();
@@ -4673,6 +4681,7 @@
             if (!confirm(`Vider toutes les cartes de la liste "${currentList}" ?`)) return;
 
             categories[currentCategory][currentFolder][currentList] = [];
+			saveUserData();
             saveData();
             loadManagePage();
             showNotification('Liste vidée ✓', 'success');
