@@ -2369,11 +2369,13 @@
 		}
 
 		document.addEventListener('mouseup', (e) => {
-			if (e.target.closest('.editor-content')) saveSelection();
+			const t = e.target;
+			if (t && t.closest && t.closest('.editor-content')) saveSelection();
 		});
 
 		document.addEventListener('keyup', (e) => {
-			if (e.target.closest('.editor-content')) saveSelection();
+			const t = e.target;
+			if (t && t.closest && t.closest('.editor-content')) saveSelection();
 		});
 
 		function applyColorToSelection(cmd, color) {
