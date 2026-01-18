@@ -3759,6 +3759,9 @@
             const cardElement = document.querySelector(`.card-edit-item[data-index="${idx}"]`);
             cardElement.innerHTML = '';
             cardElement.appendChild(editorDiv);
+
+			// Affiche le panneau format à côté (après le rerender)
+			requestAnimationFrame(() => showInlineFormatPanel(idx));
         }
 
 		function renderFormatPanel(i) {
