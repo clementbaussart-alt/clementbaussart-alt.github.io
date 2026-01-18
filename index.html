@@ -2424,6 +2424,14 @@
 			const sel = document.getElementById(`inlineImportance${i}`);
 			const original = document.getElementById(`editImportance${i}`);
 			if (sel && original) original.value = sel.value;
+			document.addEventListener('focusin', (e) => {
+				const el = e.target;
+				if (!el || !el.id) return;
+
+				// Ex: editQuestion0 / editAnswer0
+				if (el.id.startsWith('editQuestion')) activeInlineSide = 'question';
+				if (el.id.startsWith('editAnswer')) activeInlineSide = 'answer';
+			});
 		}
 
         function showRegister() {
