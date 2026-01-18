@@ -1824,14 +1824,14 @@
                                                 <input type="color"
 													onmousedown="saveSelection()"
 													oninput="applyColorToSelection('foreColor', this.value)">
-												<button type="button" class="editor-btn" onclick="applySavedColor('foreColor', 'textColorPicker')">OK</button>
+												<button type="button" class="editor-btn" onclick="applySavedColor('foreColor','textColorPicker${i}')">OK</button>
                                             </div>
                                             <div>
                                                 <div style="font-size: 8px; color: var(--text-soft); margin-bottom: 1px; text-align: center;">Fond</div>
                                                 <input type="color"
 													onmousedown="saveSelection()"
 													oninput="applyColorToSelection('backColor', this.value)">
-												<button type="button" class="editor-btn" onclick="applySavedColor('backColor', 'bgColorPicker')">OK</button>
+												<button type="button" class="editor-btn" onclick="applySavedColor('backColor','bgColorPicker${i}')">OK</button>
                                             </div>
                                         </div>
                                     </div>
