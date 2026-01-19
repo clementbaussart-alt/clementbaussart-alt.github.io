@@ -2941,16 +2941,10 @@
 			isFlipped = false;
 
 			const card = document.getElementById('flashcard');
-			if (card) {
-				card.classList.remove('flipped');
-				card.style.transform = 'rotateY(0deg)';
-			}
+			if (card) card.classList.remove('flipped');
 
 			const fsCard = document.getElementById('fullscreenCard');
-			if (fsCard) {
-				fsCard.classList.remove('flipped');
-				fsCard.style.transform = 'rotateY(0deg)';
-			}
+			if (fsCard) fsCard.classList.remove('flipped');
 		}
 
 		function updateFullscreenCard() {
