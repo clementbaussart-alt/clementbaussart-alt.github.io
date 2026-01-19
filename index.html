@@ -3334,11 +3334,6 @@
 			const cards = categories[currentCategory][currentFolder][currentList];
 			const c = cards[i];
 
-			// Préfill
-			document.getElementById('newQuestion').innerHTML = c.question || c.q || '';
-			document.getElementById('newAnswer').innerHTML = c.answer || c.a || '';
-			document.getElementById('importanceSelect').value = c.importance || 'normal';
-
 			// Ouvre le même modal que “créer”
 			showNewCardModal(); // si ton bouton “ajouter fiche” utilise cette fonction
 
