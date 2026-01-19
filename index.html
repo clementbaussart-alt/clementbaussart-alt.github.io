@@ -2908,6 +2908,7 @@
 		let answerHistory = [];
 
 		function goToPreviousCardUndo() {
+			forceQuestionSide();
 			if (currentIndex <= 0 || answerHistory.length === 0) return;
 
 			const last = answerHistory.pop();
@@ -2937,17 +2938,18 @@
 		}
 
 		function forceQuestionSide() {
-			// Normal
-			const card = document.getElementById('flashcard');
-			if (card && card.classList.contains('flipped')) {
-				card.classList.remove('flipped');
-			}
 			isFlipped = false;
 
-			// Fullscreen
+			const card = document.getElementById('flashcard');
+			if (card) {
+				card.classList.remove('flipped');
+				card.style.transform = 'rotateY(0deg)';
+			}
+
 			const fsCard = document.getElementById('fullscreenCard');
-			if (fsCard && fsCard.classList.contains('flipped')) {
+			if (fsCard) {
 				fsCard.classList.remove('flipped');
+				fsCard.style.transform = 'rotateY(0deg)';
 			}
 		}
 
@@ -4286,6 +4288,7 @@
         }
 
         function answer(type) {
+			forceQuestionSide();
             const cards = categories[currentCategory][currentFolder][currentList];
 			const actualIndex = isReviewMode ? reviewIndices[currentIndex] : studyIndices[currentIndex];
 			const key = 'flashcards_results_Brochy'; // ou flashcards_results_${currentUser.username} si tu utilises ça
