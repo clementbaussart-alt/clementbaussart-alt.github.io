@@ -1829,7 +1829,6 @@
                     <div class="lists-page-header">
 					<button class="btn" onclick="backToCourses()">← Cours</button>
 					<h2 id="listsTitle">Cours</h2><button class="btn-edit-page-title" onclick="showRenameFolderModal()">✏️</button><button class="btn-edit-page-title" title="Intégrer ce cours" onclick="copyFolderEmbed()">🔗</button></div>
-					<button class="btn-edit-page-title" title="Trier A→Z" onclick="sortListsAZ = !sortListsAZ; loadListsPage();">A→Z</button>
                     <p class="lists-page-subtitle">Sélectionne une liste à réviser</p>
                     <div class="lists-grid" id="listsGrid"></div>
                     <button class="btn-new-list" onclick="showNewListModal()">➕ Créer une nouvelle liste</button>
@@ -2428,7 +2427,6 @@
 		let importanceFilter = ['important','normal','pas important','explication'];
 		let activeInlineEditIndex = null;
 		let activeInlineSide = 'question';
-		let sortListsAZ = true;
         window.activeImportanceFilter = [];
         window.currentImportance = 'normal';
 
@@ -3649,56 +3647,51 @@
 				
                 const cardCount = cards.length;
 
-				let names = Object.keys(listsObj);
-				if (sortListsAZ) {
-					names = names.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
-				}
-				names.forEach(listName => {
-                	const card = document.createElement('div');
-                	card.className = 'list-card';
+                const card = document.createElement('div');
+                card.className = 'list-card';
 
-                	const buttonsDiv = document.createElement('div');
-               		buttonsDiv.className = 'list-card-buttons';
-               		const editBtn = document.createElement('button');
-                	editBtn.className = 'btn-edit-list';
-                	editBtn.innerHTML = '✏️';
-                	editBtn.onclick = function(e) { e.stopPropagation(); showEditListModal(listName); };
-                	const deleteBtn = document.createElement('button');
-                	deleteBtn.className = 'btn-delete-list';
-                	deleteBtn.innerHTML = '✕';
-                	deleteBtn.onclick = function(e) { e.stopPropagation(); deleteList(listName); };
-                	buttonsDiv.appendChild(editBtn);
-                	buttonsDiv.appendChild(deleteBtn);
+                const buttonsDiv = document.createElement('div');
+                buttonsDiv.className = 'list-card-buttons';
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn-edit-list';
+                editBtn.innerHTML = '✏️';
+                editBtn.onclick = function(e) { e.stopPropagation(); showEditListModal(listName); };
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn-delete-list';
+                deleteBtn.innerHTML = '✕';
+                deleteBtn.onclick = function(e) { e.stopPropagation(); deleteList(listName); };
+                buttonsDiv.appendChild(editBtn);
+                buttonsDiv.appendChild(deleteBtn);
 
-                	card.innerHTML = `
-                   		<div class="list-card-left">
-                        	<div class="list-card-title">${escapeHtml(listName)}</div>
-                        	<div class="list-card-count">${cardCount} carte${cardCount > 1 ? 's' : ''}</div>
-                        	${progressHTML}
-                    	</div>
-                    	<div class="list-card-actions">
-                        	<button class="btn-list-action btn-study">📖 Réviser</button>
-							<button class="btn-list-action btn-review">🔄 À revoir</button>
-                        	<button class="btn-list-action btn-manage" onclick="showManagePage('${escapeHtml(currentCategory)}','${escapeHtml(currentFolder)}','${escapeHtml(listName)}')">✏️ Gérer</button>
-                    	</div>
-               		`;
+                card.innerHTML = `
+                    <div class="list-card-left">
+                        <div class="list-card-title">${escapeHtml(listName)}</div>
+                        <div class="list-card-count">${cardCount} carte${cardCount > 1 ? 's' : ''}</div>
+                        ${progressHTML}
+                    </div>
+                    <div class="list-card-actions">
+                        <button class="btn-list-action btn-study">📖 Réviser</button>
+						<button class="btn-list-action btn-review">🔄 À revoir</button>
+                        <button class="btn-list-action btn-manage" onclick="showManagePage('${escapeHtml(currentCategory)}','${escapeHtml(currentFolder)}','${escapeHtml(listName)}')">✏️ Gérer</button>
+                    </div>
+                `;
 
-					const btnStudy = card.querySelector('.btn-study');
-					btnStudy.onclick = (e) => {
-						e.stopPropagation();
+				const btnStudy = card.querySelector('.btn-study');
+				btnStudy.onclick = (e) => {
+					e.stopPropagation();
 
 					// Si rien à revoir, on révise tout (au lieu de bloquer)
-						const indicesToStudy = (reviewIndices.length > 0)
-							? reviewIndices
-							: cards.map((_, i) => i);
-					};
+					const indicesToStudy = (reviewIndices.length > 0)
+						? reviewIndices
+						: cards.map((_, i) => i);
+				};
 
-					card.querySelector('.btn-study').onclick = (e) => {
-						e.stopPropagation();
-						isCustomStudyIndices = false;
-						showStudyPage(currentCategory, currentFolder, listName);
-					};
-				});
+				card.querySelector('.btn-study').onclick = (e) => {
+					e.stopPropagation();
+					isCustomStudyIndices = false;
+					showStudyPage(currentCategory, currentFolder, listName);
+				};
+
 				// 🔄 À revoir = uniquement partial/unknown
 				const btnReview = card.querySelector('.btn-review');
 
