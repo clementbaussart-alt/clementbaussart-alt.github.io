@@ -2951,6 +2951,9 @@
 
 			target.classList.add('active');
 			target.style.display = 'block';
+
+			const b = document.getElementById('btnGoLastCard');
+			if (b) b.style.display = (pageName === 'manage') ? 'flex' : 'none';
 		}
 
 		function setActiveInlineSide(side) {
