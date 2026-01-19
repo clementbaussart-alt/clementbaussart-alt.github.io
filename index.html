@@ -1693,6 +1693,9 @@
 			align-items: center;
 			justify-content: center;
 		}
+		.no-flip-anim {
+			transition: none !important;
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -2908,7 +2911,7 @@
 		let answerHistory = [];
 
 		function goToPreviousCardUndo() {
-			resetFlip();
+			resetFlipNoFlash();
 			forceQuestionSide();
 			if (currentIndex <= 0 || answerHistory.length === 0) return;
 
@@ -2938,9 +2941,25 @@
 			}
 		}
 
-		function resetFlip() {
-			document.getElementById('flashcard')?.classList.remove('flipped');
-			document.getElementById('fullscreenCard')?.classList.remove('flipped');
+		function resetFlipNoFlash() {
+			const card = document.getElementById('flashcard');
+			const fsCard = document.getElementById('fullscreenCard');
+
+			if (card) {
+				card.classList.add('no-flip-anim');
+				card.classList.remove('flipped');
+			}
+			if (fsCard) {
+				fsCard.classList.add('no-flip-anim');
+				fsCard.classList.remove('flipped');
+			}
+
+	// force un repaint, puis on réactive l’animation
+			requestAnimationFrame(() => {
+				if (card) card.classList.remove('no-flip-anim');
+				if (fsCard) fsCard.classList.remove('no-flip-anim');
+			});
+
 			isFlipped = false;
 		}
 
@@ -4215,7 +4234,7 @@
 	}
 
         function showCard() {
-			resetFlip();
+			resetFlipNoFlash();
 			forceQuestionSide();
 			resetFlipState();
             const cards = categories[currentCategory][currentFolder][currentList];
@@ -4290,7 +4309,7 @@
         }
 
         function answer(type) {
-			resetFlip();
+			resetFlipNoFlash();
 			forceQuestionSide();
             const cards = categories[currentCategory][currentFolder][currentList];
 			const actualIndex = isReviewMode ? reviewIndices[currentIndex] : studyIndices[currentIndex];
