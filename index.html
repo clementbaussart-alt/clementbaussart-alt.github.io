@@ -1710,6 +1710,10 @@
 			outline: 2px dashed var(--primary);
 			outline-offset: 4px;
 		}
+		.flash-focus{
+			outline: 2px solid var(--accent);
+			outline-offset: 4px;
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -1961,6 +1965,7 @@
                             <button class="btn-clear" onclick="clearCurrentList()" style="padding: 6px 12px; font-size: 12px; border-radius: 3px; height: 30px;">🗑️ Vider</button>
                             <button class="btn-action" onclick="importCards()" style="padding: 6px 12px; font-size: 12px; border-radius: 3px; height: 30px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);">📥 Importer JSON</button>
                             <button class="btn-action btn-action-secondary" onclick="showImportTextModal()" style="padding: 6px 12px; font-size: 12px; border-radius: 3px; height: 30px;">📋 Importer Texte/CSV</button>
+							<button class="btn-action btn-action-secondary" onclick="goToLastCard(true)"></button>
                         </div>
                     </div>
                 </div>
@@ -3603,6 +3608,29 @@
             loadListsPage();
             showPage('lists');
         }
+
+		function goToLastCard(openEdit = true) {
+			if (!currentCategory || !currentFolder || !currentList) return;
+
+			const cards = categories?.[currentCategory]?.[currentFolder]?.[currentList];
+			if (!Array.isArray(cards) || cards.length === 0) return;
+
+			const lastIndex = cards.length - 1;
+
+			// important : s'assurer que la page manage est bien rendue avant de chercher l'élément
+			setTimeout(() => {
+				const el = document.querySelector(`#cardsList .card-edit-item[data-index="${lastIndex}"]`);
+				if (el) {
+					el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					el.classList.add('flash-focus');
+					setTimeout(() => el.classList.remove('flash-focus'), 800);
+				}
+
+				if (openEdit) {
+					editCard(lastIndex); // ou openEditCard(lastIndex) selon ton flux
+				}
+			}, 0);
+		}
 
 		function sanitizeResultsForList(resultsObj, cardsLength) {
 			if (!resultsObj || typeof resultsObj !== 'object') return {};
