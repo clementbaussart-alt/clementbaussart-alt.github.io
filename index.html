@@ -1829,6 +1829,7 @@
                     <div class="lists-page-header">
 					<button class="btn" onclick="backToCourses()">← Cours</button>
 					<h2 id="listsTitle">Cours</h2><button class="btn-edit-page-title" onclick="showRenameFolderModal()">✏️</button><button class="btn-edit-page-title" title="Intégrer ce cours" onclick="copyFolderEmbed()">🔗</button></div>
+					<button class="btn-edit-page-title" title="Trier A→Z" onclick="sortListsAZ = !sortListsAZ; loadListsPage();">A→Z</button>
                     <p class="lists-page-subtitle">Sélectionne une liste à réviser</p>
                     <div class="lists-grid" id="listsGrid"></div>
                     <button class="btn-new-list" onclick="showNewListModal()">➕ Créer une nouvelle liste</button>
@@ -2427,6 +2428,7 @@
 		let importanceFilter = ['important','normal','pas important','explication'];
 		let activeInlineEditIndex = null;
 		let activeInlineSide = 'question';
+		let sortListsAZ = true;
         window.activeImportanceFilter = [];
         window.currentImportance = 'normal';
 
@@ -3691,6 +3693,12 @@
 					isCustomStudyIndices = false;
 					showStudyPage(currentCategory, currentFolder, listName);
 				};
+
+				let names = Object.keys(listsObj);
+				if (sortListsAZ) {
+					names = names.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+				}
+				names.forEach(listName => { ... });
 
 				// 🔄 À revoir = uniquement partial/unknown
 				const btnReview = card.querySelector('.btn-review');
