@@ -2937,6 +2937,12 @@
 			}
 		}
 
+		function resetFlip() {
+			document.getElementById('flashcard')?.classList.remove('flipped');
+			document.getElementById('fullscreenCard')?.classList.remove('flipped');
+			isFlipped = false;
+		}
+
 		function forceQuestionSide() {
 			isFlipped = false;
 
@@ -4208,6 +4214,7 @@
 	}
 
         function showCard() {
+			resetFlip();
 			forceQuestionSide();
 			resetFlipState();
             const cards = categories[currentCategory][currentFolder][currentList];
