@@ -3692,6 +3692,14 @@
 					showStudyPage(currentCategory, currentFolder, listName);
 				};
 
+				const listsObj = categories[currentCategory][currentFolder];
+
+				Object.keys(listsObj)
+					.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+					.forEach(listName => {
+		// ton code actuel pour créer la card de liste
+				});
+
 				// 🔄 À revoir = uniquement partial/unknown
 				const btnReview = card.querySelector('.btn-review');
 
