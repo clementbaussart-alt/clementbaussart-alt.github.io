@@ -1714,6 +1714,33 @@
 			outline: 2px solid var(--accent);
 			outline-offset: 4px;
 		}
+		.floating-last-card{
+			position: fixed;
+			right: 20px;
+			bottom: 20px;
+			width: 48px;
+			height: 48px;
+			border-radius: 14px;
+			border: none;
+			cursor: pointer;
+			z-index: 3000;
+
+			background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+			color: white;
+			font-size: 18px;
+			font-weight: 900;
+			box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+
+			display: none; /* caché par défaut */
+		}
+
+/* visible uniquement sur la page manage */
+		.page#managePage.active ~ #btnGoLastCard,
+		.page#managePage.active + #btnGoLastCard{
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -2417,7 +2444,9 @@
             </div>
         </div>
     </div>
-
+		<button id="btnGoLastCard" class="floating-last-card" onclick="goToLastCard(true)" title="Dernière fiche">
+		⬇️
+		</button>
     <!-- Notification -->
     <div id="notification" class="notification"></div>
 
