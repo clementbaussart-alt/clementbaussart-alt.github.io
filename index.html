@@ -1693,8 +1693,22 @@
 			align-items: center;
 			justify-content: center;
 		}
+		
 		.no-flip-anim {
 			transition: none !important;
+		}
+		.card-edit-item[draggable="true"]{
+			cursor: grab;
+		}
+
+		.card-edit-item.dragging{
+			opacity: 0.6;
+			cursor: grabbing;
+		}
+
+		.card-edit-item.drag-over{
+			outline: 2px dashed var(--primary);
+			outline-offset: 4px;
 		}
     </style>
 </head>
@@ -2426,6 +2440,7 @@
 		let editTargetIndex = null;
 		let importanceFilter = ['important','normal','pas important','explication'];
 		let activeInlineEditIndex = null;
+		let draggedCardIndex = null;
 		let activeInlineSide = 'question';
         window.activeImportanceFilter = [];
         window.currentImportance = 'normal';
@@ -3881,7 +3896,7 @@
             if (title) {
                 title.textContent = listName;
             }
-
+			enableCardsDragAndDrop();
             loadManagePage();
             showPage('manage');
         }
@@ -3955,6 +3970,7 @@
 				const origSel = document.getElementById(`editImportance${i}`);
 				if (inlineSel && origSel) inlineSel.value = origSel.value;
 			});
+			enableCardsDragAndDrop();
         }
 
         function deleteCard(idx) {
@@ -4299,6 +4315,58 @@
 				parent.appendChild(nav);
 			}
         }
+		
+		function enableCardsDragAndDrop() {
+			const listEl = document.getElementById('cardsList');
+			if (!listEl) return;
+
+			listEl.querySelectorAll('.card-edit-item').forEach(item => {
+				item.setAttribute('draggable', 'true');
+
+				item.addEventListener('dragstart', (e) => {
+					draggedCardIndex = Number(item.dataset.index);
+					item.classList.add('dragging');
+					e.dataTransfer.effectAllowed = 'move';
+				});
+
+				item.addEventListener('dragend', () => {
+					item.classList.remove('dragging');
+					draggedCardIndex = null;
+					listEl.querySelectorAll('.card-edit-item').forEach(x => x.classList.remove('drag-over'));
+				});
+
+				item.addEventListener('dragover', (e) => {
+					e.preventDefault();
+					item.classList.add('drag-over');
+					e.dataTransfer.dropEffect = 'move';
+				});
+
+				item.addEventListener('dragleave', () => {
+					item.classList.remove('drag-over');
+				});
+
+				item.addEventListener('drop', (e) => {
+					e.preventDefault();
+					item.classList.remove('drag-over');
+
+					const targetIndex = Number(item.dataset.index);
+					if (draggedCardIndex === null || Number.isNaN(targetIndex)) return;
+					if (targetIndex === draggedCardIndex) return;
+
+					const arr = categories[currentCategory][currentFolder][currentList];
+					if (!Array.isArray(arr)) return;
+
+					// réordonnancement du tableau
+					const [moved] = arr.splice(draggedCardIndex, 1);
+					arr.splice(targetIndex, 0, moved);
+
+					saveData();
+
+					// re-render la page manage (important pour remettre les data-index)
+					showManagePage(currentCategory, currentFolder, currentList);
+				});
+			});
+		}
 
         function flipCard() {
             const card = document.getElementById('flashcard');
