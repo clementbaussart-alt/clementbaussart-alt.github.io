@@ -2908,6 +2908,7 @@
 		let answerHistory = [];
 
 		function goToPreviousCardUndo() {
+			resetFlip();
 			forceQuestionSide();
 			if (currentIndex <= 0 || answerHistory.length === 0) return;
 
@@ -4289,6 +4290,7 @@
         }
 
         function answer(type) {
+			resetFlip();
 			forceQuestionSide();
             const cards = categories[currentCategory][currentFolder][currentList];
 			const actualIndex = isReviewMode ? reviewIndices[currentIndex] : studyIndices[currentIndex];
