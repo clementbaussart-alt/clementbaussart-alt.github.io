@@ -2532,6 +2532,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 		let activeInlineSide = 'question';
         window.activeImportanceFilter = [];
         window.currentImportance = 'normal';
+		window.lastSelectedHistoryEl = null;
 
         const GIF_KNOWN_URL = 'https://www.gif-vif.com/trending/cursed-mario-cursed';
 
@@ -3776,16 +3777,17 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 				if (backBtn) {
 					backBtn.classList.remove('visible');
 					backBtn.onclick = () => {
-						if (lastSelectedHistoryEl) {
-							lastSelectedHistoryEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-							lastSelectedHistoryEl.classList.add('selected');
-							setTimeout(() => lastSelectedHistoryEl?.classList.remove('selected'), 700);
+						if (window.lastSelectedHistoryEl) {
+							window.lastSelectedHistoryEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+							window.lastSelectedHistoryEl.classList.add('selected');
+							setTimeout(() => window.lastSelectedHistoryEl?.classList.remove('selected'), 700);
 						return;
 						}
 						document.getElementById('changesList')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 						document.getElementById('diffOutput')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 					};
 				}
+				window.lastSelectedHistoryEl = btn; // ou l'élément cliqué dans l'historique
 				changesList.appendChild(btn);
 			});
 		}
