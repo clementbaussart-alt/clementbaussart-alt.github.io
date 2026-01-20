@@ -1746,6 +1746,38 @@
 			background: rgba(0,0,0,0.5);
 			transform: scale(1.05);
 		}
+		
+		.floating-last-card{
+			position: fixed;
+			right: 10px;
+			bottom: 10px;
+
+			width: 22px !important;
+			height: 22px !important;
+			padding: 0 !important;
+			min-width: 0 !important;
+
+			border-radius: 999px;
+			border: 1px solid rgba(255,255,255,0.18);
+			background: rgba(0,0,0,0.28);
+			color: rgba(255,255,255,0.95);
+
+			font-size: 12px !important;
+			line-height: 1 !important;
+			font-weight: 900;
+
+			box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+			z-index: 3000;
+
+			display: none;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.floating-last-card:hover{
+			background: rgba(0,0,0,0.45);
+			transform: scale(1.06);
+		}
     </style>
 </head>
 <body onload="checkAuth()">
