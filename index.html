@@ -2528,6 +2528,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 		let importanceFilter = ['important','normal','pas important','explication'];
 		let activeInlineEditIndex = null;
 		let draggedCardIndex = null;
+		let lastSelectedHistoryEl = null;
 		let activeInlineSide = 'question';
         window.activeImportanceFilter = [];
         window.currentImportance = 'normal';
@@ -3758,6 +3759,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 				btn.type = 'button';
 				btn.innerHTML = (ch.added ? '➕ Insertion' : '➖ Suppression') + `<span class="ctx">${escapeHtml(ch.value).slice(0, 80)}</span>`;
 				btn.onclick = () => {
+					lastSelectedHistoryEl = btn; // ou l'élément exact que tu ajoutes dans changesList
 					document.querySelectorAll('mark.focused').forEach(m => m.classList.remove('focused'));
 
 					const marks = diffOutput.querySelectorAll(ch.added ? 'mark.ins' : 'mark.del');
@@ -3774,6 +3776,13 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 				if (backBtn) {
 					backBtn.classList.remove('visible');
 					backBtn.onclick = () => {
+						if (lastSelectedHistoryEl) {
+							lastSelectedHistoryEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+							lastSelectedHistoryEl.classList.add('selected');
+							setTimeout(() => lastSelectedHistoryEl?.classList.remove('selected'), 700);
+						return;
+						}
+						document.getElementById('changesList')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 						document.getElementById('diffOutput')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 					};
 				}
