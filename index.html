@@ -1794,6 +1794,16 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			border-color: rgba(255,92,92,0.55);
 			box-shadow: inset 0 0 0 999px rgba(255,92,92,0.14);
 		}
+		#backToSelected{
+			position: fixed;
+			right: 16px;
+			bottom: 16px;
+			z-index: 99999;
+		}
+
+		#backToSelected:not(.visible){
+			display: none !important;
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -3762,9 +3772,11 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			return escapeHtml(p.value);
 		}).join('');
 
-	// bouton jaune: handler 1 seule fois
+		const backBtn = document.getElementById('backToSelected');
 		if (backBtn) {
-			backBtn.classList.remove('visible');
+			backBtn.disabled = false;              // <= IMPORTANT
+			[backBtn.style](http://backBtn.style).pointerEvents = 'auto';  // optionnel
+			backBtn.classList.remove('visible');   // caché au départ
 			backBtn.onclick = () => {
 				const el = window.lastSelectedDiffEl || window.lastSelectedHistoryEl;
 
@@ -3816,7 +3828,9 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 					window.lastSelectedDiffEl = null;
 				}
 
-					if (backBtn) backBtn.classList.add('visible');
+				if (backBtn) 
+					backBtn.classList.add('visible');
+					backBtn.disabled = false; 
 				};
 
 				changesList.appendChild(btn);
@@ -5102,7 +5116,6 @@ function updateBackButton() {
         backBtn.disabled = false;
     } else {
         backBtn.classList.remove('visible');
-        backBtn.disabled = true;
     }
 }
 
