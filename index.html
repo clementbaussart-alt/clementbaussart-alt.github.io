@@ -3735,7 +3735,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			const copyBtn = document.getElementById('copyBtn');
 
 			if (compareBtn) compareBtn.onclick = runComparator;
-			if (copyBtn) copyBtn.onclick = copyComparatorResult;
+			if (copyBtn) copyBtn.onclick = window.copyComparatorResult();
 		}
 
 		function runComparator() {
