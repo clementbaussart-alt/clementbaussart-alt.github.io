@@ -3740,78 +3740,87 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 		}
 
 		function runComparator() {
-			const oldText = document.getElementById('oldText')?.value || '';
-			const newText = document.getElementById('newText')?.value || '';
+		const oldText = document.getElementById('oldText')?.value || '';
+		const newText = document.getElementById('newText')?.value || '';
 
-			const changesList = document.getElementById('changesList');
-			const diffOutput = document.getElementById('diffOutput');
-			if (!changesList || !diffOutput) return;
+		const changesList = document.getElementById('changesList');
+		const diffOutput = document.getElementById('diffOutput');
+		const backBtn = document.getElementById('backToSelected');
+		if (!changesList || !diffOutput) return;
 
 	// reset
-			changesList.innerHTML = '';
-			diffOutput.innerHTML = '';
+		changesList.innerHTML = '';
+		diffOutput.innerHTML = '';
 
-	// calc diff (exemple "mots")
-			const parts = Diff.diffWords(oldText, newText);
+	// calc diff
+		const parts = Diff.diffWords(oldText, newText);
 
-	// 1) output principal
-			diffOutput.innerHTML = parts.map(p => {
-				if (p.added) return `<mark class="ins">${escapeHtml(p.value)}</mark>`;
-				if (p.removed) return `<mark class="del">${escapeHtml(p.value)}</mark>`;
-				return escapeHtml(p.value);
-			}).join('');
+	// output principal
+		diffOutput.innerHTML = parts.map(p => {
+			if (p.added) return `<mark class="ins">${escapeHtml(p.value)}</mark>`;
+			if (p.removed) return `<mark class="del">${escapeHtml(p.value)}</mark>`;
+			return escapeHtml(p.value);
+		}).join('');
 
-	// 2) historique / liste des changements
-			const changes = parts
-				.map((p, idx) => ({...p, idx}))
-				.filter(p => p.added || p.removed);
+	// bouton jaune: handler 1 seule fois
+		if (backBtn) {
+			backBtn.classList.remove('visible');
+			backBtn.onclick = () => {
+				const el = window.lastSelectedDiffEl || window.lastSelectedHistoryEl;
 
-			changes.forEach(ch => {
-				const btn = document.createElement('button');
-				btn.className = 'comp-change';
-				btn.type = 'button';
-				btn.innerHTML = (ch.added ? '➕ Insertion' : '➖ Suppression') + `<span class="ctx">${escapeHtml(ch.value).slice(0, 80)}</span>`;
-				btn.onclick = () => {
-					lastSelectedHistoryEl = btn; // ou l'élément exact que tu ajoutes dans changesList
-					document.querySelectorAll('mark.focused').forEach(m => m.classList.remove('focused'));
+				if (el) {
+					el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					el.classList.add('selected');
+					setTimeout(() => el.classList.remove('selected'), 700);
+					return;
+				}
 
-					const marks = diffOutput.querySelectorAll(ch.added ? 'mark.ins' : 'mark.del');
-					const target = marks[0]; // version simple (optionnel: mapper idx->mark)
-					if (target) {
-						target.classList.add('focused');
-						target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-					}
+				(diffOutput || changesList).scrollIntoView({ behavior: 'smooth', block: 'start' });
+			};
+		}
+
+	// historique
+		const changes = parts
+			.map((p, idx) => ({ ...p, idx }))
+			.filter(p => p.added || p.removed);
+
+		changes.forEach(ch => {
+			const btn = document.createElement('button');
+			btn.className = 'comp-change';
+			btn.type = 'button';
+
+		// couleur dans l'historique
+			btn.classList.add(ch.added ? 'hist-add' : 'hist-del');
+
+			btn.innerHTML =
+				(ch.added ? '➕ Insertion' : '➖ Suppression') +
+				`<span class="ctx">${escapeHtml(ch.value).slice(0, 80)}</span>`;
+
+			btn.onclick = () => {
+			// mémorise la sélection HISTORIQUE
+				window.lastSelectedHistoryEl = btn;
+
+			// reset focus diff
+				diffOutput.querySelectorAll('mark.focused').forEach(m => m.classList.remove('focused'));
+
+			// IMPORTANT: ton mapping est "simple": tu prends le 1er mark ins/del.
+			// (Ça peut ne pas correspondre au bon changement si tu as plusieurs insertions/suppressions.)
+				const marks = diffOutput.querySelectorAll(ch.added ? 'mark.ins' : 'mark.del');
+				const target = marks[0];
+
+				if (target) {
+					target.classList.add('focused');
+					window.lastSelectedDiffEl = target; // mémorise la sélection DIFF
+					target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				} else {
+					window.lastSelectedDiffEl = null;
+				}
 
 					if (backBtn) backBtn.classList.add('visible');
 				};
 
-				const backBtn = document.getElementById('backToSelected');
-				if (backBtn) {
-					backBtn.classList.remove('visible');
-					backBtn.onclick = () => {
-						if (window.lastSelectedHistoryEl) {
-							window.lastSelectedHistoryEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-							window.lastSelectedHistoryEl.classList.add('selected');
-							window.lastSelectedHistoryEl = btn; // ou l'élément cliqué dans l'historique
-							window.lastSelectedDiffEl = document.querySelector('#diffOutput mark.focused');
-							setTimeout(() => window.lastSelectedHistoryEl?.classList.remove('selected'), 700);
-						return;
-						}
-				document.getElementById('backToSelected').onclick = () => {
-					const el = window.lastSelectedDiffEl;
-					if (el) {
-						el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-						el.classList.add('selected');
-						setTimeout(() => el.classList.remove('selected'), 700);
-						return;
-						}
-						document.getElementById('diffOutput')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-						document.getElementById('changesList')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-						document.getElementById('diffOutput')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-					};
-				}
 				changesList.appendChild(btn);
-			};
+			});
 		}
 
 		function sanitizeResultsForList(resultsObj, cardsLength) {
