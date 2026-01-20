@@ -3070,6 +3070,17 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			isFlipped = false;
 		}
 
+		function copyComparatorResult() {
+			const out = document.getElementById('diffOutput');
+			const text = out ? out.innerText : '';
+
+			if (!text.trim()) return;
+
+			navigator.clipboard.writeText(text)
+				.then(() => console.log('Résultat copié'))
+				.catch(err => console.error('Clipboard error:', err));
+		}
+
 		function forceQuestionSide() {
 			isFlipped = false;
 
