@@ -3737,8 +3737,25 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 				btn.type = 'button';
 				btn.innerHTML = (ch.added ? '➕ Insertion' : '➖ Suppression') + `<span class="ctx">${escapeHtml(ch.value).slice(0, 80)}</span>`;
 				btn.onclick = () => {
-			// optionnel: scroller le diffOutput, ou surligner
+					document.querySelectorAll('mark.focused').forEach(m => m.classList.remove('focused'));
+
+					const marks = diffOutput.querySelectorAll(ch.added ? 'mark.ins' : 'mark.del');
+					const target = marks[0]; // version simple (optionnel: mapper idx->mark)
+					if (target) {
+						target.classList.add('focused');
+						target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					}
+
+					if (backBtn) backBtn.classList.add('visible');
 				};
+
+				const backBtn = document.getElementById('backToSelected');
+				if (backBtn) {
+					backBtn.classList.remove('visible');
+					backBtn.onclick = () => {
+						document.getElementById('diffOutput')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+					};
+				}
 				changesList.appendChild(btn);
 			});
 		}
