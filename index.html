@@ -3749,86 +3749,89 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 		}
 
 		function runComparator() {
-		const oldText = document.getElementById('oldText')?.value || '';
-		const newText = document.getElementById('newText')?.value || '';
+	// état global (pour le bouton jaune)
+				if (typeof window.lastSelectedHistoryEl === 'undefined') window.lastSelectedHistoryEl = null;
 
-		const changesList = document.getElementById('changesList');
-		const diffOutput = document.getElementById('diffOutput');
-		const backBtn = document.getElementById('backToSelected');
-		if (!changesList || !diffOutput) return;
+				const oldText = document.getElementById('oldText')?.value || '';
+				const newText = document.getElementById('newText')?.value || '';
 
-	// reset
-		changesList.innerHTML = '';
-		diffOutput.innerHTML = '';
+				const changesList = document.getElementById('changesList');
+				const diffOutput = document.getElementById('diffOutput');
+				const backBtn = document.getElementById('backToSelected');
+
+				if (!changesList || !diffOutput) return;
+
+	// reset UI
+				changesList.innerHTML = '';
+				diffOutput.innerHTML = '';
 
 	// calc diff
-		const parts = Diff.diffWords(oldText, newText);
+				const parts = Diff.diffWords(oldText, newText);
 
-	// output principal
-		diffOutput.innerHTML = parts.map(p => {
-			if (p.added) return `<mark class="ins">${escapeHtml(p.value)}</mark>`;
-			if (p.removed) return `<mark class="del">${escapeHtml(p.value)}</mark>`;
-			return escapeHtml(p.value);
-		}).join('');
+	// 1) output principal (diff central)
+				diffOutput.innerHTML = parts.map(p => {
+					if (p.added) return `<mark class="ins">${escapeHtml(p.value)}</mark>`;
+					if (p.removed) return `<mark class="del">${escapeHtml(p.value)}</mark>`;
+					return escapeHtml(p.value);
+				}).join('');
 
-		if (backBtn) {
-			backBtn.disabled = false;              // <= IMPORTANT
-			backBtn.style.pointerEvents = 'auto'
-			backBtn.classList.remove('visible');   // caché au départ
-			backBtn.onclick = () => {
-				const el = window.lastSelectedDiffEl || window.lastSelectedHistoryEl;
+	// 2) bouton jaune : revient à la sélection DANS L'HISTORIQUE
+				if (backBtn) {
+					backBtn.disabled = false;          // important : jamais disabled
+					backBtn.classList.remove('visible');
 
-				if (el) {
+					backBtn.onclick = () => {
+						const el = window.lastSelectedHistoryEl;
+
+			// fallback : si rien n'a été sélectionné, remonte juste au haut de l'historique
+					if (!el) {
+						changesList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+						return;
+					}
+
 					el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 					el.classList.add('selected');
 					setTimeout(() => el.classList.remove('selected'), 700);
-					return;
-				}
+				};
+			}
 
-				(diffOutput || changesList).scrollIntoView({ behavior: 'smooth', block: 'start' });
-			};
-		}
+	// 3) historique / liste des changements
+			const changes = parts
+				.map((p, idx) => ({ ...p, idx }))
+				.filter(p => p.added || p.removed);
 
-	// historique
-		const changes = parts
-			.map((p, idx) => ({ ...p, idx }))
-			.filter(p => p.added || p.removed);
+			changes.forEach(ch => {
+				const btn = document.createElement('button');
+				btn.className = 'comp-change';
+				btn.type = 'button';
 
-		changes.forEach(ch => {
-			const btn = document.createElement('button');
-			btn.className = 'comp-change';
-			btn.type = 'button';
+		// Couleur rouge/verte dans l'historique (si tu as le CSS hist-add / hist-del)
+				btn.classList.add(ch.added ? 'hist-add' : 'hist-del');
 
-		// couleur dans l'historique
-			btn.classList.add(ch.added ? 'hist-add' : 'hist-del');
+				btn.innerHTML =
+					(ch.added ? '➕ Insertion' : '➖ Suppression') +
+					`<span class="ctx">${escapeHtml(ch.value).slice(0, 80)}</span>`;
 
-			btn.innerHTML =
-				(ch.added ? '➕ Insertion' : '➖ Suppression') +
-				`<span class="ctx">${escapeHtml(ch.value).slice(0, 80)}</span>`;
+				btn.onclick = () => {
+			// mémoriser la sélection historique (IMPORTANT: sur window)
+					window.lastSelectedHistoryEl = btn;
 
-			btn.onclick = () => {
-			// mémorise la sélection HISTORIQUE
-				window.lastSelectedHistoryEl = btn;
+			// visuel: une seule sélection dans la liste
+					changesList.querySelectorAll('.comp-change.selected')
+						.forEach(x => x.classList.remove('selected'));
+					btn.classList.add('selected');
 
-			// reset focus diff
-				diffOutput.querySelectorAll('mark.focused').forEach(m => m.classList.remove('focused'));
+			// focus dans le diff (optionnel mais utile)
+					diffOutput.querySelectorAll('mark.focused').forEach(m => m.classList.remove('focused'));
+					const marks = diffOutput.querySelectorAll(ch.added ? 'mark.ins' : 'mark.del');
+					const target = marks[0]; // mapping simple (comme ton code actuel)
+					if (target) target.classList.add('focused');
 
-			// IMPORTANT: ton mapping est "simple": tu prends le 1er mark ins/del.
-			// (Ça peut ne pas correspondre au bon changement si tu as plusieurs insertions/suppressions.)
-				const marks = diffOutput.querySelectorAll(ch.added ? 'mark.ins' : 'mark.del');
-				const target = marks[0];
-
-				if (target) {
-					target.classList.add('focused');
-					window.lastSelectedDiffEl = target; // mémorise la sélection DIFF
-					target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-				} else {
-					window.lastSelectedDiffEl = null;
-				}
-
-				if (backBtn) 
-					backBtn.classList.add('visible');
-					backBtn.disabled = false; 
+			// afficher le bouton jaune quand une sélection existe
+					if (backBtn) {
+						backBtn.disabled = false;
+						backBtn.classList.add('visible');
+					}
 				};
 
 				changesList.appendChild(btn);
