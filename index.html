@@ -1808,6 +1808,11 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			background: rgba(255,209,102,0.2) !important;
 		}
 		#newText{ z-index: 1; }
+		.focus-ghost.focused{
+			box-shadow: inset 0 -0.48em rgba(255,209,102,0.9), 0 0 0 2px rgba(255,209,102,0.25) !important;
+			border: 1px dashed rgba(255,209,102,0.85) !important;
+			background: rgba(255,209,102,0.2) !important;
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -5071,8 +5076,8 @@ function focusChangeComp(id, type, options) {
             if (!ghost) {
                 ghost = document.createElement('span');
                 ghost.id = id + '-ghost';
-                ghost.className = 'focus-ghost';
-                el.insertAdjacentElement('afterend', ghost);
+				ghost.className = 'focus-ghost focused';
+				el.insertAdjacentElement('afterend', ghost);
             }
         }
     }
