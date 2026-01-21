@@ -5241,6 +5241,9 @@ function renderChangesListComp(changes) {
 
 			const target = document.getElementById(btn.dataset.id);
 			if (!target) {	
+				// Ne pas recompute ici : l’utilisateur clique juste sur “Comparer” une fois et ça repart.
+				hintComp.textContent = "Clique d’abord sur « Comparer » (le texte central a été recalculé).";
+				return;
 			}
         });
         
