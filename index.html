@@ -5020,9 +5020,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			showNotification("Thème exporté ✓", "success");
 		}
 
-        // ====== OVERRIDE COMPARATEUR (Fix Persistance Rouge) ======
-
-		// ====== FONCTIONS DU COMPARATEUR ======
+        // ====== FONCTIONS DU COMPARATEUR ======
         function openComparator() {
             document.getElementById('comparatorModal').classList.add('show');
             document.body.style.overflow = 'hidden';
@@ -5345,95 +5343,7 @@ backBtn.addEventListener('click', () => {
 // Exemples par défaut
 oldTA.value = "Le contrat entre en vigueur le 1er janvier 2024.\nLe prix est de 100€.\nLe client accepte les conditions.";
 newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 €.\nLe client accepte pleinement les conditions générales.";
-		window.escapeHtml = function(s) { 
-  			return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); 
-		};
 
-		window.computeComp = function() {
-   			const oldT = document.getElementById('oldText').value;
-    		const newT = document.getElementById('newText').value;
-    		const outDiv = document.getElementById('diffOutput');
-    		if (!outDiv) return;
-    
-    // Sécurité si la lib Diff n'est pas chargée
-    		if (typeof Diff === 'undefined') { console.error('Diff.js not loaded'); return; }
-
-    		const diff = Diff.diffWordsWithSpace(oldT, newT);
-    		let html = '';
-    		let changes = [];
-   			let idx = 0;
-    
-    		let cIns=0, cDel=0;
-
-    		diff.forEach(part => {
-        		const txt = window.escapeHtml(part.value);
-        		if (part.added) {
-            		const id = 'chg-' + idx++;
-            		html += `<mark class="ins" id="${id}">${txt}</mark>`;
-            		changes.push({id, type:'insertion', text: part.value});
-           			cIns++;
-        	} else if (part.removed) {
-            	const id = 'chg-' + idx++;
-            // FIX : On insère directement la balise mark.del (plus de "ghost" invisible)
-            	html += `<span class="del-ghost" id="${id}"><mark class="del">${txt}</mark></span>`;
-           		changes.push({id, type:'suppression', text: part.value});
-            	cDel++;
-        	} else {
-            	html += txt;
-        	}
-    	});
-
-    	outDiv.innerHTML = html;
-    
-    // Mise à jour des compteurs
-    	if(document.getElementById('insCount')) document.getElementById('insCount').textContent = cIns;
-    	if(document.getElementById('delCount')) document.getElementById('delCount').textContent = cDel;
-    	if(document.getElementById('repCount')) document.getElementById('repCount').textContent = 0;
-
-   		window.renderChangesListComp(changes);
-	};
-
-	window.renderChangesListComp = function(changes) {
-    	const list = document.getElementById('changesList');
-    	if(!list) return;
-    	list.innerHTML = '';
-    
-    	changes.forEach(ch => {
-        	const btn = document.createElement('div');
-        	btn.className = 'comp-change';
-        	btn.innerHTML = `<span class="type">${ch.type}</span> <span class="token ${ch.type==='suppression'?'del':''}">${window.escapeHtml(ch.text)}</span>`;
-        
-        	btn.addEventListener('click', () => {
-            // 1. Gestion de la sélection visuelle dans la liste
-            	document.querySelectorAll('.comp-change.selected').forEach(e => e.classList.remove('selected'));
-            	btn.classList.add('selected');
-            
-            // 2. Focus uniquement (sans jamais toucher au HTML central)
-            	window.focusChangeComp(ch.id);
-        	});
-        
-        	list.appendChild(btn);
-    	});
-	};
-
-	window.focusChangeComp = function(id) {
-    // Nettoyage des focus précédents
-    	document.querySelectorAll('#diffOutput .focused').forEach(e => e.classList.remove('focused'));
-    
-    	const el = document.getElementById(id);
-    	if(el) {
-       		el.classList.add('focused');
-        	el.scrollIntoView({behavior:'smooth', block:'center'});
-        
-        // Si c'est une suppression, on surligne aussi l'enfant <mark> pour être sûr
-        	const child = el.querySelector('mark');
-        	if(child) child.classList.add('focused');
-    	}
-	};
-
-// Re-bind du bouton "Comparer" pour utiliser la nouvelle fonction
-	const btnC = document.getElementById('compareBtn');
-	if(btnC) btnC.onclick = window.computeComp;
         // ====== FONCTIONS MANQUANTES IMPLÉMENTÉES ======
         function logout() {
             if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
