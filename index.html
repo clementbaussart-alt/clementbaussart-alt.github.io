@@ -5021,6 +5021,330 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 		}
 
         // ====== OVERRIDE COMPARATEUR (Fix Persistance Rouge) ======
+
+		// ====== FONCTIONS DU COMPARATEUR ======
+        function openComparator() {
+            document.getElementById('comparatorModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeComparator() {
+            document.getElementById('comparatorModal').classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+		// Variables comparateur
+let showContext = false;
+let lastFocusedId = null;
+let lastFocusedType = null;
+let lastSelectedBtn = null;
+
+const $ = sel => document.querySelector(sel);
+const oldTA = $("#oldText");
+const newTA = $("#newText");
+const outComp = $("#diffOutput");
+const changesListComp = $("#changesList");
+const insCountComp = $("#insCount");
+const delCountComp = $("#delCount");
+const repCountComp = $("#repCount");
+const hintComp = $("#hint");
+const copyBtnComp = $("#copyBtn");
+const toggleContextBtnComp = $("#toggleContext");
+const backBtn = $("#backToSelected");
+
+function escapeHtmlComp(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function normalizeSpaces(s) { return s.replace(/[ \t]+/g, ' '); }
+function emojiFor(t) { return t==='insertion' ? '➕' : t==='suppression' ? '➖' : '♻️'; }
+function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+function isOnlySpaces(s) { return !s || /^\s+$/.test(s); }
+function isWhitespaceOnlyChange(removed, added) {
+    const r = (removed||"").replace(/\s+/g,'');
+    const a = (added||"").replace(/\s+/g,'');
+    return r === a && (removed!==added);
+}
+
+function updateBackButton() {
+    if (lastSelectedBtn) {
+        backBtn.classList.add('visible');
+        backBtn.disabled = false;
+    } else {
+        backBtn.classList.remove('visible');
+    }
+}
+
+function clearFocusComp() {
+    if (lastFocusedId) {
+        const prev = document.getElementById(lastFocusedId);
+        if (prev && prev.classList) prev.classList.remove('focused');
+        const ghost = document.getElementById(lastFocusedId + '-ghost');
+        if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+        const delGhost = document.getElementById(lastFocusedId + '-delghost');
+        if (delGhost && delGhost.parentNode) delGhost.parentNode.removeChild(delGhost);
+    }
+    lastFocusedId = null;
+    lastFocusedType = null;
+}
+
+function showDeletionGhostAfter(anchorEl, id, removedText) {
+    const old = document.getElementById(id + '-delghost');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    const ghost = document.createElement('span');
+    ghost.id = id + '-delghost';
+    ghost.className = 'del-ghost';
+	ghost.classList.add('focused');
+    const content = '(' + removedText + ')';
+    ghost.innerHTML = `<mark class="del">${escapeHtmlComp(content)}</mark>`;
+    anchorEl.insertAdjacentElement('afterend', ghost);
+}
+
+function focusChangeComp(id, type, options) {
+    clearFocusComp();
+    const el = document.getElementById(id);
+    if (!el) return;
+    
+    if (el.tagName === 'MARK') {
+        el.classList.add('focused');
+        lastFocusedId = id;
+        lastFocusedType = type || null;
+    } else {
+        lastFocusedId = id;
+        lastFocusedType = type || 'suppression';
+        
+        if ((type === 'suppression') && options && options.removedText) {
+            showDeletionGhostAfter(el, id, options.removedText);
+        } else {
+            let ghost = document.getElementById(id + '-ghost');
+            if (!ghost) {
+                ghost = document.createElement('span');
+                ghost.id = id + '-ghost';
+				ghost.className = 'focus-ghost focused';
+				el.insertAdjacentElement('afterend', ghost);
+            }
+        }
+    }
+    (el.tagName === 'MARK' ? el : document.getElementById(id)).scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function computeComp() {
+	const oldTxt = oldTA.value || "";
+	const newTxt = newTA.value || "";
+
+	const parts = (window.Diff && Diff.diffWordsWithSpace)
+		? Diff.diffWordsWithSpace(oldTxt, newTxt)
+		: [{ removed: true, value: oldTxt }, { added: true, value: newTxt }];
+
+	let html = "";
+	let changes = [];
+	let ins = 0, del = 0, rep = 0, idxChange = 0;
+
+	for (let i = 0; i < parts.length; i++) {
+		const p = parts[i];
+		if ((p.added || p.removed) && isOnlySpaces(p.value)) continue;
+
+		// --- Suppression (potentiellement suivie d'un added => remplacement)
+		if (p.removed && !p.added) {
+			const next = parts[i + 1];
+
+			// Remplacement = removed puis added
+			if (next && next.added && !next.removed) {
+				if (!isOnlySpaces(next.value) && !isWhitespaceOnlyChange(p.value, next.value)) {
+					const anchorId = `chg-${++idxChange}`;
+
+					// On ancre sur le texte "nouveau" (mark.ins)
+					html += `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(next.value))}</mark>`;
+
+					rep++;
+					changes.push({ id: anchorId, type: 'remplacement', added: next.value, removed: p.value });
+
+					i++; // on consomme le "next"
+					continue;
+				} else {
+					i++; // ignore changement uniquement d'espaces
+					continue;
+				}
+			}
+
+			// Suppression pure : ancre invisible dans le texte central
+			const anchorId = `chg-${++idxChange}`;
+			html += `<a id="${anchorId}"></a>`;
+
+			del++;
+			changes.push({ id: anchorId, type: 'suppression', added: '', removed: p.value });
+			continue;
+		}
+
+		// --- Insertion
+		if (p.added && !p.removed) {
+			if (isOnlySpaces(p.value)) continue;
+
+			const anchorId = `chg-${++idxChange}`;
+			html += `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
+
+			ins++;
+			changes.push({ id: anchorId, type: 'insertion', added: p.value, removed: '' });
+			continue;
+		}
+
+		// --- Texte inchangé
+		html += escapeHtmlComp(normalizeSpaces(p.value));
+	}
+
+	outComp.innerHTML = html;
+
+	// ✅ sanity check rapide (tu peux laisser temporairement)
+	// console.log('anchors:', document.querySelectorAll('#diffOutput [id^="chg-"]').length);
+
+	renderChangesListComp(changes);
+
+	insCountComp.textContent = ins;
+	delCountComp.textContent = del;
+	repCountComp.textContent = rep;
+	hintComp.textContent = `${ins + del + rep} modifications détectées${rep ? " • remplacements: " + rep : ""}.`;
+}
+
+function flashSidebarCard(btn) {
+    const prevShadow = btn.style.boxShadow;
+    btn.style.boxShadow = '0 0 0 3px rgba(255,209,102,0.45)';
+    setTimeout(() => { btn.style.boxShadow = prevShadow; }, 750);
+}
+
+function renderChangesListComp(changes) {
+    changesListComp.innerHTML = "";
+    const filtered = changes.filter(c => {
+        if (c.type === 'remplacement') return !isWhitespaceOnlyChange(c.removed, c.added);
+        if (c.type === 'insertion') return !isOnlySpaces(c.added);
+        if (c.type === 'suppression') return !isOnlySpaces(c.removed);
+        return true;
+    });
+    
+    if (!filtered.length) {
+        changesListComp.innerHTML = '<div style="color:#8b93a6;padding:8px">Aucun changement.</div>';
+        updateBackButton();
+        return;
+    }
+    
+    const ctxSpan = showContext ? 24 : 0;
+    let toRestoreId = (lastSelectedBtn && lastSelectedBtn.dataset.id) ? lastSelectedBtn.dataset.id : null;
+    lastSelectedBtn = null;
+    
+    for (const c of filtered) {
+        const btn = document.createElement('button');
+        btn.className = 'comp-change';
+        btn.type = 'button';
+        btn.dataset.id = c.id;
+        btn.dataset.type = c.type;
+        if (c.type === 'suppression') {
+            btn.dataset.removed = c.removed;
+        }
+        
+        let tokenHtml = '';
+        if (c.type === 'insertion') {
+            tokenHtml = `<mark class="token">${escapeHtmlComp(c.added)}</mark>`;
+        } else if (c.type === 'suppression') {
+            tokenHtml = `<mark class="token del">${escapeHtmlComp(c.removed)}</mark>`;
+        } else {
+            tokenHtml = `<mark class="token del">${escapeHtmlComp(c.removed)}</mark> <span style="display:inline-block;width:6px"></span> <mark class="token">${escapeHtmlComp(c.added)}</mark>`;
+        }
+        
+        let ctx = '';
+        if (ctxSpan > 0) {
+            const src = c.type==='suppression' ? (oldTA.value||"") : (newTA.value||"");
+            const needle = (c.type==='suppression') ? c.removed : c.added;
+            const flat = (needle||"").replace(/\s+/g,' ').trim();
+            const pos = flat ? src.indexOf(flat) : -1;
+            if (pos>=0) {
+                const start = Math.max(0,pos-ctxSpan);
+                const end = Math.min(src.length, pos+flat.length+ctxSpan);
+                ctx = (start>0?'…':'') + src.slice(start,end).replace(/\s+/g,' ') + (end<src.length?'…':'');
+            }
+        }
+        
+        btn.innerHTML = `<span class="type">${emojiFor(c.type)} ${cap(c.type)}</span> ${tokenHtml} ${ctx ? `<span class="ctx">${escapeHtmlComp(ctx)}</span>` : ``}`;
+        
+        btn.addEventListener('click', () => {
+
+            const prev = document.querySelector('.comp-change.selected');
+            if (prev) prev.classList.remove('selected');
+            btn.classList.add('selected');
+            lastSelectedBtn = btn;
+            
+            const opts = (btn.dataset.type === 'suppression') ? { removedText: btn.dataset.removed || '' } : undefined;
+			document.getElementById('diffOutput')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            focusChangeComp(btn.dataset.id, btn.dataset.type, opts);
+            updateBackButton();
+
+			const target = document.getElementById(btn.dataset.id);
+			if (!target) {
+			// le diff a été recalculé, on le recalcule puis on refait un focus
+				computeComp();
+			}
+        });
+        
+        changesListComp.appendChild(btn);
+        
+        if (toRestoreId && c.id === toRestoreId) {
+            btn.classList.add('selected');
+            lastSelectedBtn = btn;
+        }
+    }
+    
+    updateBackButton();
+}
+
+document.getElementById("compareBtn").addEventListener('click', () => {
+    if (lastSelectedBtn) { lastSelectedBtn.classList.remove('selected'); lastSelectedBtn = null; }
+    clearFocusComp();
+    computeComp();
+    updateBackButton();
+});
+
+document.getElementById("toggleContext").addEventListener('click', () => {
+    showContext = !showContext;
+    document.getElementById("toggleContext").textContent = showContext ? "Contexte —" : "± Contexte";
+    const prevSelectedId = lastSelectedBtn ? lastSelectedBtn.dataset.id : null;
+    const prevFocused = lastFocusedId;
+    computeComp();
+    if (prevSelectedId) {
+        const candidate = Array.from(document.querySelectorAll('.comp-change')).find(b => b.dataset.id === prevSelectedId);
+        if (candidate) {
+            candidate.classList.add('selected');
+            lastSelectedBtn = candidate;
+        } else {
+            lastSelectedBtn = null;
+        }
+    }
+    if (prevFocused) {
+        const el = document.getElementById(prevFocused);
+        if (el && el.tagName === 'MARK') {
+            el.classList.add('focused');
+            lastFocusedId = prevFocused;
+        } else {
+            lastFocusedId = null;
+            lastFocusedType = null;
+        }
+    }
+    updateBackButton();
+});
+
+document.getElementById("copyBtn").addEventListener('click', async () => {
+    try {
+        await navigator.clipboard.writeText(outComp.innerHTML);
+        copyBtnComp.textContent = 'Copié ✓';
+        setTimeout(() => copyBtnComp.textContent = 'Copier le résultat', 900);
+    } catch(e) {
+        alert("Impossible de copier. Sélectionne et copie manuellement.");
+    }
+});
+
+backBtn.addEventListener('click', () => {
+    if (!lastSelectedBtn) return;
+    lastSelectedBtn.scrollIntoView({behavior:'smooth', block:'center'});
+    flashSidebarCard(lastSelectedBtn);
+});
+
+// Exemples par défaut
+oldTA.value = "Le contrat entre en vigueur le 1er janvier 2024.\nLe prix est de 100€.\nLe client accepte les conditions.";
+newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 €.\nLe client accepte pleinement les conditions générales.";
 		window.escapeHtml = function(s) { 
   			return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); 
 		};
