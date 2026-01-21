@@ -1803,6 +1803,53 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			display: none !important;
 		}
 		#newText{ z-index: 1; }
+		/* carte historique */
+		.comp-change{
+			width: 100%;
+			display: block;
+			text-align: left;
+			padding: 12px 14px;
+			border-radius: 14px;
+			border: 1px solid rgba(255,255,255,0.10);
+			background: rgba(0,0,0,0.22);
+			backdrop-filter: blur(6px);
+			color: #fff;
+		}
+
+/* titre */
+		.comp-change .chg-title{
+			font-weight: 800;
+			font-size: 18px;
+			margin-bottom: 10px;
+		}
+
+/* pills */
+		.comp-change .chg-pills{
+			display: flex;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		.comp-change .pill{
+			display: inline-flex;
+			align-items: center;
+			padding: 6px 10px;
+			border-radius: 10px;
+			font-weight: 800;
+			font-size: 18px;
+			line-height: 1;
+			border: 2px solid rgba(255,255,255,0.08);
+		}
+
+		.comp-change .pill-del{
+			background: rgba(255,92,92,0.25);
+			border-color: rgba(255,92,92,0.65);
+		}
+
+		.comp-change .pill-add{
+			background: rgba(31,191,71,0.25);
+			border-color: rgba(31,191,71,0.65);
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -3806,15 +3853,15 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 				btn.type = 'button';
 
 		// Couleur rouge/verte dans l'historique (si tu as le CSS hist-add / hist-del)
-				btn.classList.add(ch.added ? 'hist-add' : 'hist-del');
+				const oldVal = ch.removed ? ch.value : '';
+				const newVal = ch.added ? ch.value : '';
 
-				btn.innerHTML =
-					(ch.added ? '➕ Insertion' : '➖ Suppression') +
-					`<span class="ctx">${escapeHtml(ch.value).slice(0, 80)}</span>`;
-				changesList.innerHTML += `
-					<button class="hist-item ${ch.added ? 'hist-add' : 'hist-del'}">
-						${escapeHtml(ch.label || ch.value || 'Changement')}
-					</button>
+				btn.innerHTML = `
+					<div class="chg-title">Remplacement</div>
+					<div class="chg-pills">
+						<span class="pill pill-del">${escapeHtml(oldVal).slice(0, 40)}</span>
+						<span class="pill pill-add">${escapeHtml(newVal).slice(0, 40)}</span>
+					</div>
 				`;
 
 				btn.onclick = () => {
