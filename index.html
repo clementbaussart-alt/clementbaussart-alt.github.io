@@ -5090,14 +5090,6 @@ function focusChangeComp(id, type, options) {
     }
     (el.tagName === 'MARK' ? el : document.getElementById(id)).scrollIntoView({behavior:'smooth', block:'center'});
 }
-function escapeHtml(s) {
-	return String(s ?? '')
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&#039;');
-}
 
 function computeComp() {
 	const oldTxt = oldTA.value || "";
@@ -5164,6 +5156,7 @@ function computeComp() {
 	}
 
 	outComp.innerHTML = html;
+	window._comp_lastDiffHTML = diffOutput.innerHTML;
 
 	// ✅ sanity check rapide (tu peux laisser temporairement)
 	// console.log('anchors:', document.querySelectorAll('#diffOutput [id^="chg-"]').length);
@@ -5174,6 +5167,7 @@ function computeComp() {
 	delCountComp.textContent = del;
 	repCountComp.textContent = rep;
 	hintComp.textContent = `${ins + del + rep} modifications détectées${rep ? " • remplacements: " + rep : ""}.`;
+	window._comp_lastSelectedId = null;
 }
 
 function flashSidebarCard(btn) {
@@ -5234,24 +5228,26 @@ function renderChangesListComp(changes) {
         }
         
         btn.innerHTML = `<span class="type">${emojiFor(c.type)} ${cap(c.type)}</span> ${tokenHtml} ${ctx ? `<span class="ctx">${escapeHtmlComp(ctx)}</span>` : ``}`;
-        
+    
         btn.addEventListener('click', () => {
-
-            const prev = document.querySelector('.comp-change.selected');
-            if (prev) prev.classList.remove('selected');
-            btn.classList.add('selected');
-            lastSelectedBtn = btn;
-            
-            const opts = (btn.dataset.type === 'suppression') ? { removedText: btn.dataset.removed || '' } : undefined;
-			document.getElementById('diffOutput')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            focusChangeComp(btn.dataset.id, btn.dataset.type, opts);
-            updateBackButton();
-
-			const target = document.getElementById(btn.dataset.id);
-			if (!target) {
-			// le diff a été recalculé, on le recalcule puis on refait un focus
-				computeComp();
+			const diffOutput = document.getElementById('diffOutput');
+			if (diffOutput && window._comp_lastDiffHTML) {
+				diffOutput.innerHTML = window._comp_lastDiffHTML;
 			}
+
+	// 2) gérer la sélection UI côté historique
+			document.querySelectorAll('.comp-change.selected').forEach(x => x.classList.remove('selected'));
+			btn.classList.add('selected');
+
+	// 3) focus sans recalcul
+			const id = btn.dataset.id;           // ex: "chg-3"
+			const type = btn.dataset.type;       // "suppression" / "insertion" / "remplacement"
+			window._comp_lastSelectedId = id;
+
+			focusChangeComp(id, type, {
+				removedText: btn.dataset.removed || ''
+			});
+			updateBackButton?.();
         });
         
         changesListComp.appendChild(btn);
@@ -5327,6 +5323,19 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
                 location.reload();
             }
         }
+
+		function focusChangeComp(id, type, opts = {}) {
+	// Nettoyage focus
+			document.querySelectorAll('#diffOutput .focused').forEach(n => n.classList.remove('focused'));
+
+			const el = document.getElementById(id);
+			if (!el) return;
+
+	// Cas suppression: tu peux cibler le ghost si besoin, mais SANS reconstruire le diff
+			el.classList.add('focused');
+
+			el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
 
         function togglePublicProfile() {
             if (!currentUser) return;
@@ -5941,7 +5950,6 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
                 });
 
                 document.getElementById('diffOutput').innerHTML = output;
-					else if (p.removed) out += `<mark class="del">${escapeHtml(p.value)}</mark>`;
                 document.getElementById('insCount').textContent = insCount;
                 document.getElementById('delCount').textContent = delCount;
                 document.getElementById('repCount').textContent = Math.min(insCount, delCount);
