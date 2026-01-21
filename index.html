@@ -1813,6 +1813,13 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			border: 1px dashed rgba(255,209,102,0.85) !important;
 			background: rgba(255,209,102,0.2) !important;
 		}
+		.focus-ghost.focused,
+		.del-ghost.focused{
+			box-shadow: inset 0 -0.48em rgba(255,209,102,0.9), 0 0 0 2px rgba(255,209,102,0.25) !important;
+			border: 1px dashed rgba(255,209,102,0.85) !important;
+			background: rgba(255,209,102,0.2) !important;
+			border-radius: 4px;
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -5050,6 +5057,7 @@ function showDeletionGhostAfter(anchorEl, id, removedText) {
     const ghost = document.createElement('span');
     ghost.id = id + '-delghost';
     ghost.className = 'del-ghost';
+	ghost.classList.add('focused');
     const content = '(' + removedText + ')';
     ghost.innerHTML = `<mark class="del">${escapeHtmlComp(content)}</mark>`;
     anchorEl.insertAdjacentElement('afterend', ghost);
