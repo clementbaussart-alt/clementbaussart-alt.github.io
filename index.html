@@ -5229,12 +5229,6 @@ function renderChangesListComp(changes) {
         
         btn.addEventListener('click', () => {
 
-			const target = document.getElementById(btn.dataset.id);
-			if (!target) {
-			// le diff a été recalculé, on le recalcule puis on refait un focus
-				computeComp();
-			}
-			
             const prev = document.querySelector('.comp-change.selected');
             if (prev) prev.classList.remove('selected');
             btn.classList.add('selected');
@@ -5244,6 +5238,12 @@ function renderChangesListComp(changes) {
 			document.getElementById('diffOutput')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             focusChangeComp(btn.dataset.id, btn.dataset.type, opts);
             updateBackButton();
+
+			const target = document.getElementById(btn.dataset.id);
+			if (!target) {
+			// le diff a été recalculé, on le recalcule puis on refait un focus
+				computeComp();
+			}
         });
         
         changesListComp.appendChild(btn);
