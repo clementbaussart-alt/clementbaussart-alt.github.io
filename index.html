@@ -5086,56 +5086,80 @@ function focusChangeComp(id, type, options) {
 }
 
 function computeComp() {
-    const oldTxt = oldTA.value || "";
-    const newTxt = newTA.value || "";
-    const parts = (window.Diff && Diff.diffWordsWithSpace) ? Diff.diffWordsWithSpace(oldTxt, newTxt) : [{removed:true,value:oldTxt},{added:true,value:newTxt}];
-    let html = "";
-    let changes = [];
-    let ins=0, del=0, rep=0, idxChange=0;
-    
-    for (let i=0; i<parts.length; i++) {
-        const p = parts[i];
-        if ((p.added || p.removed) && isOnlySpaces(p.value)) continue;
-        
-        if (p.removed && !p.added) {
-            const next = parts[i+1];
-            if (next && next.added && !next.removed) {
-                if (!isOnlySpaces(next.value) && !isWhitespaceOnlyChange(p.value, next.value)) {
-                    const anchorId = `chg-${++idxChange}`;
-                    html += `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(next.value))}</mark>`;
-                    rep++;
-                    changes.push({id: anchorId, type: 'remplacement', added: next.value, removed: p.value});
-                    i++;
-                    continue;
-                } else {
-                    i++;
-                    continue;
-                }
-            }
-          	const anchorId = `chg-${++idxChange}`;
+	const oldTxt = oldTA.value || "";
+	const newTxt = newTA.value || "";
+
+	const parts = (window.Diff && Diff.diffWordsWithSpace)
+		? Diff.diffWordsWithSpace(oldTxt, newTxt)
+		: [{ removed: true, value: oldTxt }, { added: true, value: newTxt }];
+
+	let html = "";
+	let changes = [];
+	let ins = 0, del = 0, rep = 0, idxChange = 0;
+
+	for (let i = 0; i < parts.length; i++) {
+		const p = parts[i];
+		if ((p.added || p.removed) && isOnlySpaces(p.value)) continue;
+
+		// --- Suppression (potentiellement suivie d'un added => remplacement)
+		if (p.removed && !p.added) {
+			const next = parts[i + 1];
+
+			// Remplacement = removed puis added
+			if (next && next.added && !next.removed) {
+				if (!isOnlySpaces(next.value) && !isWhitespaceOnlyChange(p.value, next.value)) {
+					const anchorId = `chg-${++idxChange}`;
+
+					// On ancre sur le texte "nouveau" (mark.ins)
+					html += `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(next.value))}</mark>`;
+
+					rep++;
+					changes.push({ id: anchorId, type: 'remplacement', added: next.value, removed: p.value });
+
+					i++; // on consomme le "next"
+					continue;
+				} else {
+					i++; // ignore changement uniquement d'espaces
+					continue;
+				}
+			}
+
+			// Suppression pure : ancre invisible dans le texte central
+			const anchorId = `chg-${++idxChange}`;
+			html += `<a id="${anchorId}"></a>`;
+
+			del++;
+			changes.push({ id: anchorId, type: 'suppression', added: '', removed: p.value });
+			continue;
+		}
+
+		// --- Insertion
+		if (p.added && !p.removed) {
+			if (isOnlySpaces(p.value)) continue;
+
+			const anchorId = `chg-${++idxChange}`;
 			html += `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
+
+			ins++;
 			changes.push({ id: anchorId, type: 'insertion', added: p.value, removed: '' });
-            continue;
-        }
-        
-        if (p.added && !p.removed) {
-            if (isOnlySpaces(p.value)) continue;
-            const anchorId = `chg-${++idxChange}`;
-            html += `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
-            ins++;
-            changes.push({id: anchorId, type: 'insertion', added: p.value, removed: ''});
-            continue;
-        }
-        
-        html += escapeHtmlComp(normalizeSpaces(p.value));
-    }
-    
-    outComp.innerHTML = html;
-    renderChangesListComp(changes);
-    insCountComp.textContent = ins;
-    delCountComp.textContent = del;
-    repCountComp.textContent = rep;
-    hintComp.textContent = `${ins+del+rep} modifications détectées${rep? " • remplacements: "+rep : ""}.`;
+			continue;
+		}
+
+		// --- Texte inchangé
+		html += escapeHtmlComp(normalizeSpaces(p.value));
+	}
+
+	outComp.innerHTML = html;
+
+	// ✅ sanity check rapide (tu peux laisser temporairement)
+	// console.log('anchors:', document.querySelectorAll('#diffOutput [id^="chg-"]').length);
+
+	renderChangesListComp(changes);
+
+	insCountComp.textContent = ins;
+	delCountComp.textContent = del;
+	repCountComp.textContent = rep;
+	hintComp.textContent = `${ins + del + rep} modifications détectées${rep ? " • remplacements: " + rep : ""}.`;
 }
 
 function flashSidebarCard(btn) {
