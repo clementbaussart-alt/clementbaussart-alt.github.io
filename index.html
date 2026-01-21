@@ -5242,7 +5242,8 @@ function renderChangesListComp(changes) {
 			const target = document.getElementById(btn.dataset.id);
 			if (!target) {
 			// le diff a été recalculé, on le recalcule puis on refait un focus
-				computeComp();
+			focusChangeComp([btn.dataset.id](http://btn.dataset.id), btn.dataset.type, opts);
+			updateBackButton();
 			}
         });
         
