@@ -5061,6 +5061,7 @@ function showDeletionGhostAfter(anchorEl, id, removedText) {
     const content = '(' + removedText + ')';
     ghost.innerHTML = `<mark class="del">${escapeHtmlComp(content)}</mark>`;
     anchorEl.insertAdjacentElement('afterend', ghost);
+	document.querySelectorAll('#diffOutput .focus-ghost, #diffOutput .del-ghost').length
 }
 
 function focusChangeComp(id, type, options) {
@@ -5088,7 +5089,7 @@ function focusChangeComp(id, type, options) {
             }
         }
     }
-    
+    document.querySelectorAll('#diffOutput .focus-ghost, #diffOutput .del-ghost').length
     (el.tagName === 'MARK' ? el : document.getElementById(id)).scrollIntoView({behavior:'smooth', block:'center'});
 }
 
