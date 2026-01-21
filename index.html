@@ -5195,6 +5195,7 @@ function renderChangesListComp(changes) {
             lastSelectedBtn = btn;
             
             const opts = (btn.dataset.type === 'suppression') ? { removedText: btn.dataset.removed || '' } : undefined;
+			document.getElementById('diffOutput')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             focusChangeComp(btn.dataset.id, btn.dataset.type, opts);
             updateBackButton();
         });
