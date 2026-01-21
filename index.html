@@ -5112,10 +5112,9 @@ function computeComp() {
                     continue;
                 }
             }
-            const anchorId = `chg-${++idxChange}`;
-            html += `<a id="${anchorId}"></a>`;
-            del++;
-            changes.push({id: anchorId, type: 'suppression', added: '', removed: p.value});
+          	const anchorId = `chg-${++idxChange}`;
+			html += `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(p.value))}</mark>`;
+			changes.push({ id: anchorId, type: 'insertion', added: p.value, removed: '' });
             continue;
         }
         
