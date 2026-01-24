@@ -5459,20 +5459,19 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
 			const parentWithId = el.closest('[id]');
 			return parentWithId ? parentWithId.id : null;
 		}
-	}
 
-	const changesList = document.getElementById('changesList');
-	if (changesList) {
-		changesList.addEventListener('click', () => {
-			setTimeout(() => {
+		const changesList = document.getElementById('changesList');
+		if (changesList) {
+			changesList.addEventListener('click', () => {
+				setTimeout(() => {
 			// 1) On récupère l'ID actuellement "focus" dans le texte central
-				window._comp_lastFocusedId = getCurrentFocusedIdFromDiff();
+					window._comp_lastFocusedId = getCurrentFocusedIdFromDiff();
 
 			// 2) Si le clic a fait disparaître les rouges, on restaure le HTML complet
-				restoreFullDiffHTMLIfNeeded();
+					restoreFullDiffHTMLIfNeeded();
 
 			// 3) Et on remet le focus jaune sur l'élément correspondant
-				applyFocusById(window._comp_lastFocusedId);
+					applyFocusById(window._comp_lastFocusedId);
 				}, 0);
 			}, true);
 		}
