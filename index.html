@@ -5391,6 +5391,58 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
                 location.reload();
             }
         }
+		// ====== FIX: empêcher la disparition des suppressions rouges après clic historique ======
+		window._comp_lastFullHTML = '';
+
+		function saveFullDiffHTML() {
+			const out = document.getElementById('diffOutput');
+			if (out) window._comp_lastFullHTML = out.innerHTML;
+		}
+
+		function restoreFullDiffHTMLIfNeeded() {
+			const out = document.getElementById('diffOutput');
+			if (!out || !window._comp_lastFullHTML) return;
+
+			const now = out.innerHTML;
+
+	// Si le HTML actuel ne contient plus de "del" mais que la sauvegarde en contenait -> on restaure
+			const nowHasDel = /class="del"|class='del'|del-ghost/.test(now);
+			const savedHasDel = /class="del"|class='del'|del-ghost/.test(window._comp_lastFullHTML);
+
+			if (!nowHasDel && savedHasDel) {
+				out.innerHTML = window._comp_lastFullHTML;
+			}
+		}
+
+// 1) Après avoir cliqué sur "Comparer", on sauvegarde le rendu complet
+		document.addEventListener('click', (e) => {
+			if (e.target && e.target.id === 'compareBtn') {
+				setTimeout(saveFullDiffHTML, 0);
+			}
+		}, true);
+
+// 2) Après un clic sur l'historique, si ton code a “nettoyé” les rouges, on restaure
+		const changesList = document.getElementById('changesList');
+		if (changesList) {
+			changesList.addEventListener('click', () => {
+				setTimeout(() => {
+					restoreFullDiffHTMLIfNeeded();
+
+			// (optionnel) refaire le focus jaune sur la dernière sélection si ton code la stocke
+					const el = window.lastSelectedDiffEl;
+					if (el && el.id) {
+						document.querySelectorAll('#diffOutput .focused').forEach(x => x.classList.remove('focused'));
+						const target = document.getElementById(el.id);
+						if (target) {
+							target.classList.add('focused');
+							const child = target.querySelector('mark');
+							if (child) child.classList.add('focused');
+							target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+						}
+					}
+				}, 0);
+			}, true);
+		}
 
         function togglePublicProfile() {
             if (!currentUser) return;
