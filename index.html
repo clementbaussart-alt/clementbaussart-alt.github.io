@@ -5445,22 +5445,38 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
 			}
 		}, true);
 
-// 2) Clic sur historique: on récupère l'ID cible, puis on restaure si besoin, puis on remet le focus
-		const changesList = document.getElementById('changesList');
-		if (changesList) {
-			changesList.addEventListener('click', (e) => {
-		// On suppose que ton item d'historique pointe vers un id (le plus courant)
-		// Cas A: élément dans la liste a data-id="chg-12"
-				const item = e.target.closest?.('[data-id]');
-				if (item?.dataset?.id) window._comp_lastFocusedId = item.dataset.id;
+		function getCurrentFocusedIdFromDiff() {
+	// Ton CSS semble viser mark.focused, donc on check d'abord ça
+			let el = document.querySelector('#diffOutput mark.focused');
 
-				setTimeout(() => {
-					restoreFullDiffHTMLIfNeeded();
-					applyFocusById(window._comp_lastFocusedId);
+	// Sinon on prend n'importe quel élément .focused
+			if (!el) el = document.querySelector('#diffOutput .focused');
+			if (!el) return null;
+
+	// Si l'élément n'a pas d'id, on remonte au parent qui en a un
+			if (el.id) return el.id;
+
+			const parentWithId = el.closest('[id]');
+			return parentWithId ? parentWithId.id : null;
+		}
+	}
+
+	const changesList = document.getElementById('changesList');
+	if (changesList) {
+		changesList.addEventListener('click', () => {
+			setTimeout(() => {
+			// 1) On récupère l'ID actuellement "focus" dans le texte central
+				window._comp_lastFocusedId = getCurrentFocusedIdFromDiff();
+
+			// 2) Si le clic a fait disparaître les rouges, on restaure le HTML complet
+				restoreFullDiffHTMLIfNeeded();
+
+			// 3) Et on remet le focus jaune sur l'élément correspondant
+				applyFocusById(window._comp_lastFocusedId);
 				}, 0);
 			}, true);
 		}
-
+		
         function togglePublicProfile() {
             if (!currentUser) return;
 
