@@ -5391,12 +5391,33 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
                 location.reload();
             }
         }
-		// ====== FIX: empêcher la disparition des suppressions rouges après clic historique ======
+		// ====== FIX: conserver rouges + remettre le focus jaune ======
 		window._comp_lastFullHTML = '';
+		window._comp_lastFocusedId = null;
 
 		function saveFullDiffHTML() {
 			const out = document.getElementById('diffOutput');
 			if (out) window._comp_lastFullHTML = out.innerHTML;
+		}
+
+		function applyFocusById(id) {
+			if (!id) return;
+
+	// Nettoie l'ancien focus
+			document.querySelectorAll('#diffOutput .focused').forEach(x => x.classList.remove('focused'));
+			document.querySelectorAll('#diffOutput mark.focused').forEach(x => x.classList.remove('focused'));
+
+			const target = document.getElementById(id);
+			if (!target) return;
+
+	// Ajoute le focus jaune sur le conteneur
+			target.classList.add('focused');
+
+	// Ajoute aussi sur le <mark> si présent (car ton CSS vise mark.focused)
+			const mk = target.matches('mark') ? target : target.querySelector('mark');
+			if (mk) mk.classList.add('focused');
+
+			target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 		}
 
 		function restoreFullDiffHTMLIfNeeded() {
@@ -5405,7 +5426,6 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
 
 			const now = out.innerHTML;
 
-	// Si le HTML actuel ne contient plus de "del" mais que la sauvegarde en contenait -> on restaure
 			const nowHasDel = /class="del"|class='del'|del-ghost/.test(now);
 			const savedHasDel = /class="del"|class='del'|del-ghost/.test(window._comp_lastFullHTML);
 
@@ -5414,32 +5434,29 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
 			}
 		}
 
-// 1) Après avoir cliqué sur "Comparer", on sauvegarde le rendu complet
+// 1) Après "Comparer", sauvegarde du diff complet
 		document.addEventListener('click', (e) => {
 			if (e.target && e.target.id === 'compareBtn') {
-				setTimeout(saveFullDiffHTML, 0);
+				setTimeout(() => {
+					saveFullDiffHTML();
+			// reset du focus
+					window._comp_lastFocusedId = null;
+				}, 0);
 			}
 		}, true);
 
-// 2) Après un clic sur l'historique, si ton code a “nettoyé” les rouges, on restaure
+// 2) Clic sur historique: on récupère l'ID cible, puis on restaure si besoin, puis on remet le focus
 		const changesList = document.getElementById('changesList');
 		if (changesList) {
-			changesList.addEventListener('click', () => {
+			changesList.addEventListener('click', (e) => {
+		// On suppose que ton item d'historique pointe vers un id (le plus courant)
+		// Cas A: élément dans la liste a data-id="chg-12"
+				const item = e.target.closest?.('[data-id]');
+				if (item?.dataset?.id) window._comp_lastFocusedId = item.dataset.id;
+
 				setTimeout(() => {
 					restoreFullDiffHTMLIfNeeded();
-
-			// (optionnel) refaire le focus jaune sur la dernière sélection si ton code la stocke
-					const el = window.lastSelectedDiffEl;
-					if (el && el.id) {
-						document.querySelectorAll('#diffOutput .focused').forEach(x => x.classList.remove('focused'));
-						const target = document.getElementById(el.id);
-						if (target) {
-							target.classList.add('focused');
-							const child = target.querySelector('mark');
-							if (child) child.classList.add('focused');
-							target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-						}
-					}
+					applyFocusById(window._comp_lastFocusedId);
 				}, 0);
 			}, true);
 		}
