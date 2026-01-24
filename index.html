@@ -2044,6 +2044,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
                                         <button class="editor-btn" onclick="execFormatCommand('bold')" title="Gras" aria-label="Gras"><b>G</b></button>
                                         <button class="editor-btn" onclick="execFormatCommand('italic')" title="Italique" aria-label="Italique"><i>I</i></button>
                                         <button class="editor-btn" onclick="execFormatCommand('underline')" title="Souligné" aria-label="Souligné"><u>S</u></button>
+										<button class="editor-btn" type="button" onclick="insertBulletNow()" title="Puce">•</button>
                                     </div>
 
                                     <div style="margin-bottom: 4px;">
@@ -3074,6 +3075,25 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 
 		function setActiveInlineSide(side) {
 			activeInlineSide = side; // 'question' ou 'answer'
+		}
+
+		function insertBulletNow() {
+			// Réutilise ton système déjà présent (activeInlineSide / activeInlineEditIndex)
+			let el = null;
+
+			if (activeInlineEditIndex !== null && activeInlineEditIndex !== undefined) {
+				el = document.getElementById(activeInlineSide === 'answer'
+					? `editAnswer${activeInlineEditIndex}`
+					: `editQuestion${activeInlineEditIndex}`);
+			} else {
+				el = document.getElementById(activeInlineSide === 'answer' ? 'newAnswer' : 'newQuestion');
+			}
+
+			if (!el) return;
+			el.focus();
+
+			// Insère une puce + espace à la position du curseur
+			document.execCommand('insertText', false, '• ');
 		}
 
 		let answerHistory = [];
