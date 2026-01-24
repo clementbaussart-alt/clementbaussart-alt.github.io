@@ -2635,6 +2635,16 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 
 		document.addEventListener('mouseup', saveSelection);
 		document.addEventListener('keyup', saveSelection);
+		document.addEventListener('keydown', (e) => {
+			const editor = e.target?.closest?.('.editor-content');
+			if (!editor) return;
+
+	// Enter simple -> saut de ligne
+			if (e.key === 'Enter' && !e.shiftKey) {
+				e.preventDefault();
+				document.execCommand('insertHTML', false, '<br>');
+			}
+		});
 
 		function applyColorToSelection(cmd, color) {
 			// 1) Focus sur le bon éditeur
