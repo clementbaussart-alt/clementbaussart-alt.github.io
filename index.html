@@ -1854,6 +1854,14 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
    			font-family: inherit !important;
    			font-size: inherit !important;
 		}
+		/* Focus jaune garanti */
+		#diffOutput .focused,
+		#diffOutput .focused mark,
+		#diffOutput mark.focused {
+			box-shadow: inset 0 -0.48em rgba(255,209,102,0.9), 0 0 0 2px rgba(255,209,102,0.25) !important;
+			border-color: rgba(255,209,102,0.85) !important;
+			background: rgba(255,209,102,0.2) !important;
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -5403,21 +5411,24 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
 		function applyFocusById(id) {
 			if (!id) return;
 
-	// Nettoie l'ancien focus
-			document.querySelectorAll('#diffOutput .focused').forEach(x => x.classList.remove('focused'));
-			document.querySelectorAll('#diffOutput mark.focused').forEach(x => x.classList.remove('focused'));
+	// Nettoyage
+			document.querySelectorAll('#diffOutput .focused, #diffOutput mark.focused')
+				.forEach(x => x.classList.remove('focused'));
 
-			const target = document.getElementById(id);
-			if (!target) return;
+			const el = document.getElementById(id);
+			if (!el) return;
 
-	// Ajoute le focus jaune sur le conteneur
-			target.classList.add('focused');
+	// 1) Focus sur le conteneur (span / a / etc.)
+			el.classList.add('focused');
 
-	// Ajoute aussi sur le <mark> si présent (car ton CSS vise mark.focused)
-			const mk = target.matches('mark') ? target : target.querySelector('mark');
+	// 2) Focus sur le mark INS/DEL à l’intérieur (c’est souvent lui qui est stylé)
+			let mk = null;
+			if (el.tagName && el.tagName.toLowerCase() === 'mark') mk = el;
+			else mk = el.querySelector('mark.ins, mark.del') || el.querySelector('mark');
+
 			if (mk) mk.classList.add('focused');
 
-			target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 		}
 
 		function restoreFullDiffHTMLIfNeeded() {
