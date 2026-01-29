@@ -5692,97 +5692,53 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
 
         function importCards() {
 			const fileInput = document.getElementById('fileInput');
-			if (!fileInput) {
-				showNotification("Input fichier introuvable (#fileInput)", "error");
-				return;
-			}
+			if (!fileInput) return showNotification("Input fichier introuvable (#fileInput)", "error");
 
 			fileInput.onchange = function (e) {
 				const file = e.target.files[0];
 				if (!file) return;
 
 				const reader = new FileReader();
-
 				reader.onload = function (event) {
 					try {
 						const data = JSON.parse(event.target.result);
-						console.log("IMPORT root type:", Array.isArray(data) ? "array" : typeof data);
-						console.log("IMPORT root keys:", data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : null);
 
-				// --- 1) Normaliser les formats encapsulés fréquents ---
-						let payload = data;
-						if (payload && typeof payload === "object" && !Array.isArray(payload)) {
-							if (payload.data) payload = payload.data;
-							if (payload.export) payload = payload.export;
-							if (payload.payload) payload = payload.payload;
-							if (payload.state) payload = payload.state;
+				// 1) Trouver le tableau de cartes (où qu'il soit dans le JSON)
+						const arr = extractSingleCardsArray(data);
+						const cards = sanitizeCardsArrayFlexible(arr);
+
+						if (!cards.length) {
+							throw new Error("Aucune fiche détectée dans ce JSON (tableau vide ou champs non reconnus).");
 						}
 
-				// --- 2) Détection de ce qu'on importe ---
-						let importedCategories = null;
-						let importedCardsArray = null;
+				// 2) Destination
+						const catName = prompt("Catégorie de destination :", "Récupération");
+						if (!catName) return;
 
-						console.log("IMPORT payload type:", Array.isArray(payload) ? "array" : typeof payload);
-						console.log("IMPORT payload keys:", payload && typeof payload === "object" && !Array.isArray(payload) ? Object.keys(payload) : null);
+						const folderName = prompt("Cours de destination :", "Importé");
+						if (!folderName) return;
 
-				// Formats natifs attendus
-						if (payload?.categories && typeof payload.categories === "object") {
-							importedCategories = payload.categories;
-						} else if (payload?.folders && typeof payload.folders === "object") {
-							importedCategories = payload.folders;
-						} else if (Array.isArray(payload)) {
-							importedCardsArray = payload;
-						} else if (payload && typeof payload === "object") {
-					// Formats alternatifs fréquents: {cards:[...]}, {deck:[...]}, {items:[...]} etc.
-							const candidates = ["cards", "card", "items", "deck", "set", "sets", "list", "lists"];
-							for (const k of candidates) {
-								if (Array.isArray(payload[k])) {
-									importedCardsArray = payload[k];
-									break;
-								}
-							}
+						const listName = prompt("Nom de la liste :", file.name.replace(/\.json$/i, ""));
+						if (!listName) return;
+
+						if (!categories[catName]) categories[catName] = {};
+						if (!categories[catName][folderName]) categories[catName][folderName] = {};
+						categories[catName][folderName][listName] = cards;
+
+				// 3) Persistance
+						if (currentUser) {
+							currentUser.folders = categories;
+							allUsers[currentUser.username] = currentUser;
+							localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
 						}
+						saveData();
+						updateCategoryList();
+						if (typeof updateHomeStats === "function") updateHomeStats();
 
-						if (!importedCategories && !importedCardsArray) {
-							throw new Error("Format JSON non reconnu. Attendu: {categories} / {folders} / [cartes]");
-						}
-
-				// --- 3) Appliquer l'import ---
-						if (importedCategories) {
-					// Choix fusion/remplacement
-							const mode = (prompt("Importer en mode : 'fusion' (recommandé) ou 'remplacer' ?", "fusion") || "fusion").toLowerCase();
-
-							const sanitized = sanitizeCategories(importedCategories);
-
-							if (mode.startsWith("remp")) {
-								categories = sanitized;
-							} else {
-								mergeCategories(categories, sanitized);
-							}
-
-							afterImportSuccess("Données importées avec succès ✓");
-							return;
-						}
-
-				// --- 4) Cas: tableau de cartes ---
-						if (importedCardsArray) {
-							const catName = prompt("Nom de la catégorie :", "Import");
-							const folderName = prompt("Nom du cours :", "Importé");
-							const listName = prompt("Nom de la liste :", "Liste importée");
-							if (!catName || !folderName || !listName) return;
-
-							if (!categories[catName]) categories[catName] = {};
-							if (!categories[catName][folderName]) categories[catName][folderName] = {};
-
-							categories[catName][folderName][listName] = sanitizeCardsArray(importedCardsArray);
-
-							afterImportSuccess("Cartes importées avec succès ✓");
-							return;
-						}
-
-					} catch (error) {
-						showNotification("Erreur lors de l'importation: " + error.message, "error");
-						console.error(error);
+						showNotification(`${cards.length} fiches importées ✓`, "success");
+					} catch (err) {
+						console.error(err);
+						showNotification("Erreur import: " + err.message, "error");
 					} finally {
 						fileInput.value = "";
 					}
@@ -5792,7 +5748,92 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
 			};
 
 			fileInput.click();
+		}
 
+// --- helpers ---
+
+		function extractSingleCardsArray(root) {
+	// Cas 1: JSON = [ ... ]
+			if (Array.isArray(root)) return root;
+
+	// Cas 2: on “déplie” des wrappers fréquents
+			let payload = root;
+			if (payload && typeof payload === "object") {
+				for (const k of ["data", "export", "payload", "state", "content"]) {
+					if (payload && typeof payload === "object" && payload[k] != null) payload = payload[k];
+				}
+			}
+
+	// Cas 3: clés candidates directes
+			if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+				for (const k of ["cards", "deck", "items", "rows", "terms", "notes"]) {
+					if (Array.isArray(payload[k])) return payload[k];
+				}
+			}
+	
+	// Cas 4: recherche profonde (premier tableau qui ressemble à des fiches)
+				const found = findFirstCardArrayDeep(payload);
+				if (found) return found;
+
+				throw new Error("Format JSON non reconnu (aucun tableau de fiches trouvé).");
+			}
+
+			function findFirstCardArrayDeep(node, seen = new Set()) {
+				if (!node || typeof node !== "object") return null;
+				if (seen.has(node)) return null;
+				seen.add(node);
+
+				if (Array.isArray(node)) {
+					const sample = node.find(x => x && typeof x === "object");
+					if (sample && typeof sample === "object" && !Array.isArray(sample)) {
+						const keys = Object.keys(sample);
+						const looksLike =
+							keys.includes("question") || keys.includes("answer") ||
+							keys.includes("front") || keys.includes("back") ||
+							keys.includes("term") || keys.includes("definition") ||
+							keys.includes("q") || keys.includes("a") ||
+							keys.includes("recto") || keys.includes("verso");
+
+						if (looksLike) return node;
+					}
+					for (const x of node) {
+						const got = findFirstCardArrayDeep(x, seen);
+						if (got) return got;
+					}
+					return null;
+				}
+
+				for (const v of Object.values(node)) {
+					const got = findFirstCardArrayDeep(v, seen);
+					if (got) return got;
+				}
+				return null;
+			}
+
+			function sanitizeCardsArrayFlexible(arr) {
+				if (!Array.isArray(arr)) return [];
+
+				return arr
+					.map(c => {
+			// support aussi ["q","a"]
+					if (Array.isArray(c)) {
+						return {
+							question: (c[0] ?? "").toString(),
+							answer: (c[1] ?? "").toString(),
+							importance: "normal"
+						};
+					}
+
+					if (!c || typeof c !== "object") return null;
+
+					const q = c.question ?? c.q ?? c.front ?? c.term ?? c.recto ?? "";
+					const a = c.answer ?? c.a ?? c.back ?? c.definition ?? c.verso ?? "";
+					const importance = (c.importance ?? c.priority ?? "normal").toString();
+
+					return { question: String(q ?? ""), answer: String(a ?? ""), importance };
+				})
+				.filter(x => x && (x.question.trim() || x.answer.trim()));
+			}
 			// --- helpers internes (ou tu peux les mettre ailleurs) ---
 			function afterImportSuccess(message) {
 				if (currentUser) {
@@ -5806,29 +5847,6 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
 				if (typeof updateHomeStats === "function") updateHomeStats();
 
 				showNotification(message, "success");
-			}
-
-			function sanitizeCardsArray(arr) {
-				if (!Array.isArray(arr)) return [];
-
-				return arr
-					.map(c => {
-			// support objets + lignes CSV style ["q","a"]
-					if (Array.isArray(c)) {
-						return {
-							question: (c[0] ?? "").toString(),
-							answer: (c[1] ?? "").toString(),
-							importance: "normal"
-						};
-					}
-
-					return {
-						question: (c?.question ?? c?.q ?? c?.front ?? c?.term ?? c?.recto ?? "").toString(),
-						answer: (c?.answer ?? c?.a ?? c?.back ?? c?.definition ?? c?.verso ?? "").toString(),
-						importance: (c?.importance ?? c?.priority ?? "normal").toString()
-					};
-				})
-				.filter(c => c.question.trim() || c.answer.trim());
 			}
 
 			function sanitizeCategories(obj) {
