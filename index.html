@@ -5707,6 +5707,9 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
 					try {
 						const raw = event.target.result;
 						const data = JSON.parse(raw);
+						console.log("IMPORT type:", Array.isArray(data) ? "array" : typeof data);
+						console.log("IMPORT keys:", (data && typeof data === "object") ? Object.keys(data) : null);
+						console.log("IMPORT sample:", data);
 
 				// 1) Déterminer le payload à importer (format attendu : {categories} ou {folders} ou Array)
 						let importedCategories = null;
