@@ -5690,50 +5690,136 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
             showNotification('Cours importé avec succès ✓', 'success');
         }
 
-        function importCards() {
-            const fileInput = document.getElementById('fileInput');
-            fileInput.onchange = function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
+       	function importCards() {
+			const fileInput = document.getElementById('fileInput');
+			if (!fileInput) {
+				showNotification("Input fichier introuvable (#fileInput)", "error");
+				return;
+			}
 
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    try {
-                        const data = JSON.parse(event.target.result);
+			fileInput.onchange = function (e) {
+				const file = e.target.files[0];
+				if (!file) return;
 
-                        if (data.categories) {
-                            categories = data.categories;
-                        } else if (data.folders) {
-                            currentUser.folders = data.folders;
-                            categories = data.folders;
-                        } else if (Array.isArray(data)) {
-                            const catName = prompt("Nom de la catégorie:", "Import");
-                            const folderName = prompt("Nom du cours:", "Importé");
-                            const listName = prompt("Nom de la liste:", "Liste importée");
+				const reader = new FileReader();
 
-                            if (!catName || !folderName || !listName) return;
+				reader.onload = function (event) {
+					try {
+						const raw = event.target.result;
+						const data = JSON.parse(raw);
 
-                            if (!categories[catName]) categories[catName] = {};
-                            if (!categories[catName][folderName]) categories[catName][folderName] = {};
-                            categories[catName][folderName][listName] = data;
-                        }
+				// 1) Déterminer le payload à importer (format attendu : {categories} ou {folders} ou Array)
+						let importedCategories = null;
 
-                        currentUser.folders = categories;
-                        allUsers[currentUser.username] = currentUser;
-                        localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
-						saveUserData();
-                        saveData();
-                        updateCategoryList();
-                        showNotification('Données importées avec succès ✓', 'success');
-                    } catch (error) {
-                        showNotification('Erreur lors de l\'importation: ' + error.message, 'error');
-                    }
-                    fileInput.value = '';
-                };
-                reader.readAsText(file);
-            };
-            fileInput.click();
-        }
+						if (data && typeof data === "object" && data.categories && typeof data.categories === "object") {
+							importedCategories = data.categories;
+						} else if (data && typeof data === "object" && data.folders && typeof data.folders === "object") {
+							importedCategories = data.folders;
+						} else if (Array.isArray(data)) {
+					// Import direct d'une liste de cartes -> on l'insère dans une destination choisie
+							const catName = prompt("Nom de la catégorie :", "Import");
+							const folderName = prompt("Nom du cours :", "Importé");
+							const listName = prompt("Nom de la liste :", "Liste importée");
+
+							if (!catName || !folderName || !listName) return;
+
+							if (!categories[catName]) categories[catName] = {};
+							if (!categories[catName][folderName]) categories[catName][folderName] = {};
+
+							categories[catName][folderName][listName] = sanitizeCardsArray(data);
+
+							afterImportSuccess();
+							return;
+						} else {
+							throw new Error("Format JSON non reconnu. Attendu: {categories} / {folders} / [cartes]");
+						}
+
+				// 2) Choix: fusionner ou remplacer ?
+						const mode = (prompt("Importer en mode : 'fusion' (recommandé) ou 'remplacer' ?", "fusion") || "fusion").toLowerCase();
+
+						if (mode.startsWith("remp")) {
+							categories = sanitizeCategories(importedCategories);
+						} else {
+							mergeCategories(categories, sanitizeCategories(importedCategories));
+						}
+
+						afterImportSuccess();
+
+					} catch (error) {
+						showNotification("Erreur lors de l'importation: " + error.message, "error");
+						console.error(error);
+					} finally {
+						fileInput.value = "";
+					}
+				};
+
+				reader.readAsText(file);
+			};
+
+			fileInput.click();
+
+				function afterImportSuccess() {
+		// Persistance
+				if (currentUser) {
+					currentUser.folders = categories;
+					allUsers[currentUser.username] = currentUser;
+					localStorage.setItem("flashcards_users", JSON.stringify(allUsers));
+				}
+
+		// ⚠️ IMPORTANT : on ne fait PAS appel à saveUserData() (souvent inexistante)
+				saveData();
+				updateCategoryList();
+				updateHomeStats?.();
+
+				showNotification("Données importées avec succès ✓", "success");
+			}
+		}
+
+// --- Helpers robustes ---
+
+		function sanitizeCardsArray(arr) {
+			if (!Array.isArray(arr)) return [];
+			return arr
+				.map(c => ({
+					question: (c?.question ?? "").toString(),
+					answer: (c?.answer ?? "").toString(),
+					importance: (c?.importance ?? "normal").toString()
+				}))
+				.filter(c => c.question.trim() || c.answer.trim());
+		}
+
+		function sanitizeCategories(obj) {
+			const out = {};
+			if (!obj || typeof obj !== "object") return out;
+
+			for (const [catName, folders] of Object.entries(obj)) {
+				out[catName] = {};
+				if (!folders || typeof folders !== "object") continue;
+
+				for (const [folderName, lists] of Object.entries(folders)) {
+					out[catName][folderName] = {};
+					if (!lists || typeof lists !== "object") continue;
+
+					for (const [listName, cards] of Object.entries(lists)) {
+						out[catName][folderName][listName] = sanitizeCardsArray(cards);
+					}
+				}
+			}
+			return out;
+		}
+
+		function mergeCategories(target, incoming) {
+			for (const [catName, folders] of Object.entries(incoming)) {
+				if (!target[catName]) target[catName] = {};
+				for (const [folderName, lists] of Object.entries(folders)) {
+					if (!target[catName][folderName]) target[catName][folderName] = {};
+					for (const [listName, cards] of Object.entries(lists)) {
+						// règle de merge : si la liste existe, on la remplace (simple et prévisible)
+						target[catName][folderName][listName] = cards;
+					}
+				}
+			}
+		}
 
         function exportAll() {
             const data = {
