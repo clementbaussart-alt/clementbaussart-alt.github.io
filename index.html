@@ -5800,83 +5800,82 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 â
 						const got = findFirstCardArrayDeep(x, seen);
 						if (got) return got;
 					}
-					return null;
-				}
-
-				for (const v of Object.values(node)) {
-					const got = findFirstCardArrayDeep(v, seen);
-					if (got) return got;
-				}
 				return null;
 			}
 
-			function sanitizeCardsArrayFlexible(arr) {
-				if (!Array.isArray(arr)) return [];
+			for (const v of Object.values(node)) {
+				const got = findFirstCardArrayDeep(v, seen);
+				if (got) return got;
+			}
+			return null;
+		}
 
-				return arr
-					.map(c => {
+		function sanitizeCardsArrayFlexible(arr) {
+			if (!Array.isArray(arr)) return [];
+
+			return arr
+				.map(c => {
 			// support aussi ["q","a"]
-					if (Array.isArray(c)) {
-						return {
-							question: (c[0] ?? "").toString(),
-							answer: (c[1] ?? "").toString(),
-							importance: "normal"
-						};
-					}
+				if (Array.isArray(c)) {
+					return {
+						question: (c[0] ?? "").toString(),
+						answer: (c[1] ?? "").toString(),
+						importance: "normal"
+					};
+				}
 
-					if (!c || typeof c !== "object") return null;
+				if (!c || typeof c !== "object") return null;
 
-					const q = c.question ?? c.q ?? c.front ?? c.term ?? c.recto ?? "";
-					const a = c.answer ?? c.a ?? c.back ?? c.definition ?? c.verso ?? "";
-					const importance = (c.importance ?? c.priority ?? "normal").toString();
+				const q = c.question ?? c.q ?? c.front ?? c.term ?? c.recto ?? "";
+				const a = c.answer ?? c.a ?? c.back ?? c.definition ?? c.verso ?? "";
+				const importance = (c.importance ?? c.priority ?? "normal").toString();
 
-					return { question: String(q ?? ""), answer: String(a ?? ""), importance };
-				})
-				.filter(x => x && (x.question.trim() || x.answer.trim()));
-			}
+				return { question: String(q ?? ""), answer: String(a ?? ""), importance };
+			})
+			.filter(x => x && (x.question.trim() || x.answer.trim()));
+		}
 			// --- helpers internes (ou tu peux les mettre ailleurs) ---
-			function afterImportSuccess(message) {
-				if (currentUser) {
-					currentUser.folders = categories;
-					allUsers[currentUser.username] = currentUser;
-					localStorage.setItem("flashcards_users", JSON.stringify(allUsers));
-				}
-
-				saveData();
-				updateCategoryList();
-				if (typeof updateHomeStats === "function") updateHomeStats();
-
-				showNotification(message, "success");
+		function afterImportSuccess(message) {
+			if (currentUser) {
+				currentUser.folders = categories;
+				allUsers[currentUser.username] = currentUser;
+				localStorage.setItem("flashcards_users", JSON.stringify(allUsers));
 			}
 
-			function sanitizeCategories(obj) {
-				const out = {};
-				if (!obj || typeof obj !== "object") return out;
+			saveData();
+			updateCategoryList();
+			if (typeof updateHomeStats === "function") updateHomeStats();
 
-				for (const [catName, folders] of Object.entries(obj)) {
-					out[catName] = {};
-					if (!folders || typeof folders !== "object") continue;
+			showNotification(message, "success");
+		}
 
-					for (const [folderName, lists] of Object.entries(folders)) {
-						out[catName][folderName] = {};
-						if (!lists || typeof lists !== "object") continue;
+		function sanitizeCategories(obj) {
+			const out = {};
+			if (!obj || typeof obj !== "object") return out;
 
-						for (const [listName, cards] of Object.entries(lists)) {
-							out[catName][folderName][listName] = sanitizeCardsArray(cards);
-						}
+			for (const [catName, folders] of Object.entries(obj)) {
+				out[catName] = {};
+				if (!folders || typeof folders !== "object") continue;
+
+				for (const [folderName, lists] of Object.entries(folders)) {
+					out[catName][folderName] = {};
+					if (!lists || typeof lists !== "object") continue;
+
+					for (const [listName, cards] of Object.entries(lists)) {
+						out[catName][folderName][listName] = sanitizeCardsArray(cards);
 					}
 				}
-				return out;
 			}
+			return out;
+		}
 
-			function mergeCategories(target, incoming) {
-				for (const [catName, folders] of Object.entries(incoming)) {
-					if (!target[catName]) target[catName] = {};
-					for (const [folderName, lists] of Object.entries(folders)) {
-						if (!target[catName][folderName]) target[catName][folderName] = {};
-						for (const [listName, cards] of Object.entries(lists)) {
-							target[catName][folderName][listName] = cards;
-						}
+		function mergeCategories(target, incoming) {
+			for (const [catName, folders] of Object.entries(incoming)) {
+				if (!target[catName]) target[catName] = {};
+				for (const [folderName, lists] of Object.entries(folders)) {
+					if (!target[catName][folderName]) target[catName][folderName] = {};
+					for (const [listName, cards] of Object.entries(lists)) {
+						target[catName][folderName][listName] = cards;
 					}
 				}
 			}
