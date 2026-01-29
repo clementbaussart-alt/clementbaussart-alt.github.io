@@ -5913,82 +5913,92 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
         }
 
         function performTextImport() {
-            const catSelect = document.getElementById('importCatSelect');
-            const folderSelect = document.getElementById('importFolderSelect');
-            const listNameInput = document.getElementById('importListName');
-            const separatorSelect = document.getElementById('importSeparator');
-            const textContent = document.getElementById('importTextContent').value.trim();
+			const catSelect = document.getElementById('importCatSelect');
+			const folderSelect = document.getElementById('importFolderSelect');
+			const listNameInput = document.getElementById('importListName');
+			const separatorSelect = document.getElementById('importSeparator');
+			const textArea = document.getElementById('importTextContent');
 
-            const catName = catSelect.value;
-            const folderName = folderSelect.value;
-            const listName = listNameInput.value.trim();
-            const separatorValue = separatorSelect.value;
+			if (!catSelect || !folderSelect || !listNameInput || !separatorSelect || !textArea) {
+				showNotification("Import: éléments UI introuvables", "error");
+				return;
+			}
 
-            if (!catName) {
-                showNotification('Sélectionnez une catégorie', 'error');
-                return;
-            }
+			const textContent = (textArea.value || '').trim();
 
-            if (!listName) {
-                showNotification('Entrez un nom pour la liste', 'error');
-                return;
-            }
+			const catName = catSelect.value;
+			const folderName = folderSelect.value;
+			const listName = listNameInput.value.trim();
+			const separatorValue = separatorSelect.value;
 
-            if (!textContent) {
-                showNotification('Collez du texte à importer', 'error');
-                return;
-            }
+			if (!catName) return showNotification('Sélectionnez une catégorie', 'error');
+			if (!listName) return showNotification('Entrez un nom pour la liste', 'error');
+			if (!textContent) return showNotification('Collez du texte à importer', 'error');
 
-            let actualFolderName = folderName;
-            if (folderName === '__new__') {
-                actualFolderName = prompt('Nom du nouveau cours:', 'Nouveau cours');
-                if (!actualFolderName) return;
-            }
+			let actualFolderName = folderName;
+			if (folderName === '__new__' || folderName === 'new' || folderName === '**new**') {
+				actualFolderName = prompt('Nom du nouveau cours :', 'Nouveau cours');
+				if (!actualFolderName) return;
+				actualFolderName = actualFolderName.trim();
+				if (!actualFolderName) return;
+			}
 
-            if (!categories[catName]) {
-                categories[catName] = {};
-            }
+			if (!categories[catName]) categories[catName] = {};
+			if (!categories[catName][actualFolderName]) categories[catName][actualFolderName] = {};
 
-            if (!categories[catName][actualFolderName]) {
-                categories[catName][actualFolderName] = {};
-            }
+			if (categories[catName][actualFolderName][listName]) {
+				if (!confirm(`La liste "${listName}" existe déjà. Remplacer ?`)) return;
+			}
 
-            if (categories[catName][actualFolderName][listName]) {
-                if (!confirm(`La liste "${listName}" existe déjà. Remplacer ?`)) return;
-            }
+	// 1) Séparateur robuste (tab = \t réel)
+			let sepChar = '\t';
+			if (separatorValue === 'tab') sepChar = '\t';
+			else sepChar = separatorValue;
 
-            let separator;
-            switch (separatorValue) {
-                case 'tab': separator = /\t/; break;
-                case ',': separator = /,/; break;
-                case ';': separator = /;/; break;
-                case ':': separator = /:/; break;
-                case '-': separator = /-/; break;
-                case '|': separator = /\|/; break;
-                default: separator = /\t/;
-            }
+	// 2) Normalisation des retours lignes Windows + split
+			const lines = textContent
+				.replace(/\r\n/g, '\n')
+				.split('\n')
+				.map(l => l.trim())
+				.filter(Boolean);
 
-            const lines = textContent.split('\n').filter(line => line.trim());
-            const cards = [];
+			const cards = [];
+			for (const line of lines) {
+		// split sur le 1er séparateur trouvé (évite de casser une définition qui contient le séparateur)
+				const idx = line.indexOf(sepChar);
+				if (idx === -1) continue;
 
-            lines.forEach(line => {
-                const parts = line.split(separator).map(part => part.trim());
-                if (parts.length >= 2) {
-                    cards.push({
-                        question: parts[0],
-                        answer: parts.slice(1).join(separatorValue === 'tab' ? '\t' : separatorValue),
-                        importance: 'normal'
-                    });
-                }
-            });
+				const q = line.slice(0, idx).trim();
+				const a = line.slice(idx + sepChar.length).trim();
 
-            categories[catName][actualFolderName][listName] = cards;
-			saveUserData();
-            saveData();
-            updateCategoryList();
-            closeImportTextModal();
-            showNotification(`${cards.length} cartes importées avec succès ✓`, 'success');
-        }
+				if (!q && !a) continue;
+
+				cards.push({
+					question: q,
+					answer: a,
+					importance: 'normal'
+				});
+			}
+
+			if (cards.length === 0) {
+				showNotification("Aucune carte détectée. Vérifie le séparateur (Quizlet = tabulation).", "error");
+				return;
+			}
+
+			categories[catName][actualFolderName][listName] = cards;
+
+	// ✅ Persistance correcte
+			if (currentUser) {
+				currentUser.folders = categories;
+				allUsers[currentUser.username] = currentUser;
+				localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
+			}
+			saveData();
+
+			updateCategoryList();
+			closeImportTextModal();
+			showNotification(`${cards.length} cartes importées avec succès ✓`, 'success');
+		}
 
         function openFullscreenStudy() {
             const cards = categories[currentCategory][currentFolder][currentList];
