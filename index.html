@@ -5706,6 +5706,8 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 â
 				reader.onload = function (event) {
 					try {
 						const data = JSON.parse(event.target.result);
+						console.log("IMPORT root type:", Array.isArray(data) ? "array" : typeof data);
+						console.log("IMPORT root keys:", data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data) : null);
 
 				// --- 1) Normaliser les formats encapsulÃ©s frÃ©quents ---
 						let payload = data;
@@ -5719,6 +5721,9 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 â
 				// --- 2) DÃ©tection de ce qu'on importe ---
 						let importedCategories = null;
 						let importedCardsArray = null;
+
+						console.log("IMPORT payload type:", Array.isArray(payload) ? "array" : typeof payload);
+						console.log("IMPORT payload keys:", payload && typeof payload === "object" && !Array.isArray(payload) ? Object.keys(payload) : null);
 
 				// Formats natifs attendus
 						if (payload?.categories && typeof payload.categories === "object") {
@@ -5805,13 +5810,25 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 â
 
 			function sanitizeCardsArray(arr) {
 				if (!Array.isArray(arr)) return [];
+
 				return arr
-					.map(c => ({
-						question: (c?.question ?? c?.q ?? c?.front ?? "").toString(),
-						answer: (c?.answer ?? c?.a ?? c?.back ?? "").toString(),
-						importance: (c?.importance ?? "normal").toString()
-					}))
-					.filter(c => c.question.trim() || c.answer.trim());
+					.map(c => {
+			// support objets + lignes CSV style ["q","a"]
+					if (Array.isArray(c)) {
+						return {
+							question: (c[0] ?? "").toString(),
+							answer: (c[1] ?? "").toString(),
+							importance: "normal"
+						};
+					}
+
+					return {
+						question: (c?.question ?? c?.q ?? c?.front ?? c?.term ?? c?.recto ?? "").toString(),
+						answer: (c?.answer ?? c?.a ?? c?.back ?? c?.definition ?? c?.verso ?? "").toString(),
+						importance: (c?.importance ?? c?.priority ?? "normal").toString()
+					};
+				})
+				.filter(c => c.question.trim() || c.answer.trim());
 			}
 
 			function sanitizeCategories(obj) {
