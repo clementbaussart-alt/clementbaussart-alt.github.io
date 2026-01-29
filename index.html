@@ -5690,7 +5690,7 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
             showNotification('Cours importé avec succès ✓', 'success');
         }
 
-       	function importCards() {
+        function importCards() {
 			const fileInput = document.getElementById('fileInput');
 			if (!fileInput) {
 				showNotification("Input fichier introuvable (#fileInput)", "error");
@@ -5705,48 +5705,75 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
 
 				reader.onload = function (event) {
 					try {
-						const raw = event.target.result;
-						const data = JSON.parse(raw);
-						console.log("IMPORT type:", Array.isArray(data) ? "array" : typeof data);
-						console.log("IMPORT keys:", (data && typeof data === "object") ? Object.keys(data) : null);
-						console.log("IMPORT sample:", data);
+						const data = JSON.parse(event.target.result);
 
-				// 1) Déterminer le payload à importer (format attendu : {categories} ou {folders} ou Array)
+				// --- 1) Normaliser les formats encapsulés fréquents ---
+						let payload = data;
+						if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+							if (payload.data) payload = payload.data;
+							if (payload.export) payload = payload.export;
+							if (payload.payload) payload = payload.payload;
+							if (payload.state) payload = payload.state;
+						}
+
+				// --- 2) Détection de ce qu'on importe ---
 						let importedCategories = null;
+						let importedCardsArray = null;
 
-						if (data && typeof data === "object" && data.categories && typeof data.categories === "object") {
-							importedCategories = data.categories;
-						} else if (data && typeof data === "object" && data.folders && typeof data.folders === "object") {
-							importedCategories = data.folders;
-						} else if (Array.isArray(data)) {
-					// Import direct d'une liste de cartes -> on l'insère dans une destination choisie
+				// Formats natifs attendus
+						if (payload?.categories && typeof payload.categories === "object") {
+							importedCategories = payload.categories;
+						} else if (payload?.folders && typeof payload.folders === "object") {
+							importedCategories = payload.folders;
+						} else if (Array.isArray(payload)) {
+							importedCardsArray = payload;
+						} else if (payload && typeof payload === "object") {
+					// Formats alternatifs fréquents: {cards:[...]}, {deck:[...]}, {items:[...]} etc.
+							const candidates = ["cards", "card", "items", "deck", "set", "sets", "list", "lists"];
+							for (const k of candidates) {
+								if (Array.isArray(payload[k])) {
+									importedCardsArray = payload[k];
+									break;
+								}
+							}
+						}
+
+						if (!importedCategories && !importedCardsArray) {
+							throw new Error("Format JSON non reconnu. Attendu: {categories} / {folders} / [cartes]");
+						}
+
+				// --- 3) Appliquer l'import ---
+						if (importedCategories) {
+					// Choix fusion/remplacement
+							const mode = (prompt("Importer en mode : 'fusion' (recommandé) ou 'remplacer' ?", "fusion") || "fusion").toLowerCase();
+
+							const sanitized = sanitizeCategories(importedCategories);
+
+							if (mode.startsWith("remp")) {
+								categories = sanitized;
+							} else {
+								mergeCategories(categories, sanitized);
+							}
+
+							afterImportSuccess("Données importées avec succès ✓");
+							return;
+						}
+
+				// --- 4) Cas: tableau de cartes ---
+						if (importedCardsArray) {
 							const catName = prompt("Nom de la catégorie :", "Import");
 							const folderName = prompt("Nom du cours :", "Importé");
 							const listName = prompt("Nom de la liste :", "Liste importée");
-
 							if (!catName || !folderName || !listName) return;
 
 							if (!categories[catName]) categories[catName] = {};
 							if (!categories[catName][folderName]) categories[catName][folderName] = {};
 
-							categories[catName][folderName][listName] = sanitizeCardsArray(data);
+							categories[catName][folderName][listName] = sanitizeCardsArray(importedCardsArray);
 
-							afterImportSuccess();
+							afterImportSuccess("Cartes importées avec succès ✓");
 							return;
-						} else {
-							throw new Error("Format JSON non reconnu. Attendu: {categories} / {folders} / [cartes]");
 						}
-
-				// 2) Choix: fusionner ou remplacer ?
-						const mode = (prompt("Importer en mode : 'fusion' (recommandé) ou 'remplacer' ?", "fusion") || "fusion").toLowerCase();
-
-						if (mode.startsWith("remp")) {
-							categories = sanitizeCategories(importedCategories);
-						} else {
-							mergeCategories(categories, sanitizeCategories(importedCategories));
-						}
-
-						afterImportSuccess();
 
 					} catch (error) {
 						showNotification("Erreur lors de l'importation: " + error.message, "error");
@@ -5761,64 +5788,60 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
 
 			fileInput.click();
 
-				function afterImportSuccess() {
-		// Persistance
+			// --- helpers internes (ou tu peux les mettre ailleurs) ---
+			function afterImportSuccess(message) {
 				if (currentUser) {
 					currentUser.folders = categories;
 					allUsers[currentUser.username] = currentUser;
 					localStorage.setItem("flashcards_users", JSON.stringify(allUsers));
 				}
 
-		// ⚠️ IMPORTANT : on ne fait PAS appel à saveUserData() (souvent inexistante)
 				saveData();
 				updateCategoryList();
-				updateHomeStats?.();
+				if (typeof updateHomeStats === "function") updateHomeStats();
 
-				showNotification("Données importées avec succès ✓", "success");
+				showNotification(message, "success");
 			}
-		}
 
-// --- Helpers robustes ---
+			function sanitizeCardsArray(arr) {
+				if (!Array.isArray(arr)) return [];
+				return arr
+					.map(c => ({
+						question: (c?.question ?? c?.q ?? c?.front ?? "").toString(),
+						answer: (c?.answer ?? c?.a ?? c?.back ?? "").toString(),
+						importance: (c?.importance ?? "normal").toString()
+					}))
+					.filter(c => c.question.trim() || c.answer.trim());
+			}
 
-		function sanitizeCardsArray(arr) {
-			if (!Array.isArray(arr)) return [];
-			return arr
-				.map(c => ({
-					question: (c?.question ?? "").toString(),
-					answer: (c?.answer ?? "").toString(),
-					importance: (c?.importance ?? "normal").toString()
-				}))
-				.filter(c => c.question.trim() || c.answer.trim());
-		}
+			function sanitizeCategories(obj) {
+				const out = {};
+				if (!obj || typeof obj !== "object") return out;
 
-		function sanitizeCategories(obj) {
-			const out = {};
-			if (!obj || typeof obj !== "object") return out;
+				for (const [catName, folders] of Object.entries(obj)) {
+					out[catName] = {};
+					if (!folders || typeof folders !== "object") continue;
 
-			for (const [catName, folders] of Object.entries(obj)) {
-				out[catName] = {};
-				if (!folders || typeof folders !== "object") continue;
+					for (const [folderName, lists] of Object.entries(folders)) {
+						out[catName][folderName] = {};
+						if (!lists || typeof lists !== "object") continue;
 
-				for (const [folderName, lists] of Object.entries(folders)) {
-					out[catName][folderName] = {};
-					if (!lists || typeof lists !== "object") continue;
-
-					for (const [listName, cards] of Object.entries(lists)) {
-						out[catName][folderName][listName] = sanitizeCardsArray(cards);
+						for (const [listName, cards] of Object.entries(lists)) {
+							out[catName][folderName][listName] = sanitizeCardsArray(cards);
+						}
 					}
 				}
+				return out;
 			}
-			return out;
-		}
 
-		function mergeCategories(target, incoming) {
-			for (const [catName, folders] of Object.entries(incoming)) {
-				if (!target[catName]) target[catName] = {};
-				for (const [folderName, lists] of Object.entries(folders)) {
-					if (!target[catName][folderName]) target[catName][folderName] = {};
-					for (const [listName, cards] of Object.entries(lists)) {
-						// règle de merge : si la liste existe, on la remplace (simple et prévisible)
-						target[catName][folderName][listName] = cards;
+			function mergeCategories(target, incoming) {
+				for (const [catName, folders] of Object.entries(incoming)) {
+					if (!target[catName]) target[catName] = {};
+					for (const [folderName, lists] of Object.entries(folders)) {
+						if (!target[catName][folderName]) target[catName][folderName] = {};
+						for (const [listName, cards] of Object.entries(lists)) {
+							target[catName][folderName][listName] = cards;
+						}
 					}
 				}
 			}
