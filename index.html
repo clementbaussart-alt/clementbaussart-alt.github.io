@@ -5392,14 +5392,16 @@ function updateBackButton() {
 }
 
 function clearFocusComp() {
-    if (lastFocusedId) {
-        const prev = document.getElementById(lastFocusedId);
-        if (prev && prev.classList) prev.classList.remove('focused');
-        const ghost = document.getElementById(lastFocusedId + '-ghost');
-        if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
-        const delGhost = document.getElementById(lastFocusedId + '-delghost');
-        if (delGhost && delGhost.parentNode) delGhost.parentNode.removeChild(delGhost);
-    }
+    // Retire tous les éléments avec la classe focused
+    document.querySelectorAll('#diffOutput .focused').forEach(el => {
+        el.classList.remove('focused');
+    });
+    
+    // Supprime tous les fantômes
+    document.querySelectorAll('[id$="-ghost"], [id$="-delghost"]').forEach(ghost => {
+        ghost.remove();
+    });
+    
     lastFocusedId = null;
     lastFocusedType = null;
 }
