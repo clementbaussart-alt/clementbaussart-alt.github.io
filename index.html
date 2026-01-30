@@ -1994,7 +1994,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
                 <div class="container lists-page">
                     <div class="lists-page-header">
 					<button class="btn" onclick="backToCourses()">← Cours</button>
-					<h2 id="listsTitle">Cours</h2><button class="btn-edit-page-title" onclick="showRenameFolderModal()">✏️</button><button class="btn-edit-page-title" title="Intégrer ce cours" onclick="copyFolderEmbed()">🔗</button></div>
+					<h2 id="listsTitle">Cours</h2><button class="btn-edit-list" type="button" data-action="rename-list" data-list="${escapeAttr(listName)}">✏️</button><button class="btn-edit-page-title" title="Intégrer ce cours" onclick="copyFolderEmbed()">🔗</button></div>
                     <p class="lists-page-subtitle">Sélectionne une liste à réviser</p>
                     <div class="lists-grid" id="listsGrid"></div>
                     <button class="btn-new-list" onclick="showNewListModal()">➕ Créer une nouvelle liste</button>
@@ -2710,6 +2710,14 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
             showNotification('Connexion réussie !', 'success');
         }
 
+		function escapeAttr(s){
+			return String(s ?? "")
+				.replaceAll("&","&amp;")
+				.replaceAll('"',"&quot;")
+				.replaceAll("<","&lt;")
+				.replaceAll(">","&gt;");
+		}
+
         function loginAsGuest() {
             const guestId = 'guest_' + Date.now();
             currentUser = {
@@ -2940,6 +2948,13 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
             updateHomeStats();
             loadTheme();
             showPage('home');
+			
+			document.getElementById('listsGrid')?.addEventListener('click', (e) => {
+				const btn = e.target.closest('[data-action="rename-list"]');
+				if (!btn) return;
+				const listName = btn.dataset.list;
+				showRenameListModal(listName);
+			});
         }
 
         function checkAuth() {
