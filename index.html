@@ -3770,103 +3770,107 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
             const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
             return text.replace(/[&<>"']/g, m => map[m]);
         }
+		
+		function updateCategoryList() {
+    		const container = document.getElementById('categoryList');
+    		container.innerHTML = '';
+    		Object.keys(categories).forEach(catName => {
+        		const catDiv = document.createElement('div');
+        		catDiv.className = 'category-item';
+        		const catHeader = document.createElement('div');
+        		catHeader.className = 'category-header';
+        		if (catName === currentCategory && (currentPage === 'lists' || currentPage === 'study' || currentPage === 'manage')) {
+            		catHeader.classList.add('active');
+        		}
 
-        function updateCategoryList() {
-            const container = document.getElementById('categoryList');
-            container.innerHTML = '';
-            Object.keys(categories).forEach(catName => {
-                const catDiv = document.createElement('div');
-                catDiv.className = 'category-item';
-                const catHeader = document.createElement('div');
-                catHeader.className = 'category-header';
-                if (catName === currentCategory && (currentPage === 'lists' || currentPage === 'study' || currentPage === 'manage')) {
-                    catHeader.classList.add('active');
-                }
+        		let totalCards = 0;
+        		Object.values(categories[catName]).forEach(folder => {
+            		Object.values(folder).forEach(lists => {
+                		if (Array.isArray(lists)) {
+                    		totalCards += lists.length;
+                		}
+            		});
+        		});
 
-                let totalCards = 0;
-                Object.values(categories[catName]).forEach(folder => {
-                    Object.values(folder).forEach(lists => {
-                        totalCards += lists.length;
-                    });
-                });
+        		const leftDiv = document.createElement('div');
+        		leftDiv.className = 'category-left';
+        		const isOpen = openCategories[catName];
+        		const toggleSpan = document.createElement('span');
+        		toggleSpan.className = 'category-toggle' + (isOpen ? ' open' : '');
+        		toggleSpan.innerHTML = '▶';
+        		toggleSpan.onclick = function(e) { e.stopPropagation(); toggleCategory(catName); };
+        		const nameSpan = document.createElement('span');
+        		nameSpan.className = 'category-name';
+        		nameSpan.textContent = catName;
+        		const countSpan = document.createElement('span');
+        		countSpan.className = 'category-count';
+        		countSpan.textContent = totalCards;
 
-                const leftDiv = document.createElement('div');
-                leftDiv.className = 'category-left';
-                const isOpen = openCategories[catName];
-                const toggleSpan = document.createElement('span');
-                toggleSpan.className = 'category-toggle' + (isOpen ? ' open' : '');
-                toggleSpan.innerHTML = '▶';
-                toggleSpan.onclick = function(e) { e.stopPropagation(); toggleCategory(catName); };
-                const nameSpan = document.createElement('span');
-                nameSpan.className = 'category-name';
-                nameSpan.textContent = catName;
-                const countSpan = document.createElement('span');
-                countSpan.className = 'category-count';
-                countSpan.textContent = totalCards;
+        		leftDiv.appendChild(toggleSpan);
+        		leftDiv.appendChild(nameSpan);
+        		leftDiv.appendChild(countSpan);
 
-                leftDiv.appendChild(toggleSpan);
-                leftDiv.appendChild(nameSpan);
-                leftDiv.appendChild(countSpan);
+        		const actionsDiv = document.createElement('div');
+        		actionsDiv.className = 'category-actions';
+        		const editBtn = document.createElement('button');
+        		editBtn.className = 'btn-edit-category';
+        		editBtn.innerHTML = '✏️';
+        		editBtn.onclick = function(e) { e.stopPropagation(); showEditCategoryModal(catName); };
+        		const deleteBtn = document.createElement('button');
+        		deleteBtn.className = 'btn-delete-category';
+        		deleteBtn.innerHTML = '✕';
+        		deleteBtn.onclick = function(e) { e.stopPropagation(); deleteCategory(catName); };
+        		actionsDiv.appendChild(editBtn);
+        		actionsDiv.appendChild(deleteBtn);
 
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'category-actions';
-                const editBtn = document.createElement('button');
-                editBtn.className = 'btn-edit-category';
-                editBtn.innerHTML = '✏️';
-                editBtn.onclick = function(e) { e.stopPropagation(); showEditCategoryModal(catName); };
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn-delete-category';
-                deleteBtn.innerHTML = '✕';
-                deleteBtn.onclick = function(e) { e.stopPropagation(); deleteCategory(catName); };
-                actionsDiv.appendChild(editBtn);
-                actionsDiv.appendChild(deleteBtn);
+        		catHeader.appendChild(leftDiv);
+        		catHeader.appendChild(actionsDiv);
+        		catDiv.appendChild(catHeader);
 
-                catHeader.appendChild(leftDiv);
-                catHeader.appendChild(actionsDiv);
-                catDiv.appendChild(catHeader);
+        		const foldersDiv = document.createElement('div');
+        		foldersDiv.className = 'category-folders' + (isOpen ? ' open' : '');
 
-                const foldersDiv = document.createElement('div');
-                foldersDiv.className = 'category-folders' + (isOpen ? ' open' : '');
+        		Object.keys(categories[catName]).forEach(folderName => {
+            		let cardCount = 0;
+            		Object.values(categories[catName][folderName]).forEach(lists => {
+                		if (Array.isArray(lists)) {
+                    		cardCount += lists.length;
+                		}
+            		});
 
-                Object.keys(categories[catName]).forEach(folderName => {
-                    let cardCount = 0;
-                    Object.values(categories[catName][folderName]).forEach(lists => {
-                        cardCount += lists.length;
-                    });
+            		const folderDiv = document.createElement('div');
+            		folderDiv.className = 'folder-item';
+            		if (catName === currentCategory && folderName === currentFolder && (currentPage === 'lists' || currentPage === 'study' || currentPage === 'manage')) {
+                		folderDiv.classList.add('active');
+            		}
 
-                    const folderDiv = document.createElement('div');
-                    folderDiv.className = 'folder-item';
-                    if (catName === currentCategory && folderName === currentFolder && (currentPage === 'lists' || currentPage === 'study' || currentPage === 'manage')) {
-                        folderDiv.classList.add('active');
-                    }
+            		const folderInfo = document.createElement('div');
+            		folderInfo.className = 'folder-info';
+        			folderInfo.onclick = function() { showListsPage(catName, folderName); };
+            		folderInfo.innerHTML = '<span>📖</span><span style="flex:1">' + escapeHtml(folderName) + '</span><span class="folder-badge">' + cardCount + '</span>';
 
-                    const folderInfo = document.createElement('div');
-                    folderInfo.className = 'folder-info';
-                    folderInfo.onclick = function() { showListsPage(catName, folderName); };
-                    folderInfo.innerHTML = '<span>📖</span><span style="flex:1">' + escapeHtml(folderName) + '</span><span class="folder-badge">' + cardCount + '</span>';
+            		const folderActions = document.createElement('div');
+            		folderActions.className = 'folder-actions';
+            		const folderEditBtn = document.createElement('button');
+            		folderEditBtn.className = 'btn-edit-folder';
+            		folderEditBtn.innerHTML = '✏️';
+            		folderEditBtn.onclick = function(e) { e.stopPropagation(); showEditFolderModal(catName, folderName); };
+            		const folderDeleteBtn = document.createElement('button');
+            		folderDeleteBtn.className = 'btn-delete-folder';
+            		folderDeleteBtn.innerHTML = '✕';
+            		folderDeleteBtn.onclick = function(e) { e.stopPropagation(); deleteFolder(catName, folderName); };
+            		folderActions.appendChild(folderEditBtn);
+            		folderActions.appendChild(folderDeleteBtn);
 
-                    const folderActions = document.createElement('div');
-                    folderActions.className = 'folder-actions';
-                    const folderEditBtn = document.createElement('button');
-                    folderEditBtn.className = 'btn-edit-folder';
-                    folderEditBtn.innerHTML = '✏️';
-                    folderEditBtn.onclick = function(e) { e.stopPropagation(); showEditFolderModal(catName, folderName); };
-                    const folderDeleteBtn = document.createElement('button');
-                    folderDeleteBtn.className = 'btn-delete-folder';
-                    folderDeleteBtn.innerHTML = '✕';
-                    folderDeleteBtn.onclick = function(e) { e.stopPropagation(); deleteFolder(catName, folderName); };
-                    folderActions.appendChild(folderEditBtn);
-                    folderActions.appendChild(folderDeleteBtn);
+            		folderDiv.appendChild(folderInfo);
+            		folderDiv.appendChild(folderActions);
+           			foldersDiv.appendChild(folderDiv);
+        		});
 
-                    folderDiv.appendChild(folderInfo);
-                    folderDiv.appendChild(folderActions);
-                    foldersDiv.appendChild(folderDiv);
-                });
-
-                catDiv.appendChild(foldersDiv);
-                container.appendChild(catDiv);
-            });
-        }
+        		catDiv.appendChild(foldersDiv);
+        		container.appendChild(catDiv);
+   			});
+		}
 
         function updateHomeStats() {
     		let totalCourses = 0;
