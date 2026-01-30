@@ -3601,6 +3601,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 
    			const modal = document.getElementById('renameListModal');
    			if (modal) modal.classList.add('show');
+			setTimeout(() => input.focus(), 100);
 		}
 
         function closeRenameListModal() {
