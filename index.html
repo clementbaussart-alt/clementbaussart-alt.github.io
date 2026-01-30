@@ -3709,54 +3709,83 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
     		const targetCategory = document.getElementById('moveToCategorySelect').value;
     		const targetFolder = document.getElementById('moveToFolderSelect').value;
     
-    // Vérifier si on déplace vers le même endroit
-    		if (targetCategory === currentCategory && targetFolder === currentFolder) {
-        		showNotification('La liste est déjà dans cette catégorie/cours.', 'error');
+    // Vérifications de base
+    		if (!moveListTarget) {
+        		showNotification('Erreur : aucune liste sélectionnée.', 'error');
         		return;
     		}
     
-    // Vérifier si une liste avec ce nom existe déjà
+    		if (!targetCategory || !targetFolder) {
+        		showNotification('Veuillez sélectionner une catégorie et un cours.', 'error');
+        		return;
+    		}
+    
+    // Vérifier si on déplace vers le même endroit
+    		if (targetCategory === currentCategory && targetFolder === currentFolder) {
+        		showNotification('La liste est déjà dans cette catégorie/cours.', 'error');
+       			return;
+    		}
+    
+    // Vérifier que la source existe
+    		if (!categories[currentCategory] || !categories[currentCategory][currentFolder] || 
+        		!categories[currentCategory][currentFolder][moveListTarget]) {
+        		showNotification('Erreur : liste source introuvable.', 'error');
+        		return;
+    		}
+    
+    // Vérifier que la destination existe
+    		if (!categories[targetCategory] || !categories[targetCategory][targetFolder]) {
+        		showNotification('Erreur : destination introuvable.', 'error');
+       			return;
+    		}
+    
+    // Vérifier si une liste avec ce nom existe déjà à la destination
     		if (categories[targetCategory][targetFolder][moveListTarget]) {
         		showNotification('Une liste avec ce nom existe déjà à cet endroit.', 'error');
         		return;
     		}
     
-    // Copier la liste vers la nouvelle destination
+    // Récupérer le contenu de la liste
     		const listContent = categories[currentCategory][currentFolder][moveListTarget];
+    
+    // Déplacer la liste
     		categories[targetCategory][targetFolder][moveListTarget] = listContent;
     
-    // Initialiser les structures de résultats si nécessaire
+    // Gérer les résultats
     		if (!results[targetCategory]) results[targetCategory] = {};
     		if (!results[targetCategory][targetFolder]) results[targetCategory][targetFolder] = {};
     
-    // Copier les résultats si existants
     		if (results[currentCategory]?.[currentFolder]?.[moveListTarget]) {
         		results[targetCategory][targetFolder][moveListTarget] = results[currentCategory][currentFolder][moveListTarget];
         		delete results[currentCategory][currentFolder][moveListTarget];
         
-        // Nettoyer les structures vides dans results
+        // Nettoyer les structures vides
         		if (Object.keys(results[currentCategory][currentFolder]).length === 0) {
             		delete results[currentCategory][currentFolder];
         		}
-        		if (results[currentCategory] && Object.keys(results[currentCategory]).length === 0) {
+       			if (results[currentCategory] && Object.keys(results[currentCategory]).length === 0) {
             		delete results[currentCategory];
         		}
     		}
     
-    // Supprimer de l'emplacement d'origine
+    // Supprimer de la source
     		delete categories[currentCategory][currentFolder][moveListTarget];
     
-    // Créer une liste par défaut si le dossier devient vide
+    // Créer une liste par défaut si le dossier source devient vide
     		if (Object.keys(categories[currentCategory][currentFolder]).length === 0) {
         		categories[currentCategory][currentFolder]['Liste par défaut'] = [];
     		}
     
+    // Sauvegarder
     		saveResults();
     		saveData();
+    
+    // Mettre à jour l'interface
     		updateCategoryList();
     		loadListsPage();
     		closeMoveListModal();
-    		showNotification('Liste déplacée ✓', 'success');
+    
+    		showNotification('Liste "' + moveListTarget + '" déplacée vers "' + targetCategory + ' → ' + targetFolder + '" ✓', 'success');
 		}
 
 // Fermer la modal de déplacement
