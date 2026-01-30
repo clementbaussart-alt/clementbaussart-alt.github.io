@@ -2656,25 +2656,37 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 		document.addEventListener('mouseup', saveSelection);
 		document.addEventListener('keyup', saveSelection);
 		document.addEventListener('keydown', (e) => {
-			const editor = e.target?.closest?.('.editor-content');
-			if (!editor) return;
+   			const editor = e.target?.closest?.('.editor-content');
+    		if (!editor) return;
 
-	// Laisse les raccourcis clavier tranquilles
-			if (e.ctrlKey || e.metaKey || e.altKey) return;
+    // Laisse les raccourcis clavier tranquilles
+    		if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-			if (e.key === 'Enter') {
-				e.preventDefault();
+    // Intercepter la touche "-" pour insérer "•"
+    		if (e.key === '-') {
+        		e.preventDefault();
+        		e.stopPropagation();
+        
+        		const selection = window.getSelection();
+        		const range = selection.getRangeAt(0);
+        		range.deleteContents();
+        
+        		const textNode = document.createTextNode('• ');
+        		range.insertNode(textNode);
+        
+        		range.setStartAfter(textNode);
+        		range.setEndAfter(textNode);
+        		selection.removeAllRanges();
+        		selection.addRange(range);
+        
+        		return false;
+    		}
 
-		// 1) le plus fiable pour un <br>
-				const ok = document.execCommand('insertLineBreak');
-
-		// 2) fallback si insertLineBreak ne marche pas
-				if (!ok) document.execCommand('insertHTML', false, '<br>');
-				if (e.key === '-') {
-					e.preventDefault();
-					document.execCommand('insertText', false, '• ');
-				}
-			}
+    		if (e.key === 'Enter') {
+        		e.preventDefault();
+        		const ok = document.execCommand('insertLineBreak');
+        		if (!ok) document.execCommand('insertHTML', false, '<br>');
+    		}
 		}, true);
 
 		function applyColorToSelection(cmd, color) {
