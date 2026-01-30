@@ -2114,7 +2114,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
                             <button class="btn-clear" onclick="clearCurrentList()" style="padding: 6px 12px; font-size: 12px; border-radius: 3px; height: 30px;">🗑️ Vider</button>
                             <button class="btn-action" onclick="importCards()" style="padding: 6px 12px; font-size: 12px; border-radius: 3px; height: 30px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);">📥 Importer JSON</button>
                             <button class="btn-action btn-action-secondary" onclick="showImportTextModal()" style="padding: 6px 12px; font-size: 12px; border-radius: 3px; height: 30px;">📋 Importer Texte/CSV</button>
-							<button class="btn-action btn-action-secondary" onclick="goToLastCard(true)"></button>
+							<button class="btn-action btn-action-secondary" onclick="goToLastCard(false)"></button>
                         </div>
                     </div>
                 </div>
@@ -2577,7 +2577,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
             </div>
         </div>
     </div>
-		<button id="btnGoLastCard" class="floating-last-card" onclick="goToLastCard(true)" title="Dernière fiche">
+		<button id="btnGoLastCard" class="floating-last-card" onclick="goToLastCard(false)" title="Dernière fiche">
 		⬇️
 		</button>
     <!-- Notification -->
