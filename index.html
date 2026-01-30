@@ -2577,6 +2577,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
             </div>
         </div>
     </div>
+		<button class="scroll-btn" onclick="goToFirstCard(false)" title="Aller en haut">⬆️</button>
 		<button id="btnGoLastCard" class="floating-last-card" onclick="goToLastCard(false)" title="Dernière fiche">
 		⬇️
 		</button>
@@ -4026,6 +4027,26 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 					editCard(lastIndex); // ou openEditCard(lastIndex) selon ton flux
 				}
 			}, 0);
+		}
+
+		function goToFirstCard(openEdit = false) {
+    		if (!currentCategory || !currentFolder || !currentList) return;
+
+    		const cards = categories?.[currentCategory]?.[currentFolder]?.[currentList];
+    		if (!Array.isArray(cards) || cards.length === 0) return;
+
+    		setTimeout(() => {
+        		const el = document.querySelector(`#cardsList .card-edit-item[data-index="0"]`);
+        		if (el) {
+            		el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            		el.classList.add('flash-focus');
+            		setTimeout(() => el.classList.remove('flash-focus'), 800);
+        		}
+
+        		if (openEdit) {
+            		editCard(0);
+        		}
+   			}, 0);
 		}
 
 		function sanitizeResultsForList(resultsObj, cardsLength) {
