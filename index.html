@@ -3588,20 +3588,30 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			requestAnimationFrame(tryInject);
 		}
 
+		// À mettre n'importe où dans vos scripts (par exemple avant renameList)
 		function showRenameListModal(listName) {
-    // On stocke l'emplacement complet pour que la fonction renameList sache quoi modifier
-    		renameTarget = { 
-        		category: currentCategory, 
-        		folder: currentFolder, 
-       			list: listName 
+    // 1. On verrouille la cible (Catégorie + Cours + Nom de la liste)
+    		renameTarget = {
+        		category: currentCategory,
+        		folder: currentFolder,
+        		list: listName
     		};
 
+    // 2. On remplit le champ texte du modal
     		const input = document.getElementById('renameListInput');
-    		if (input) input.value = listName || '';
+    		if (input) {
+        		input.value = listName;
+    		}
 
-   			const modal = document.getElementById('renameListModal');
-   			if (modal) modal.classList.add('show');
-			setTimeout(() => input.focus(), 100);
+    // 3. On affiche le modal
+    		const modal = document.getElementById('renameListModal');
+    		if (modal) {
+        		modal.classList.add('show');
+        // Petit délai pour mettre le focus dans la case (confort utilisateur)
+       			setTimeout(() => input.focus(), 100);
+    		} else {
+        		console.error("Le modal 'renameListModal' est introuvable dans le HTML");
+    		}
 		}
 
         function closeRenameListModal() {
@@ -3611,58 +3621,67 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
         }
 
         function renameList() {
-    		const input = document.getElementById('renameListInput');
+   			const input = document.getElementById('renameListInput');
     		const newName = (input?.value || '').trim();
-    
+
     		if (!newName) {
         		showNotification("Le nom ne peut pas être vide", "error");
-       			return;
+        		return;
     		}
 
-    // Récupération des cibles via renameTarget
+    // On récupère les infos stockées lors du clic sur le crayon
     		const cat = renameTarget?.category;
     		const folder = renameTarget?.folder;
     		const oldName = renameTarget?.list;
 
+    // Sécurité : si on a perdu la trace de la liste originale
     		if (!cat || !folder || !oldName) {
-        		showNotification("Erreur de cible pour le renommage", "error");
-       			return;
+        		showNotification("Erreur : cible introuvable. Réessayez.", "error");
+        		closeRenameListModal();
+        		return;
     		}
 
-    		const listsObj = categories[cat][folder];
-    		const cards = listsObj[oldName]; // On sauvegarde les fiches ici !
-
+    		const currentFolderObj = categories[cat][folder];
+    
+    // Si le nom n'a pas changé, on ferme juste
     		if (newName === oldName) {
         		closeRenameListModal();
         		return;
-   			}
-
-    // Vérifier si le nouveau nom existe déjà
-    		if (listsObj[newName]) {
-        		if (!confirm(`Une liste nommée "${newName}" existe déjà. Écraser ?`)) return;
     		}
 
-    // --- TRANSFERT DES DONNÉES ---
-    		listsObj[newName] = cards; // On crée la nouvelle clé avec les anciennes fiches
-    		delete listsObj[oldName];  // On supprime l'ancienne clé
+    // Si une liste porte déjà ce nom
+    		if (currentFolderObj[newName]) {
+        		if (!confirm(`La liste "${newName}" existe déjà. Voulez-vous la remplacer ?`)) {
+            		return;
+        		}
+    		}
 
-    // --- TRANSFERT DES RÉSULTATS (Statistiques d'apprentissage) ---
-   			if (results[cat] && results[cat][folder] && results[cat][folder][oldName]) {
+    // --- LE CŒUR DU SYSTÈME ---
+    // 1. On copie les cartes de l'ancienne liste vers le nouveau nom
+    		currentFolderObj[newName] = currentFolderObj[oldName];
+    
+    // 2. On supprime l'ancienne liste
+    		delete currentFolderObj[oldName];
+
+    // 3. On met à jour les résultats (scores d'apprentissage) si ils existent
+    		if (results[cat] && results[cat][folder] && results[cat][folder][oldName]) {
         		results[cat][folder][newName] = results[cat][folder][oldName];
         		delete results[cat][folder][oldName];
-        		saveResults();
+       			saveResults();
     		}
 
-    // Mise à jour de l'état global si on était en train de gérer cette liste
-    		if (currentList === oldName) currentList = newName;
+    // 4. Si on était en train de consulter cette liste, on met à jour la variable globale
+    		if (currentList === oldName) {
+        		currentList = newName;
+    		}
 
-    // Sauvegarde et Rafraîchissement
-   			saveData();
-    		updateCategoryList();
-    		loadListsPage(); // Recharge la grille des listes
-    
+    // 5. Sauvegarde et Rafraîchissement
+    		saveData(); // Sauvegarde dans le LocalStorage
+    		updateCategoryList(); // Met à jour la barre latérale
+    		loadListsPage(); // Met à jour la grille des listes (important pour réafficher le nouveau nom)
+
     		closeRenameListModal();
-    		showNotification("Liste renommée avec succès ✓", "success");
+    		showNotification("Liste renommée avec succès !", "success");
 		}
 
         // ====== FONCTIONS D'AFFICHAGE ======
@@ -3934,7 +3953,10 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
                 const editBtn = document.createElement('button');
                 editBtn.className = 'btn-edit-list';
                 editBtn.innerHTML = '✏️';
-                editBtn.onclick = function(e) { e.stopPropagation(); showEditListModal(listName); };
+				editBtn.onclick = function(e) {
+    			e.stopPropagation(); // Empêche d'ouvrir la liste quand on clique sur le crayon
+    			showRenameListModal(listName); // Appelle la fonction corrigée ci-dessous
+				};
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'btn-delete-list';
                 deleteBtn.innerHTML = '✕';
