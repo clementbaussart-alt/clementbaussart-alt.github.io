@@ -2283,8 +2283,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
                 </div>
                 <div class="modal-buttons">
                     <button class="btn-cancel" onclick="closeRenameCategoryModal()">Annuler</button>
-                    <button class="btn-add" onclick="renameCategory()">Renommer</button>
-                </div>
+					<button class="btn-edit-list" onclick="showRenameListModal(${JSON.stringify(listName)})">✏️</button>                </div>
             </div>
         </div>
 
@@ -3590,18 +3589,12 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 		}
 
 		function showRenameListModal(listName) {
-	// 1) mémoriser la cible
-			renameTarget = {
-				category: currentCategory,
-				folder: currentFolder,
-				list: listName
-			};
+			renameTarget = { category: currentCategory, folder: currentFolder, list: listName };
+			currentList = listName; // <- important si ton code s’appuie sur currentList
 
-	// 2) préremplir l’input
 			const input = document.getElementById('renameListInput');
 			if (input) input.value = listName || '';
 
-	// 3) ouvrir le modal
 			const modal = document.getElementById('renameListModal');
 			if (modal) modal.classList.add('show');
 		}
