@@ -4036,6 +4036,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 
             loadListsPage();
             showPage('lists');
+			hideScrollButtons();
         }
 
 		function goToLastCard(openEdit = true) {
@@ -4390,8 +4391,12 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			enableCardsDragAndDrop();
             loadManagePage();
             showPage('manage');
-			document.querySelector('.scroll-buttons').style.display = 'none';
         }
+
+		function hideScrollButtons() {
+    		const scrollBtns = document.querySelector('.scroll-buttons');
+    		if (scrollBtns) scrollBtns.style.display = 'none';
+		}
 
 		function injectFormatPanelsInCardsList() {
 			document.querySelectorAll('#cardsList .card-edit-item').forEach(cardItem => {
@@ -4592,6 +4597,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 		function goHome() {
 			currentPage = 'home';
 			showPage('home');
+			hideScrollButtons();
 		}
 
 		function backToCourses() {
@@ -4601,6 +4607,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			} else {
 				// sécurité si jamais currentCategory n'est pas défini
 				goHome();
+				hideScrollButtons();
 			}
 		}
 
@@ -4613,6 +4620,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
             updateCategoryList();
             loadStudyPage();
             showPage('study');
+			hideScrollButtons();
         }
 
         function loadStudyPage() {
