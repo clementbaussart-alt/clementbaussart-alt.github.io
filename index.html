@@ -5420,28 +5420,23 @@ function focusChangeComp(id, type, options) {
     clearFocusComp();
     const el = document.getElementById(id);
     if (!el) return;
-    
+
+    lastFocusedId = id;
+    lastFocusedType = type || null;
+
+    // Pour MARK (insertions et remplacements)
     if (el.tagName === 'MARK') {
         el.classList.add('focused');
-        lastFocusedId = id;
-        lastFocusedType = type || null;
-    } else {
-        lastFocusedId = id;
-        lastFocusedType = type || 'suppression';
-        
-        if ((type === 'suppression') && options && options.removedText) {
+    } 
+    // Pour les ancres invisibles (suppressions)
+    else if (el.tagName === 'A') {
+        if (type === 'suppression' && options && options.removedText) {
             showDeletionGhostAfter(el, id, options.removedText);
-        } else {
-            let ghost = document.getElementById(id + '-ghost');
-            if (!ghost) {
-                ghost = document.createElement('span');
-                ghost.id = id + '-ghost';
-				ghost.className = 'focus-ghost focused';
-				el.insertAdjacentElement('afterend', ghost);
-            }
         }
     }
-    (el.tagName === 'MARK' ? el : document.getElementById(id)).scrollIntoView({behavior:'smooth', block:'center'});
+
+    // Scroll vers l'élément
+    el.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
 function computeComp() {
