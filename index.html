@@ -1866,7 +1866,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
     		position: fixed;
     		right: 20px;
     		bottom: 20px;
-    		display: flex;
+    		display: none;
     		flex-direction: column;
     		gap: 10px;
     		z-index: 1000;
@@ -4390,6 +4390,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			enableCardsDragAndDrop();
             loadManagePage();
             showPage('manage');
+			document.querySelector('.scroll-buttons').style.display = 'none';
         }
 
 		function injectFormatPanelsInCardsList() {
@@ -4462,6 +4463,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 				if (inlineSel && origSel) inlineSel.value = origSel.value;
 			});
 			enableCardsDragAndDrop();
+			document.querySelector('.scroll-buttons').style.display = 'flex';
         }
 
         function deleteCard(idx) {
