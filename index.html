@@ -4092,8 +4092,8 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
                     <div class="list-card-actions">
                         <button class="btn-list-action btn-study">📖 Réviser</button>
 						<button class="btn-list-action btn-review">🔄 À revoir</button>
-                        <button class="btn-list-action btn-manage" onclick="showManagePage('${escapeHtml(currentCategory)}','${escapeHtml(currentFolder)}','${escapeHtml(listName)}')">✏️ Gérer</button>
-						<button onclick="showMoveListModal('${escapeHtml(listName)}')">📦 Déplacer</button>
+						<button class="btn-list-action btn-manage">✏️ Gérer</button>
+						<button class="btn-list-action btn-move">📦 Déplacer</button>
                     </div>
                 `;
 
@@ -4116,6 +4116,19 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 				// 🔄 À revoir = uniquement partial/unknown
 				const btnReview = card.querySelector('.btn-review');
 
+				// Bouton Gérer
+				const btnManage = card.querySelector('.btn-manage');
+				btnManage.onclick = (e) => {
+    				e.stopPropagation();
+    				showManagePage(currentCategory, currentFolder, listName);
+				};
+					// Bouton Déplacer
+				const btnMove = card.querySelector('.btn-move');
+				btnMove.onclick = (e) => {
+    				e.stopPropagation();
+   					showMoveListModal(listName);
+				};
+	
 				btnReview.onclick = (e) => {
 					e.stopPropagation();
 					if (reviewIndices.length === 0) return;
