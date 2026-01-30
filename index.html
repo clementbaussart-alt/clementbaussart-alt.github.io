@@ -3610,11 +3610,11 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			const newName = (input?.value || '').trim();
 			if (!newName) return showNotification("Nom de liste vide", "error");
 
-	// cible robuste: d'abord renameTarget, sinon current*
-			const cat = (renameTarget && renameTarget.category) ? renameTarget.category : currentCategory;
-			const folder = (renameTarget && renameTarget.folder) ? renameTarget.folder : currentFolder;
-			const oldName = (renameTarget && renameTarget.list) ? renameTarget.list : currentList;
-
+	// ✅ la cible vient du showRenameListModal(listName)
+			const cat = renameTarget?.category;
+			const folder = renameTarget?.folder;
+			const oldName = renameTarget?.list;
+	
 			if (!cat || !folder || !oldName) {
 				showNotification("Renommer: cible introuvable (cat/cours/liste)", "error");
 				return;
@@ -3638,8 +3638,8 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			}
 
 			if (listsObj[newName] && !confirm(`La liste "${newName}" existe déjà. Remplacer ?`)) return;
-
-	// ✅ déplacer la liste (sans toucher aux cartes)
+	
+	// ✅ renommer = déplacer la clé, sans perdre les cartes
 			listsObj[newName] = cards;
 			delete listsObj[oldName];
 
@@ -3652,21 +3652,17 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 				if (typeof saveResults === "function") saveResults();
 			}
 
-	// état courant
-			currentCategory = cat;
-			currentFolder = folder;
+	// état courant + clean
 			currentList = newName;
 			renameTarget = null;
 
-	// persist
+	// persist + refresh
 			if (currentUser) {
 				currentUser.folders = categories;
 				allUsers[currentUser.username] = currentUser;
 				localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
 			}
 			saveData();
-
-	// refresh UI (si ta fonction existe)
 			if (typeof showListsPage === "function") showListsPage(cat, folder);
 			updateCategoryList();
 
