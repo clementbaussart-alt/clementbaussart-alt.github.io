@@ -1994,7 +1994,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
                 <div class="container lists-page">
                     <div class="lists-page-header">
 					<button class="btn" onclick="backToCourses()">← Cours</button>
-					<h2 id="listsTitle">Cours</h2><button class="btn-edit-list" type="button" data-action="rename-list" data-list="${escapeAttr(listName)}">✏️</button><button class="btn-edit-page-title" title="Intégrer ce cours" onclick="copyFolderEmbed()">🔗</button></div>
+					<h2 id="listsTitle">Cours</h2><button class="btn-edit-page-title" onclick="showRenameFolderModal()">✏️</button><button class="btn-edit-page-title" title="Intégrer ce cours" onclick="copyFolderEmbed()">🔗</button></div>
                     <p class="lists-page-subtitle">Sélectionne une liste à réviser</p>
                     <div class="lists-grid" id="listsGrid"></div>
                     <button class="btn-new-list" onclick="showNewListModal()">➕ Créer une nouvelle liste</button>
@@ -2283,7 +2283,8 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
                 </div>
                 <div class="modal-buttons">
                     <button class="btn-cancel" onclick="closeRenameCategoryModal()">Annuler</button>
-					<button class="btn-add" onclick="renameCategory()">Renommer</button>
+                    <button class="btn-add" onclick="renameCategory()">Renommer</button>
+                </div>
             </div>
         </div>
 
@@ -2312,7 +2313,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
                 </div>
                 <div class="modal-buttons">
                     <button class="btn-cancel" onclick="closeRenameListModal()">Annuler</button>
-					<button class="btn-add" onclick="renameList()">Renommer</button>
+                    <button class="btn-add" onclick="renameList()">Renommer</button>
                 </div>
             </div>
         </div>
@@ -2710,14 +2711,6 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
             showNotification('Connexion réussie !', 'success');
         }
 
-		function escapeAttr(s){
-			return String(s ?? "")
-				.replaceAll("&","&amp;")
-				.replaceAll('"',"&quot;")
-				.replaceAll("<","&lt;")
-				.replaceAll(">","&gt;");
-		}
-
         function loginAsGuest() {
             const guestId = 'guest_' + Date.now();
             currentUser = {
@@ -2948,13 +2941,6 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
             updateHomeStats();
             loadTheme();
             showPage('home');
-			
-			document.getElementById('listsGrid')?.addEventListener('click', (e) => {
-				const btn = e.target.closest('[data-action="rename-list"]');
-				if (!btn) return;
-				const listName = btn.dataset.list;
-				showRenameListModal(listName);
-			});
         }
 
         function checkAuth() {
@@ -3603,17 +3589,6 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			requestAnimationFrame(tryInject);
 		}
 
-		// À mettre n'importe où dans vos scripts (par exemple avant renameList)
-		function showRenameListModal(listName) {
-			renameTarget = { category: currentCategory, folder: currentFolder, list: listName };
-
-			const input = document.getElementById('renameListInput');
-			if (input) input.value = listName || '';
-
-			const modal = document.getElementById('renameListModal');
-			if (modal) modal.classList.add('show');
-		}
-
         function closeRenameListModal() {
             document.getElementById('renameListModal').classList.remove('show');
             document.getElementById('renameListInput').value = '';
@@ -3621,60 +3596,39 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
         }
 
         function renameList() {
-			const input = document.getElementById('renameListInput');
-			const newName = (input?.value || '').trim();
-			if (!newName) return showNotification("Nom de liste vide", "error");
-
-	// cible = celle mémorisée au clic sur ✏️
-			const cat = renameTarget?.category;
-			const folder = renameTarget?.folder;
-			const oldName = renameTarget?.list;
-
-			if (!cat || !folder || !oldName) {
-				showNotification("Renommer: cible introuvable (cat/cours/liste)", "error");
-				return;
-			}
-
-			const listsObj = categories?.[cat]?.[folder];
-			if (!listsObj || typeof listsObj !== "object") {
-				showNotification("Renommer: cours introuvable", "error");
-				return;
-			}
-
-			const cards = listsObj[oldName];
-			if (!Array.isArray(cards)) {
-				showNotification("Renommer: liste source introuvable", "error");
-				return;
-			}
-
-			if (newName === oldName) {
-				closeRenameListModal();
-				return;
-			}
-
-			if (listsObj[newName] && !confirm(`La liste "${newName}" existe déjà. Remplacer ?`)) return;
-
-	// ✅ rename = déplacer la clé, donc contenu conservé
-			listsObj[newName] = cards;
-			delete listsObj[oldName];
-
-	// persistance
-			if (currentUser) {
-				currentUser.folders = categories;
-				allUsers[currentUser.username] = currentUser;
-				localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
-			}
-			saveData();
-
-			renameTarget = null;
-			currentList = newName;
-
-			if (typeof showListsPage === "function") showListsPage(cat, folder);
-			updateCategoryList();
-
-			closeRenameListModal();
-			showNotification("Liste renommée ✓", "success");
-		}
+            const input = document.getElementById('renameListInput');
+            const newName = input.value.trim();
+            if (!newName) {
+                showNotification('Veuillez entrer un nom.', 'error');
+                setTimeout(() => input.focus(), 150);
+                return;
+            }
+            if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) {
+                showNotification('Erreur.', 'error');
+                return;
+            }
+            if (categories[currentCategory][currentFolder][newName] && newName !== renameTarget) {
+                showNotification('Ce nom existe déjà.', 'error');
+                input.value = '';
+                setTimeout(() => input.focus(), 150);
+                return;
+            }
+            if (renameTarget && categories[currentCategory][currentFolder][renameTarget]) {
+                categories[currentCategory][currentFolder][newName] = categories[currentCategory][currentFolder][renameTarget];
+                delete categories[currentCategory][currentFolder][renameTarget];
+                if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][renameTarget]) {
+                    results[currentCategory][currentFolder][newName] = results[currentCategory][currentFolder][renameTarget];
+                    delete results[currentCategory][currentFolder][renameTarget];
+                    saveResults();
+                }
+                if (currentList === renameTarget) currentList = newName;
+                saveData();
+                updateCategoryList();
+                loadListsPage();
+                closeRenameListModal();
+                showNotification('Liste renommée ✓', 'success');
+            }
+        }
 
         // ====== FONCTIONS D'AFFICHAGE ======
         function escapeHtml(text) {
@@ -3945,10 +3899,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
                 const editBtn = document.createElement('button');
                 editBtn.className = 'btn-edit-list';
                 editBtn.innerHTML = '✏️';
-				editBtn.onclick = function(e) {
-    			e.stopPropagation(); // Empêche d'ouvrir la liste quand on clique sur le crayon
-    			showRenameListModal(listName); // Appelle la fonction corrigée ci-dessous
-				};
+                editBtn.onclick = function(e) { e.stopPropagation(); showEditListModal(listName); };
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'btn-delete-list';
                 deleteBtn.innerHTML = '✕';
@@ -3965,7 +3916,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
                     <div class="list-card-actions">
                         <button class="btn-list-action btn-study">📖 Réviser</button>
 						<button class="btn-list-action btn-review">🔄 À revoir</button>
-						<button class="btn-edit-list" onclick="showRenameListModal(${JSON.stringify(listName)})">✏️</button>
+                        <button class="btn-list-action btn-manage" onclick="showManagePage('${escapeHtml(currentCategory)}','${escapeHtml(currentFolder)}','${escapeHtml(listName)}')">✏️ Gérer</button>
                     </div>
                 `;
 
