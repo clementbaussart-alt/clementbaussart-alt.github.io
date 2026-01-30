@@ -3713,7 +3713,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
     		if (targetCategory === currentCategory && targetFolder === currentFolder) {
         		showNotification('La liste est déjà dans cette catégorie/cours.', 'error');
         		return;
-    		}
+   			}
     
     // Vérifier si une liste avec ce nom existe déjà
     		if (categories[targetCategory][targetFolder][moveListTarget]) {
@@ -3725,13 +3725,14 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
     		const listContent = categories[currentCategory][currentFolder][moveListTarget];
     		categories[targetCategory][targetFolder][moveListTarget] = listContent;
     
+    // Initialiser les structures de résultats si nécessaire
+    		if (!results[targetCategory]) results[targetCategory] = {};
+    		if (!results[targetCategory][targetFolder]) results[targetCategory][targetFolder] = {};
+    
     // Copier les résultats si existants
     		if (results[currentCategory]?.[currentFolder]?.[moveListTarget]) {
-        		if (!results[targetCategory]) results[targetCategory] = {};
-        		if (!results[targetCategory][targetFolder]) results[targetCategory][targetFolder] = {};
         		results[targetCategory][targetFolder][moveListTarget] = results[currentCategory][currentFolder][moveListTarget];
         		delete results[currentCategory][currentFolder][moveListTarget];
-       			saveResults();
     		}
     
     // Supprimer de l'emplacement d'origine
@@ -3742,7 +3743,8 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
         		categories[currentCategory][currentFolder]['Liste par défaut'] = [];
     		}
     
-   			saveData();
+    		saveData();
+    		saveResults();
     		updateCategoryList();
     		loadListsPage();
     		closeMoveListModal();
