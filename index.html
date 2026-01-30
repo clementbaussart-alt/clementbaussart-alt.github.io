@@ -2283,7 +2283,7 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
                 </div>
                 <div class="modal-buttons">
                     <button class="btn-cancel" onclick="closeRenameCategoryModal()">Annuler</button>
-					<button class="btn-edit-list" onclick="showRenameListModal(${JSON.stringify(listName)})">✏️</button>                </div>
+					<button class="btn-add" onclick="renameList()">Renommer</button>
             </div>
         </div>
 
@@ -3589,14 +3589,18 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 		}
 
 		function showRenameListModal(listName) {
-			renameTarget = { category: currentCategory, folder: currentFolder, list: listName };
-			currentList = listName; // <- important si ton code s’appuie sur currentList
+    // On stocke l'emplacement complet pour que la fonction renameList sache quoi modifier
+    		renameTarget = { 
+        		category: currentCategory, 
+        		folder: currentFolder, 
+       			list: listName 
+    		};
 
-			const input = document.getElementById('renameListInput');
-			if (input) input.value = listName || '';
+    		const input = document.getElementById('renameListInput');
+    		if (input) input.value = listName || '';
 
-			const modal = document.getElementById('renameListModal');
-			if (modal) modal.classList.add('show');
+   			const modal = document.getElementById('renameListModal');
+   			if (modal) modal.classList.add('show');
 		}
 
         function closeRenameListModal() {
@@ -3606,68 +3610,58 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
         }
 
         function renameList() {
-			const input = document.getElementById('renameListInput');
-			const newName = (input?.value || '').trim();
-			if (!newName) return showNotification("Nom de liste vide", "error");
+    		const input = document.getElementById('renameListInput');
+    		const newName = (input?.value || '').trim();
+    
+    		if (!newName) {
+        		showNotification("Le nom ne peut pas être vide", "error");
+       			return;
+    		}
 
-	// ✅ la cible vient du showRenameListModal(listName)
-			const cat = renameTarget?.category;
-			const folder = renameTarget?.folder;
-			const oldName = renameTarget?.list;
-	
-			if (!cat || !folder || !oldName) {
-				showNotification("Renommer: cible introuvable (cat/cours/liste)", "error");
-				return;
-			}
+    // Récupération des cibles via renameTarget
+    		const cat = renameTarget?.category;
+    		const folder = renameTarget?.folder;
+    		const oldName = renameTarget?.list;
 
-			const listsObj = categories?.[cat]?.[folder];
-			if (!listsObj || typeof listsObj !== "object") {
-				showNotification("Renommer: cours introuvable", "error");
-				return;
-			}
+    		if (!cat || !folder || !oldName) {
+        		showNotification("Erreur de cible pour le renommage", "error");
+       			return;
+    		}
 
-			const cards = listsObj[oldName];
-			if (!Array.isArray(cards)) {
-				showNotification("Renommer: liste source introuvable", "error");
-				return;
-			}
+    		const listsObj = categories[cat][folder];
+    		const cards = listsObj[oldName]; // On sauvegarde les fiches ici !
 
-			if (newName === oldName) {
-				closeRenameListModal();
-				return;
-			}
+    		if (newName === oldName) {
+        		closeRenameListModal();
+        		return;
+   			}
 
-			if (listsObj[newName] && !confirm(`La liste "${newName}" existe déjà. Remplacer ?`)) return;
-	
-	// ✅ renommer = déplacer la clé, sans perdre les cartes
-			listsObj[newName] = cards;
-			delete listsObj[oldName];
+    // Vérifier si le nouveau nom existe déjà
+    		if (listsObj[newName]) {
+        		if (!confirm(`Une liste nommée "${newName}" existe déjà. Écraser ?`)) return;
+    		}
 
-	// ✅ déplacer les résultats si tu les stockes par nom de liste
-			if (results?.[cat]?.[folder]?.[oldName] !== undefined) {
-				if (!results[cat]) results[cat] = {};
-				if (!results[cat][folder]) results[cat][folder] = {};
-				results[cat][folder][newName] = results[cat][folder][oldName];
-				delete results[cat][folder][oldName];
-				if (typeof saveResults === "function") saveResults();
-			}
+    // --- TRANSFERT DES DONNÉES ---
+    		listsObj[newName] = cards; // On crée la nouvelle clé avec les anciennes fiches
+    		delete listsObj[oldName];  // On supprime l'ancienne clé
 
-	// état courant + clean
-			currentList = newName;
-			renameTarget = null;
+    // --- TRANSFERT DES RÉSULTATS (Statistiques d'apprentissage) ---
+   			if (results[cat] && results[cat][folder] && results[cat][folder][oldName]) {
+        		results[cat][folder][newName] = results[cat][folder][oldName];
+        		delete results[cat][folder][oldName];
+        		saveResults();
+    		}
 
-	// persist + refresh
-			if (currentUser) {
-				currentUser.folders = categories;
-				allUsers[currentUser.username] = currentUser;
-				localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
-			}
-			saveData();
-			if (typeof showListsPage === "function") showListsPage(cat, folder);
-			updateCategoryList();
+    // Mise à jour de l'état global si on était en train de gérer cette liste
+    		if (currentList === oldName) currentList = newName;
 
-			closeRenameListModal();
-			showNotification("Liste renommée ✓", "success");
+    // Sauvegarde et Rafraîchissement
+   			saveData();
+    		updateCategoryList();
+    		loadListsPage(); // Recharge la grille des listes
+    
+    		closeRenameListModal();
+    		showNotification("Liste renommée avec succès ✓", "success");
 		}
 
         // ====== FONCTIONS D'AFFICHAGE ======
