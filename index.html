@@ -3617,63 +3617,67 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
 			const newName = (input?.value || '').trim();
 			if (!newName) return showNotification("Nom de liste vide", "error");
 
-	// On suppose que tu as déjà currentCategory/currentFolder/currentList positionnés
-			const cat = currentCategory;
-			const folder = currentFolder;
-			const oldName = currentList;
+	// cible robuste: d'abord renameTarget, sinon current*
+			const cat = (renameTarget && renameTarget.category) ? renameTarget.category : currentCategory;
+			const folder = (renameTarget && renameTarget.folder) ? renameTarget.folder : currentFolder;
+			const oldName = (renameTarget && renameTarget.list) ? renameTarget.list : currentList;
 
 			if (!cat || !folder || !oldName) {
-				showNotification("Contexte manquant pour renommer (cat/cours/liste)", "error");
+				showNotification("Renommer: cible introuvable (cat/cours/liste)", "error");
 				return;
 			}
 
 			const listsObj = categories?.[cat]?.[folder];
 			if (!listsObj || typeof listsObj !== "object") {
-				showNotification("Cours introuvable", "error");
+				showNotification("Renommer: cours introuvable", "error");
 				return;
 			}
 
-			if (!listsObj[oldName]) {
-				showNotification("Liste source introuvable", "error");
+			const cards = listsObj[oldName];
+			if (!Array.isArray(cards)) {
+				showNotification("Renommer: liste source introuvable", "error");
 				return;
 			}
 
 			if (newName === oldName) {
-				closeRenameListModal?.();
+				closeRenameListModal();
 				return;
 			}
 
 			if (listsObj[newName] && !confirm(`La liste "${newName}" existe déjà. Remplacer ?`)) return;
 
-	// 1) Déplacer les cartes (le plus important)
-			const cards = listsObj[oldName];          // <-- on garde la référence / le contenu
-			listsObj[newName] = cards;               // <-- nouvelle clé pointe sur les mêmes cartes
-			delete listsObj[oldName];                // <-- on supprime l’ancienne clé
+	// ✅ déplacer la liste (sans toucher aux cartes)
+			listsObj[newName] = cards;
+			delete listsObj[oldName];
 
-	// 2) Déplacer les résultats (si tu les stockes par nom de liste)
+	// ✅ déplacer les résultats si tu les stockes par nom de liste
 			if (results?.[cat]?.[folder]?.[oldName] !== undefined) {
 				if (!results[cat]) results[cat] = {};
 				if (!results[cat][folder]) results[cat][folder] = {};
 				results[cat][folder][newName] = results[cat][folder][oldName];
 				delete results[cat][folder][oldName];
-				saveResults?.();
+				if (typeof saveResults === "function") saveResults();
 			}
 
-	// 3) Mettre à jour l'état courant
+	// état courant
+			currentCategory = cat;
+			currentFolder = folder;
 			currentList = newName;
+			renameTarget = null;
 
-	// 4) Persister + UI
+	// persist
 			if (currentUser) {
 				currentUser.folders = categories;
 				allUsers[currentUser.username] = currentUser;
 				localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
 			}
 			saveData();
-			updateCategoryList();
-	// Si tu as une page “lists”, tu peux rappeler son rendu
-	// showListsPage?.(cat, folder);
 
-			closeRenameListModal?.();
+	// refresh UI (si ta fonction existe)
+			if (typeof showListsPage === "function") showListsPage(cat, folder);
+			updateCategoryList();
+
+			closeRenameListModal();
 			showNotification("Liste renommée ✓", "success");
 		}
 
