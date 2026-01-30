@@ -3596,39 +3596,49 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
         }
 
         function renameList() {
-            const input = document.getElementById('renameListInput');
-            const newName = input.value.trim();
-            if (!newName) {
-                showNotification('Veuillez entrer un nom.', 'error');
-                setTimeout(() => input.focus(), 150);
-                return;
-            }
-            if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) {
-                showNotification('Erreur.', 'error');
-                return;
-            }
-            if (categories[currentCategory][currentFolder][newName] && newName !== renameTarget) {
-                showNotification('Ce nom existe déjà.', 'error');
-                input.value = '';
-                setTimeout(() => input.focus(), 150);
-                return;
-            }
-            if (renameTarget && categories[currentCategory][currentFolder][renameTarget]) {
-                categories[currentCategory][currentFolder][newName] = categories[currentCategory][currentFolder][renameTarget];
-                delete categories[currentCategory][currentFolder][renameTarget];
-                if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][renameTarget]) {
-                    results[currentCategory][currentFolder][newName] = results[currentCategory][currentFolder][renameTarget];
-                    delete results[currentCategory][currentFolder][renameTarget];
-                    saveResults();
-                }
-                if (currentList === renameTarget) currentList = newName;
-                saveData();
-                updateCategoryList();
-                loadListsPage();
-                closeRenameListModal();
-                showNotification('Liste renommée ✓', 'success');
-            }
-        }
+   	 		const input = document.getElementById('renameListInput');
+    		const newName = input.value.trim();
+    
+    		if (!newName) {
+        		showNotification('Veuillez entrer un nom.', 'error');
+        		setTimeout(() => input.focus(), 150);
+        		return;
+    		}
+    
+    // Si le nom n'a pas changé, fermer sans rien faire
+    		if (newName === renameTarget) {
+        		closeRenameListModal();
+       			return;
+    		}
+    
+    		if (!currentCategory || !currentFolder || !categories[currentCategory] || !categories[currentCategory][currentFolder]) {
+        		showNotification('Erreur.', 'error');
+       			return;
+    		}
+    
+    		if (categories[currentCategory][currentFolder][newName] && newName !== renameTarget) {
+        		showNotification('Ce nom existe déjà.', 'error');
+        		input.value = '';
+        		setTimeout(() => input.focus(), 150);
+        		return;
+    		}
+    
+    		if (renameTarget && categories[currentCategory][currentFolder][renameTarget]) {
+        		categories[currentCategory][currentFolder][newName] = categories[currentCategory][currentFolder][renameTarget];
+        		delete categories[currentCategory][currentFolder][renameTarget];
+        		if (results[currentCategory] && results[currentCategory][currentFolder] && results[currentCategory][currentFolder][renameTarget]) {
+            		results[currentCategory][currentFolder][newName] = results[currentCategory][currentFolder][renameTarget];
+            		delete results[currentCategory][currentFolder][renameTarget];
+            		saveResults();
+        		}
+       			if (currentList === renameTarget) currentList = newName;
+        		saveData();
+        		updateCategoryList();
+        		loadListsPage();
+        		closeRenameListModal();
+        		showNotification('Liste renommée ✓', 'success');
+   			}
+		}
 
         // ====== FONCTIONS D'AFFICHAGE ======
         function escapeHtml(text) {
