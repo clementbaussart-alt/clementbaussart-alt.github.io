@@ -5547,7 +5547,7 @@ function renderChangesListComp(changes) {
         btn.type = 'button';
         btn.dataset.id = c.id;
         btn.dataset.type = c.type;
-        if (c.type === 'suppression') {
+		if (c.type === 'suppression' || c.type === 'remplacement') {
             btn.dataset.removed = c.removed;
         }
         
@@ -5581,8 +5581,8 @@ function renderChangesListComp(changes) {
             if (prev) prev.classList.remove('selected');
             btn.classList.add('selected');
             lastSelectedBtn = btn;
-            
-            const opts = (btn.dataset.type === 'suppression') ? { removedText: btn.dataset.removed || '' } : undefined;
+
+			const opts = (btn.dataset.removed) ? { removedText: btn.dataset.removed || '' } : undefined;
 			document.getElementById('diffOutput')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             focusChangeComp(btn.dataset.id, btn.dataset.type, opts);
             updateBackButton();
