@@ -5452,8 +5452,6 @@ function focusChangeComp(id, type, options) {
 }
 
 function computeComp() {
-	console.log('🔥 computeComp() appelée', new Date().getTime());
-    console.trace('Called from:');  // ✅ montre d'où vient l'appel
     
 	const oldTxt = oldTA.value || "";
 	const newTxt = newTA.value || "";
@@ -5480,8 +5478,8 @@ function computeComp() {
 					const anchorId = `chg-${++idxChange}`;
 
 					// On ancre sur le texte "nouveau" (mark.ins)
-					html += `<mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(next.value))}</mark>`;
-
+// Afficher le texte supprimé en rouge + le nouveau en vert
+					html += `<mark class="del">${escapeHtmlComp(normalizeSpaces(p.value))}</mark><mark class="ins" id="${anchorId}">${escapeHtmlComp(normalizeSpaces(next.value))}</mark>`;
 					rep++;
 					changes.push({ id: anchorId, type: 'remplacement', added: next.value, removed: p.value });
 
@@ -6485,7 +6483,6 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
                     document.body.removeChild(textarea);
                     showNotification('Code d\'intégration copié ✓', 'success');
                 });
-            });
     </script>
 </body>
 </html>
