@@ -5598,21 +5598,7 @@ function renderChangesListComp(changes) {
     		document.getElementById('diffOutput')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     
     // Vérifier si l'élément existe
-    		let target = document.getElementById(btn.dataset.id);
-    		if (!target) {
-        // Recalculer le diff si l'élément n'existe pas
-        		computeComp();
-        // Attendre que le DOM soit mis à jour
-        		target = document.getElementById(btn.dataset.id);
-    		}
-    
-    // Faire le focus uniquement si l'élément existe maintenant
-    		if (target) {
-    	    	focusChangeComp(btn.dataset.id, btn.dataset.type, opts);
-    		} else {
-        		console.error('Element not found:', btn.dataset.id);
-    		}
-    
+    		focusChangeComp(btn.dataset.id, btn.dataset.type, opts);
     		updateBackButton();
         });
         
