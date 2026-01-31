@@ -6508,38 +6508,38 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
         // ====== INITIALISATION ======
         document.addEventListener('DOMContentLoaded', function() {
             // Initialiser le comparateur
-            document.getElementById('compareBtn').addEventListener('click', function() {
-                const oldText = document.getElementById('oldText').value;
-                const newText = document.getElementById('newText').value;
+			document.getElementById('compareBtn').addEventListener('click', function() {
+    			const oldText = document.getElementById('oldText').value;
+    			const newText = document.getElementById('newText').value;
 
-                if (!oldText || !newText) {
-                    showNotification('Veuillez entrer les deux textes à comparer', 'error');
-                    return;
-                }
+    			if (!oldText || !newText) {
+        			showNotification('Veuillez entrer les deux textes à comparer', 'error');
+        			return;
+    			}
 
-                const diff = Diff.diffWords(oldText, newText);
-                let output = '';
-                let insCount = 0;
-                let delCount = 0;
-                let repCount = 0;
+    			const diff = Diff.diffWords(oldText, newText);
+    			let output = '';
+    			let insCount = 0;
+    			let delCount = 0;
+    			let repCount = 0;
 
-                diff.forEach(part => {
-                    if (part.added) {
-                        output += `<mark class="ins">${part.value}</mark>`;
-                        insCount++;
-                    } else if (part.removed) {
-                        output += `<mark class="del">${part.value}</mark>`;
-                        delCount++;
-                    } else {
-                        output += part.value;
-                    }
-                });
+    			diff.forEach(part => {
+        			if (part.added) {
+            			output += `<mark class="ins">${part.value}</mark>`;
+            			insCount++;
+        			} else if (part.removed) {
+            			output += `<mark class="del">${part.value}</mark>`;
+            			delCount++;
+        			} else {
+            			output += part.value;
+        			}
+    			});
 
-                document.getElementById('diffOutput').innerHTML = output;
-                document.getElementById('insCount').textContent = insCount;
-                document.getElementById('delCount').textContent = delCount;
-                document.getElementById('repCount').textContent = Math.min(insCount, delCount);
-            });
+    			document.getElementById('diffOutput').innerHTML = output;
+    			document.getElementById('insCount').textContent = insCount;
+   		 		document.getElementById('delCount').textContent = delCount;
+    			document.getElementById('repCount').textContent = Math.min(insCount, delCount);
+			});
 
             document.getElementById('copyBtn').addEventListener('click', function() {
                 const diffOutput = document.getElementById('diffOutput').innerHTML;
