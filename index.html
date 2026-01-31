@@ -1898,6 +1898,16 @@ mark.ins { box-shadow: inset 0 -0.45em rgba(34,197,94,0.6); border-color: rgba(3
     		outline: none !important;
     		box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
 		}
+		.anchor-sup.focused {
+   			display: inline-block;
+   			width: 12px;
+    		height: 1.2em;
+    		vertical-align: baseline;
+    		box-shadow: inset 0 -0.48em rgba(255,209,102,0.9), 0 0 0 2px rgba(255,209,102,0.25) !important;
+    		border: 1px solid rgba(255,209,102,0.85) !important;
+    		background: rgba(255,209,102,0.2) !important;
+    		border-radius: 4px;
+		}
     </style>
 </head>
 <body onload="checkAuth()">
@@ -5482,8 +5492,7 @@ function computeComp() {
 
 			// Suppression pure : ancre invisible dans le texte central
 			const anchorId = `chg-${++idxChange}`;
-			html += `<a id="${anchorId}"></a>`;
-
+			html += `<span id="${anchorId}" class="anchor-sup" style="position:relative;"></span>`;
 			del++;
 			changes.push({ id: anchorId, type: 'suppression', added: '', removed: p.value });
 			continue;
