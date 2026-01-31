@@ -5452,6 +5452,9 @@ function focusChangeComp(id, type, options) {
 }
 
 function computeComp() {
+	console.log('🔥 computeComp() appelée', new Date().getTime());
+    console.trace('Called from:');  // ✅ montre d'où vient l'appel
+    
 	const oldTxt = oldTA.value || "";
 	const newTxt = newTA.value || "";
 
