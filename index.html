@@ -6485,7 +6485,73 @@ newTA.value = "Le contrat prend effet le 1er janvier 2025.\nLe prix est de 120 �
                     document.body.removeChild(textarea);
                     showNotification('Code d\'intégration copié ✓', 'success');
                 });
-        	}
+        }
+
+        function deleteAccount() {
+            if (!confirm('⚠️ ATTENTION: Cette action est irréversible. Toutes vos données seront supprimées. Continuer ?')) return;
+
+            if (!currentUser) return;
+
+            delete allUsers[currentUser.username];
+            localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
+
+            const userResultsKey = `flashcards_results_${currentUser.username}`;
+            localStorage.removeItem(userResultsKey);
+
+            const openDataKey = `flashcards_open_${currentUser.username}`;
+            localStorage.removeItem(openDataKey);
+
+            localStorage.removeItem('current_user');
+            location.reload();
+        }       
+        document.getElementById('copyBtn').addEventListener('click', function() {
+            const diffOutput = document.getElementById('diffOutput').innerHTML;
+            navigator.clipboard.writeText(diffOutput)
+                .then(() => showNotification('Comparaison copiée ✓', 'success'))
+                .catch(() => showNotification('Erreur lors de la copie', 'error'));
+            });
+
+            // Initialiser les événements des boutons de retour
+            document.getElementById('backToLists').addEventListener('click', function() {
+                showPage('lists');
+            });
+
+            document.getElementById('backToListsStudy').addEventListener('click', function() {
+                showPage('lists');
+            });
+
+            // Initialiser l'upload d'avatar
+            document.getElementById('avatarInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (!file.type.startsWith('image/')) {
+                    showNotification('Veuillez sélectionner une image', 'error');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentUser.avatar = event.target.result;
+                    allUsers[currentUser.username] = currentUser;
+                    localStorage.setItem('flashcards_users', JSON.stringify(allUsers));
+                    localStorage.setItem('current_user', JSON.stringify(currentUser));
+
+                    const avatarPreview = document.getElementById('avatarPreview');
+                    if (avatarPreview) {
+                        avatarPreview.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.username}" style="width:100%;height:100%;object-fit:cover;">`;
+                    }
+
+                    const userAvatar = document.getElementById('userAvatar');
+                    if (userAvatar) {
+                        userAvatar.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.username}" style="width:100%;height:100%;object-fit:cover;">`;
+                    }
+
+                    showNotification('Photo de profil mise à jour ✓', 'success');
+                };
+                reader.readAsDataURL(file);
+            });
+        });
     </script>
 </body>
 </html>
