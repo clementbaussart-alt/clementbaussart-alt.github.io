@@ -5515,6 +5515,8 @@ function computeComp() {
 	}
 
 	outComp.innerHTML = html;
+	console.log('HTML généré:', html);
+	console.log('HTML dans le DOM:', document.getElementById('diffOutput').innerHTML);
 
 	// ✅ sanity check rapide (tu peux laisser temporairement)
 	// console.log('anchors:', document.querySelectorAll('#diffOutput [id^="chg-"]').length);
